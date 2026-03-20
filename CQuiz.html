@@ -128,7 +128,11 @@
     .home-icon { font-size: 3.5rem; margin-bottom: 12px; }
     .home-title { font-size: 1.6rem; font-weight: 700; color: #1f2937; margin-bottom: 6px; }
     .home-subtitle { color: #6b7280; line-height: 1.6; margin-bottom: 28px; font-size: 0.95rem; }
-    .home-actions { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+    .home-actions {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .home-actions .btn-primary { grid-column: 1 / -1; }
     .home-stats {
       margin-top: 20px; padding-top: 20px; border-top: 1px solid #f3f4f6;
       color: #9ca3af; font-size: 0.85rem;
@@ -488,7 +492,7 @@
     <div class="home-header">
       <h1>注音測驗</h1>
       <p>國中國語字音練習系統</p>
-      <p style="font-size:0.72rem;opacity:0.5;margin-top:2px;letter-spacing:0.04em;">v20260320_0827_4</p>
+      <p style="font-size:0.72rem;opacity:0.5;margin-top:2px;letter-spacing:0.04em;">v20260320_1904_5</p>
     </div>
     <div class="card home-card">
       <div class="home-icon">🎯</div>
@@ -501,7 +505,7 @@
         <button class="btn btn-primary" onclick="startQuiz()">開始測驗</button>
         <button class="btn btn-outline" onclick="showHistory()">歷史記錄</button>
         <button class="btn btn-warn" onclick="showWrongBank()">錯題本</button>
-        <button class="btn btn-outline" onclick="showTestLog()" style="font-size:0.85rem;padding:10px 14px;">測驗日誌</button>
+        <button class="btn btn-outline" onclick="showTestLog()">測驗日誌</button>
       </div>
       <div id="home-stats"></div>
     </div>
