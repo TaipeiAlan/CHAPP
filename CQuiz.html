@@ -332,6 +332,89 @@
     .wb-empty-icon { font-size: 3rem; margin-bottom: 12px; }
     .wb-footer { text-align: center; padding: 12px 0 4px; }
 
+
+    /* ====== FAB BUTTONS ====== */
+    .fab-grade {
+      position: fixed; bottom: 24px; right: 20px; z-index: 300;
+      width: 68px; height: 68px; border-radius: 50%;
+      background: linear-gradient(135deg, #7c3aed, #4f46e5);
+      color: white; border: none; cursor: pointer;
+      box-shadow: 0 4px 20px rgba(79,70,229,0.55);
+      display: none; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .fab-grade:hover { transform: scale(1.08); box-shadow: 0 6px 26px rgba(79,70,229,0.65); }
+    .fab-grade-icon { font-size: 1.3rem; line-height: 1; }
+    .fab-grade-lbl  { font-size: 0.62rem; font-weight: 800; letter-spacing: 0.02em; }
+
+    .fab-top {
+      position: fixed; bottom: 24px; right: 20px; z-index: 300;
+      width: 52px; height: 52px; border-radius: 50%;
+      background: rgba(79,70,229,0.88); backdrop-filter: blur(6px);
+      color: white; font-size: 1.4rem; font-weight: 700; border: none; cursor: pointer;
+      box-shadow: 0 4px 16px rgba(79,70,229,0.4);
+      display: none; align-items: center; justify-content: center;
+      transition: transform 0.15s;
+    }
+    .fab-top:hover { transform: scale(1.1); }
+
+    /* ====== SKIP BUTTON & BADGE ====== */
+    .btn-skip {
+      font-size: 0.72rem; font-weight: 600; padding: 3px 11px; border-radius: 20px;
+      background: #fff7ed; border: 1.5px solid #fed7aa; color: #ea580c;
+      cursor: pointer; transition: all 0.15s; white-space: nowrap;
+    }
+    .btn-skip:hover { background: #ffedd5; }
+    .btn-skip.active { background: #ea580c; color: white; border-color: #ea580c; }
+
+    .q-skip-badge {
+      font-size: 0.72rem; font-weight: 600; color: #ea580c;
+      background: #fff7ed; padding: 3px 10px; border-radius: 20px;
+      border: 1.5px solid #fed7aa; display: none;
+    }
+    .q-card.skipped { box-shadow: 0 2px 14px rgba(234,88,12,0.15); }
+    .q-card.skipped .options { opacity: 0.45; pointer-events: none; }
+
+    /* ====== RESULT OPT-TEXT GREY ====== */
+    .opt-label.res-dim .opt-text { color: #9ca3af; }
+    .opt-label.res-dim .opt-key  { color: #d1d5db; }
+    .opt-label.res-wrong .opt-text { color: #9ca3af; }
+
+    /* ====== SKIPPED GRID CELL ====== */
+    .ans-cell.grid-skip { background: #fff7ed; color: #ea580c; }
+
+    /* ====== TEST LOG SCREEN ====== */
+    .log-session {
+      background: white; border-radius: 16px; margin-bottom: 14px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08); overflow: hidden;
+    }
+    .log-session-hdr {
+      padding: 13px 18px; background: #f5f3ff;
+      display: flex; justify-content: space-between; align-items: center;
+      cursor: pointer; user-select: none;
+    }
+    .log-session-hdr:hover { background: #ede9fe; }
+    .log-session-date { font-size: 0.88rem; font-weight: 700; color: #4f46e5; }
+    .log-session-meta { font-size: 0.78rem; color: #6b7280; }
+    .log-session-body { overflow-x: auto; }
+    .log-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+    .log-table th {
+      background: #f9fafb; color: #6b7280; font-weight: 600; font-size: 0.7rem;
+      padding: 7px 10px; text-align: left; border-bottom: 1px solid #e5e7eb;
+      white-space: nowrap;
+    }
+    .log-table td { padding: 7px 10px; border-bottom: 1px solid #f3f4f6; color: #374151; vertical-align: middle; }
+    .log-table tr:last-child td { border-bottom: none; }
+    .log-row-wrong { background: #fff8f8; }
+    .log-row-skip  { background: #fffbf7; }
+    .log-ok  { color: #059669; font-weight: 700; }
+    .log-err { color: #dc2626; font-weight: 700; }
+    .log-skip-lbl { color: #ea580c; font-weight: 600; }
+    .log-empty {
+      padding: 60px 20px; text-align: center; color: #9ca3af;
+      background: white; border-radius: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    }
+    .log-footer { text-align: center; padding: 12px 0 4px; }
     /* Home wrong-bank button */
     .btn-warn {
       background: rgba(239,68,68,0.15); border: 2px solid rgba(239,68,68,0.5);
@@ -366,6 +449,7 @@
         <button class="btn btn-primary" onclick="startQuiz()">開始測驗</button>
         <button class="btn btn-outline" onclick="showHistory()">歷史記錄</button>
         <button class="btn btn-warn" onclick="showWrongBank()">錯題本</button>
+        <button class="btn btn-outline" onclick="showTestLog()" style="font-size:0.85rem;padding:10px 14px;">測驗日誌</button>
       </div>
       <div id="home-stats"></div>
     </div>
@@ -386,6 +470,10 @@
       <span class="progress-count" id="progress-count">0 / 20</span>
     </div>
     <div id="questions-container"></div>
+    <button class="fab-grade" id="fab-grade" onclick="submitQuiz()" title="批改測驗">
+      <span class="fab-grade-icon">✓</span>
+      <span class="fab-grade-lbl">批改</span>
+    </button>
     <div class="submit-area">
       <button class="btn btn-primary" id="submit-btn" onclick="submitQuiz()">批改測驗</button>
       <p class="submit-hint" id="submit-hint">請完成所有題目後批改</p>
@@ -414,6 +502,7 @@
       </div>
     </div>
     <div id="results-container"></div>
+    <button class="fab-top" id="fab-top" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="回到頂部">↑</button>
   </div>
 
   <!-- ===== HISTORY SCREEN ===== -->
@@ -449,6 +538,20 @@
     <div id="wb-list"></div>
     <div class="wb-footer">
       <button class="btn btn-danger" onclick="clearWrongBank()">清除錯題記錄</button>
+    </div>
+  </div>
+
+
+  <!-- ===== TEST LOG SCREEN ===== -->
+  <div id="log-screen" class="screen">
+    <div class="nav">
+      <button class="nav-back" onclick="showHome()">← 首頁</button>
+      <span class="nav-title">測驗日誌</span>
+      <span style="width:70px"></span>
+    </div>
+    <div id="log-list"></div>
+    <div class="log-footer">
+      <button class="btn btn-danger" onclick="clearTestLog()">清除所有日誌</button>
     </div>
   </div>
 
@@ -2042,6 +2145,7 @@ const CSV_DATA = `id|sentence|target_char|correct_pinyin|wrong_pinyin|correct_ch
 const QUIZ_SIZE = 20;
 const STORAGE_KEY = 'Cquiz_history';
 const WRONG_KEY   = 'Cquiz_wrong_bank';
+const LOG_KEY     = 'Cquiz_test_log';
 const OPTION_KEYS = ['A', 'B', 'C', 'D'];
 
 // ============================================================
@@ -2115,47 +2219,44 @@ function generateWrongAnswers(correctPinyin, hintPinyin) {
   const used = new Set([correctPinyin]);
   const result = [];
 
+  const cp = parseBopo(correctPinyin);
+  // Returns true if p differs from correct only in tone
+  const isToneOnly = p => { const pp = parseBopo(p); return pp.initial === cp.initial && pp.medial === cp.medial && pp.final === cp.final; };
+  const toneOnlyCount = () => result.filter(isToneOnly).length;
+
   // 1. CSV hint (most common mistake)
   const hint = (hintPinyin || '').trim();
   if (hint && !used.has(hint)) { result.push(hint); used.add(hint); }
 
-  const cp = parseBopo(correctPinyin);
-
-  // 2. Same syllable body, different tone
-  if (result.length < 3) {
-    for (const t of shuffle(BOPO_TONES.filter(t => t !== cp.tone))) {
-      if (result.length >= 3) break;
-      const c = cp.initial + cp.medial + cp.final + t;
-      if (!used.has(c) && allPinyinPool.has(c)) { result.push(c); used.add(c); }
-    }
-  }
-
-  // 3. Same rhyme (medial+final), different initial
+  // 2. Different initial (聲母) — same medial OR same final, any tone
   if (result.length < 3) {
     const cands = shuffle([...allPinyinPool].filter(p => {
       if (used.has(p)) return false;
       const pp = parseBopo(p);
-      return pp.medial === cp.medial && pp.final === cp.final && pp.initial !== cp.initial;
+      return pp.initial !== cp.initial && (pp.medial === cp.medial || pp.final === cp.final);
     }));
-    for (const p of cands) {
-      if (result.length >= 3) break;
-      result.push(p); used.add(p);
-    }
+    for (const p of cands) { if (result.length >= 3) break; result.push(p); used.add(p); }
   }
 
-  // 4. Same initial group, same medial
+  // 3. Same initial, different final (韻母 body change)
   if (result.length < 3) {
-    const grp = INITIAL_GROUPS.find(g => g.includes(cp.initial));
-    if (grp) {
-      for (const altInit of shuffle(grp.filter(i => i !== cp.initial))) {
-        if (result.length >= 3) break;
-        const c = altInit + cp.medial + cp.final + cp.tone;
-        if (!used.has(c) && allPinyinPool.has(c)) { result.push(c); used.add(c); }
-      }
+    const cands = shuffle([...allPinyinPool].filter(p => {
+      if (used.has(p)) return false;
+      const pp = parseBopo(p);
+      return pp.initial === cp.initial && pp.final !== cp.final;
+    }));
+    for (const p of cands) { if (result.length >= 3) break; result.push(p); used.add(p); }
+  }
+
+  // 4. Tone-only variant — at most 1 total
+  if (result.length < 3 && toneOnlyCount() < 1) {
+    for (const t of shuffle(BOPO_TONES.filter(t => t !== cp.tone))) {
+      const c = cp.initial + cp.medial + cp.final + t;
+      if (!used.has(c) && allPinyinPool.has(c)) { result.push(c); used.add(c); break; }
     }
   }
 
-  // 5. Fallback: any random pinyin from pool
+  // 5. Fallback: any random pinyin
   if (result.length < 3) {
     for (const p of shuffle([...allPinyinPool].filter(p => !used.has(p)))) {
       if (result.length >= 3) break;
@@ -2216,7 +2317,11 @@ function renderQuiz() {
     <div class="q-card" id="qcard-${q.idx}">
       <div class="q-header">
         <span class="q-num">第 ${q.idx + 1} 題</span>
-        <span class="q-answered-badge" id="badge-${q.idx}">✓ 已作答</span>
+        <span style="display:flex;align-items:center;gap:6px;">
+          <span class="q-skip-badge" id="skip-badge-${q.idx}">？ 我不會</span>
+          <span class="q-answered-badge" id="badge-${q.idx}">✓ 已作答</span>
+          <button class="btn-skip" id="skip-btn-${q.idx}" onclick="skipAnswer(${q.idx})">我不會</button>
+        </span>
       </div>
       <div class="q-sentence">${formatSentence(q.sentence, q.targetChar, false)}</div>
       <div class="q-ask">下列何者為「　」內字的正確讀音？</div>
@@ -2243,6 +2348,11 @@ function selectAnswer(qIdx, answer, optIdx) {
     const lbl = document.getElementById(`opt-${qIdx}-${oi}`);
     if (lbl) lbl.classList.remove('selected');
   });
+  // Clear skip state if skipped
+  const skipBadge = document.getElementById(`skip-badge-${qIdx}`);
+  const skipBtn   = document.getElementById(`skip-btn-${qIdx}`);
+  if (skipBadge) skipBadge.style.display = 'none';
+  if (skipBtn)   skipBtn.classList.remove('active');
   // Mark new selection
   const lbl = document.getElementById(`opt-${qIdx}-${optIdx}`);
   if (lbl) lbl.classList.add('selected');
@@ -2251,9 +2361,9 @@ function selectAnswer(qIdx, answer, optIdx) {
   // Show badge
   const badge = document.getElementById(`badge-${qIdx}`);
   if (badge) badge.style.display = 'inline';
-  // Mark card as answered
+  // Mark card as answered (not skipped)
   const card = document.getElementById(`qcard-${qIdx}`);
-  if (card) card.classList.add('answered');
+  if (card) { card.classList.remove('skipped'); card.classList.add('answered'); }
   updateProgress();
   // Auto-scroll: show enough of the next card
   const nextCard = document.getElementById(`qcard-${qIdx + 1}`);
@@ -2265,6 +2375,32 @@ function selectAnswer(qIdx, answer, optIdx) {
   }
 }
 
+
+function skipAnswer(qIdx) {
+  const isSkipped = userAnswers.hasOwnProperty(qIdx) && userAnswers[qIdx] === '';
+  if (isSkipped) {
+    // Toggle off — remove skip
+    delete userAnswers[qIdx];
+    document.getElementById(`skip-badge-${qIdx}`).style.display = 'none';
+    document.getElementById(`skip-btn-${qIdx}`).classList.remove('active');
+    const card = document.getElementById(`qcard-${qIdx}`);
+    if (card) { card.classList.remove('skipped'); card.classList.remove('answered'); }
+  } else {
+    // Skip — clear any option selection first
+    const q = currentQuiz[qIdx];
+    q.options.forEach((_, oi) => {
+      const lbl = document.getElementById(`opt-${qIdx}-${oi}`);
+      if (lbl) lbl.classList.remove('selected');
+    });
+    userAnswers[qIdx] = '';
+    document.getElementById(`badge-${qIdx}`).style.display = 'none';
+    document.getElementById(`skip-badge-${qIdx}`).style.display = 'inline';
+    document.getElementById(`skip-btn-${qIdx}`).classList.add('active');
+    const card = document.getElementById(`qcard-${qIdx}`);
+    if (card) { card.classList.remove('answered'); card.classList.add('skipped'); }
+  }
+  updateProgress();
+}
 function updateProgress() {
   const done = Object.keys(userAnswers).length;
   const total = currentQuiz.length;
@@ -2313,6 +2449,7 @@ function submitQuiz() {
   };
   saveHistory(record);
   saveWrongBank(record.details);
+  saveTestLog(record);
   showResults(record);
 }
 
@@ -2326,8 +2463,9 @@ function showResults(record) {
   const grid = document.getElementById('res-answer-grid');
   if (grid) {
     grid.innerHTML = record.details.map((q, i) => {
-      const cls = q.isCorrect ? 'grid-correct' : 'grid-wrong';
-      const icon = q.isCorrect ? '✓' : '✗';
+      const isSkipped = !q.isCorrect && q.userAnswer === '';
+      const cls  = q.isCorrect ? 'grid-correct' : isSkipped ? 'grid-skip' : 'grid-wrong';
+      const icon = q.isCorrect ? '✓' : isSkipped ? '－' : '✗';
       return `<div class="ans-cell ${cls}" title="第${i+1}題: ${q.userAnswer||'未作答'}" onclick="scrollToResult(${i})">
         <span class="cell-num">${i+1}</span><span class="cell-icon">${icon}</span>
       </div>`;
@@ -2442,6 +2580,10 @@ function clearHistory() {
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
+  const fg = document.getElementById('fab-grade');
+  const ft = document.getElementById('fab-top');
+  if (fg) fg.style.display = (id === 'quiz-screen')    ? 'flex' : 'none';
+  if (ft) ft.style.display = (id === 'results-screen') ? 'flex' : 'none';
 }
 function showHome() { showScreen('home-screen'); updateHomeStats(); }
 function confirmExit() {
@@ -2563,6 +2705,89 @@ function clearWrongBank() {
     localStorage.removeItem(WRONG_KEY);
     showWrongBank();
     updateHomeStats();
+  }
+}
+
+
+// ============================================================
+// TEST LOG
+// ============================================================
+function getTestLog() {
+  try { return JSON.parse(localStorage.getItem(LOG_KEY) || '[]'); } catch { return []; }
+}
+
+function saveTestLog(record) {
+  let logs = getTestLog();
+  const session = {
+    date:  record.date,
+    score: record.score,
+    total: record.total,
+    entries: record.details.map(q => ({
+      sentence:      q.sentence,
+      targetChar:    q.targetChar,
+      correctPinyin: q.correctPinyin,
+      meaning:       q.meaning || '',
+      isCorrect:     q.isCorrect,
+      isSkipped:     q.userAnswer === '',
+      userPinyin:    (!q.isCorrect && q.userAnswer) ? q.userAnswer : '',
+      userMeaning:   '',
+    })),
+  };
+  logs.unshift(session);
+  if (logs.length > 100) logs = logs.slice(0, 100);
+  try { localStorage.setItem(LOG_KEY, JSON.stringify(logs)); } catch(e) {}
+}
+
+function showTestLog() {
+  const logs = getTestLog();
+  const list = document.getElementById('log-list');
+  if (!logs.length) {
+    list.innerHTML = `<div class="log-empty">
+      <div style="font-size:2.5rem;margin-bottom:12px;">📋</div>
+      <div style="font-weight:600;color:#374151;margin-bottom:6px;">尚無測驗日誌</div>
+      <div style="font-size:0.88rem;">完成測驗後，每道題目的結果都會記錄在這裡</div>
+    </div>`;
+  } else {
+    list.innerHTML = logs.map((session, si) => {
+      const pct = Math.round(session.score / session.total * 100);
+      const rows = session.entries.map(e => {
+        const rowCls  = e.isSkipped ? 'log-row-skip' : e.isCorrect ? '' : 'log-row-wrong';
+        const resCls  = e.isSkipped ? 'log-skip-lbl' : e.isCorrect ? 'log-ok' : 'log-err';
+        const resText = e.isSkipped ? '略過' : e.isCorrect ? '✓ 正確' : '✗ 錯誤';
+        return `<tr class="${rowCls}">
+          <td>${escHtml(e.sentence)}</td>
+          <td style="font-weight:700;color:#7c3aed;">${escHtml(e.targetChar)}</td>
+          <td style="letter-spacing:0.04em;">${escHtml(e.correctPinyin)}</td>
+          <td style="color:#78350f;">${escHtml(e.meaning)}</td>
+          <td class="${resCls}">${resText}</td>
+          <td style="letter-spacing:0.04em;color:#dc2626;">${escHtml(e.userPinyin)}</td>
+          <td style="color:#6b7280;">${escHtml(e.userMeaning)}</td>
+        </tr>`;
+      }).join('');
+      return `<div class="log-session">
+        <div class="log-session-hdr" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">
+          <span class="log-session-date">${escHtml(session.date)}</span>
+          <span class="log-session-meta">${session.score} / ${session.total}（${pct}%）▾</span>
+        </div>
+        <div class="log-session-body" ${si > 0 ? 'style="display:none"' : ''}>
+          <table class="log-table">
+            <thead><tr>
+              <th>原句</th><th>字</th><th>正確音</th><th>正確義</th><th>結果</th><th>寫錯音</th><th>寫錯義</th>
+            </tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>
+      </div>`;
+    }).join('');
+  }
+  showScreen('log-screen');
+  window.scrollTo(0, 0);
+}
+
+function clearTestLog() {
+  if (confirm('確定要清除所有測驗日誌嗎？')) {
+    localStorage.removeItem(LOG_KEY);
+    showTestLog();
   }
 }
 
