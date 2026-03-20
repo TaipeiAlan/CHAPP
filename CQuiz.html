@@ -227,11 +227,7 @@
     .q-header-left .q-sentence {
       font-size: 1.2rem; margin-bottom: 0;
     }
-    .q-answered-badge {
-      font-size: 0.72rem; font-weight: 600; color: #059669;
-      background: #d1fae5; padding: 3px 10px; border-radius: 20px;
-      display: none;
-    }
+
     .q-sentence {
       font-size: 1.35rem; font-weight: 700; color: #111827;
       margin-bottom: 4px; line-height: 1.4;
@@ -357,6 +353,20 @@
     .hw-char { color: #7c3aed; font-weight: 800; }
     .hw-correct { color: #059669; font-size: 0.9rem; letter-spacing: 0.04em; }
     .hw-wrong   { color: #dc2626; font-size: 0.9rem; letter-spacing: 0.04em; text-decoration: line-through; opacity: 0.8; }
+
+    /* ====== HOME-ACTIONS 按鈕覆寫（白底可見色） ====== */
+    .home-actions .btn-outline {
+      background: rgba(124,58,237,0.07);
+      border: 2px solid rgba(124,58,237,0.35);
+      color: #5b21b6;
+    }
+    .home-actions .btn-outline:hover { background: rgba(124,58,237,0.14); }
+    .home-actions .btn-warn {
+      background: rgba(239,68,68,0.07);
+      border: 2px solid rgba(239,68,68,0.35);
+      color: #b91c1c;
+    }
+    .home-actions .btn-warn:hover { background: rgba(239,68,68,0.13); }
     /* ====== UNANSWERED HIGHLIGHT ====== */
     @keyframes highlight-pulse {
       0%   { background: white; box-shadow: 0 2px 14px rgba(0,0,0,0.08); }
@@ -400,6 +410,17 @@
       border: none; border-top: 1px solid #f3f4f6;
     }
 
+
+    /* ====== RESULT VIEW TOGGLE ====== */
+    .result-view-toggle {
+      text-align: center; margin: 12px 0 4px;
+    }
+    .btn-toggle-result {
+      background: rgba(255,255,255,0.12); border: 1.5px solid rgba(255,255,255,0.3);
+      color: rgba(255,255,255,0.85); border-radius: 20px; padding: 6px 18px;
+      font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: all 0.2s;
+    }
+    .btn-toggle-result:hover { background: rgba(255,255,255,0.22); }
     /* ====== WRONG BANK SCREEN ====== */
     .wb-stats-bar {
       background: white; border-radius: 16px; padding: 18px 22px;
@@ -584,7 +605,7 @@
     <div class="home-header">
       <h1>注音測驗</h1>
       <p>國中國語字音練習系統</p>
-      <p style="font-size:0.72rem;opacity:0.5;margin-top:2px;letter-spacing:0.04em;">v20260320_2006_10</p>
+      <p style="font-size:0.72rem;opacity:0.5;margin-top:2px;letter-spacing:0.04em;">v20260320_2027_11</p>
     </div>
     <div id="resume-card" class="resume-card" style="display:none">
       <div class="resume-info">
@@ -657,6 +678,7 @@
         <button class="btn btn-outline" onclick="showHistory()">考試記錄</button>
       </div>
     </div>
+    <div class="result-view-toggle"><button class="btn-toggle-result" id="toggle-result-btn" onclick="toggleResultView()">▾ 顯示全部題目</button></div>
     <div id="results-container"></div>
     <button class="fab-top" id="fab-top" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="回到頂部">↑</button>
   </div>
@@ -2453,6 +2475,7 @@ function generateWrongAnswers(correctPinyin, hintPinyin) {
 // ============================================================
 let currentQuiz = [];
 let userAnswers = {};
+let showAllResults = false;
 let quizReadyTime = 0;  // 防止進入測驗瞬間的鬼點
 
 function buildQuestion(item, idx) {
@@ -2497,6 +2520,7 @@ function wrongBankToItem(wb) {
 function startQuiz() {
   clearQuizSession();
   userAnswers = {};
+  quizReadyTime = Date.now() + 600;  // 在 render 前設定，防止鬼點
   const wb = getWrongBank();
   const wbList = Object.values(wb);
   let selected;
@@ -2513,7 +2537,6 @@ function startQuiz() {
   renderQuiz();
   showScreen('quiz-screen');
   window.scrollTo(0, 0);
-  quizReadyTime = Date.now() + 400;
   window.addEventListener('beforeunload', _quizBeforeUnload);
 }
 
@@ -2528,7 +2551,6 @@ function renderQuiz() {
         </div>
         <span style="display:flex;align-items:flex-start;gap:6px;flex-shrink:0;">
           <span class="q-skip-badge" id="skip-badge-${q.idx}">？ 我不會</span>
-          <span class="q-answered-badge" id="badge-${q.idx}">✓ 已作答</span>
           <button class="btn-skip" id="skip-btn-${q.idx}" onclick="skipAnswer(${q.idx})">我不會</button>
         </span>
       </div>
@@ -2566,9 +2588,6 @@ function selectAnswer(qIdx, answer, optIdx) {
   if (lbl) lbl.classList.add('selected');
   // Record
   userAnswers[qIdx] = answer;
-  // Show badge
-  const badge = document.getElementById(`badge-${qIdx}`);
-  if (badge) badge.style.display = 'inline';
   // Mark card as answered (not skipped)
   const card = document.getElementById(`qcard-${qIdx}`);
   if (card) { card.classList.remove('skipped'); card.classList.add('answered'); }
@@ -2614,7 +2633,6 @@ function skipAnswer(qIdx) {
       if (lbl) lbl.classList.remove('selected');
     });
     userAnswers[qIdx] = '';
-    document.getElementById(`badge-${qIdx}`).style.display = 'none';
     document.getElementById(`skip-badge-${qIdx}`).style.display = 'inline';
     document.getElementById(`skip-btn-${qIdx}`).classList.add('active');
     const card = document.getElementById(`qcard-${qIdx}`);
@@ -2679,7 +2697,19 @@ function submitQuiz() {
 // ============================================================
 // RESULTS
 // ============================================================
+
+function toggleResultView() {
+  showAllResults = !showAllResults;
+  document.querySelectorAll('#results-container .res-card').forEach(card => {
+    if (card.dataset.correct === '1') card.style.display = showAllResults ? 'block' : 'none';
+  });
+  const btn = document.getElementById('toggle-result-btn');
+  if (btn) btn.textContent = showAllResults ? '▴ 只看錯題' : '▾ 顯示全部題目';
+}
+
 function showResults(record) {
+  showAllResults = false;
+  const toggleBtn = document.getElementById('toggle-result-btn'); if (toggleBtn) toggleBtn.textContent = '▾ 顯示全部題目';
   document.getElementById('res-score').textContent = record.score;
   document.getElementById('res-date').textContent = record.date;
   // Populate answer grid in summary card
@@ -2729,7 +2759,7 @@ function showResults(record) {
       ? `<div class="res-explanation"><strong>字義：</strong>${escHtml(q.meaning)}</div>` : '';
 
     return `
-      <div class="res-card">
+      <div class="res-card" data-correct="${isCorrect ? '1' : '0'}" style="${isCorrect ? 'display:none' : ''}">
         <div class="res-badge ${isCorrect ? 'correct' : 'wrong'}">${isCorrect ? '✓' : '✗'}</div>
         <div class="q-num" style="margin-bottom:8px;">第 ${i+1} 題</div>
         <div class="q-sentence">${formatSentence(q.sentence, q.targetChar, true)}</div>
@@ -3089,6 +3119,7 @@ function resumeQuiz() {
     if (!saved) return;
     currentQuiz  = saved.currentQuiz;
     userAnswers  = saved.userAnswers;
+    quizReadyTime = Date.now() + 600;
     renderQuiz();
     showScreen('quiz-screen');
     window.scrollTo(0, 0);
@@ -3106,9 +3137,7 @@ function resumeQuiz() {
         const q  = currentQuiz[qIdx];
         const oi = q ? q.options.indexOf(ans) : -1;
         if (oi >= 0) document.getElementById(`opt-${qIdx}-${oi}`)?.classList.add('selected');
-        const bg = document.getElementById(`badge-${qIdx}`);
         const cd = document.getElementById(`qcard-${qIdx}`);
-        if (bg) bg.style.display = 'inline';
         if (cd) cd.classList.add('answered');
       }
     });
@@ -3126,7 +3155,14 @@ function discardResume() {
 // ============================================================
 function scrollToResult(idx) {
   const cards = document.querySelectorAll('#results-container .res-card');
-  if (cards[idx]) cards[idx].scrollIntoView({ behavior: 'smooth', block: 'center' });
+  if (!cards[idx]) return;
+  if (cards[idx].style.display === 'none') {
+    showAllResults = true;
+    document.querySelectorAll('#results-container .res-card').forEach(c => c.style.display = 'block');
+    const btn = document.getElementById('toggle-result-btn');
+    if (btn) btn.textContent = '▴ 只看錯題';
+  }
+  cards[idx].scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
 // ============================================================
