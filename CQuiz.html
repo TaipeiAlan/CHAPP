@@ -248,7 +248,7 @@
     .q-ask { font-size: 0.88rem; color: #9ca3af; margin-bottom: 16px; }
 
     /* Options */
-    .options { display: grid; gap: 9px; }
+    .options { display: grid; gap: 9px; position: relative; }
     .opt-label {
       display: flex; align-items: center; gap: 11px;
       padding: 11px 14px; border: 2px solid #e5e7eb; border-radius: 11px;
@@ -310,8 +310,13 @@
       border-radius: 50%; display: flex; align-items: center; justify-content: center;
       font-size: 0.9rem; font-weight: 700;
     }
-    .res-badge.correct { background: #d1fae5; color: #059669; }
-    .res-badge.wrong   { background: #fee2e2; color: #dc2626; }
+    .res-badge.correct  { background: #d1fae5; color: #059669; }
+    .res-badge.wrong    { background: #fee2e2; color: #dc2626; }
+    .res-badge.skipped  { background: #ede9fe; color: #7c3aed; }
+    .res-skip-note {
+      margin-top: 6px; font-size: 0.8rem; font-weight: 600; color: #7c3aed;
+      background: #f5f3ff; padding: 4px 12px; border-radius: 8px; display: inline-block;
+    }
     .res-explanation {
       margin-top: 12px; padding: 10px 14px; background: #fffbeb;
       border-radius: 10px; font-size: 0.85rem; color: #78350f; line-height: 1.5;
@@ -505,22 +510,19 @@
     }
     .fab-top:hover { transform: scale(1.1); }
 
-    /* ====== SKIP BUTTON & BADGE ====== */
+    /* ====== SKIP BUTTON ====== */
     .btn-skip {
-      font-size: 0.72rem; font-weight: 600; padding: 3px 11px; border-radius: 20px;
-      background: #fff7ed; border: 1.5px solid #fed7aa; color: #ea580c;
+      position: absolute; top: 8px; right: 0; z-index: 5;
+      font-size: 0.7rem; font-weight: 600; padding: 3px 10px; border-radius: 20px;
+      background: #f3f4f6; border: 1.5px solid #d1d5db; color: #6b7280;
       cursor: pointer; transition: all 0.15s; white-space: nowrap;
     }
-    .btn-skip:hover { background: #ffedd5; }
-    .btn-skip.active { background: #ea580c; color: white; border-color: #ea580c; }
-
-    .q-skip-badge {
-      font-size: 0.72rem; font-weight: 600; color: #ea580c;
-      background: #fff7ed; padding: 3px 10px; border-radius: 20px;
-      border: 1.5px solid #fed7aa; display: none;
-    }
-    .q-card.skipped { box-shadow: 0 2px 14px rgba(234,88,12,0.15); }
-    .q-card.skipped .options { opacity: 0.45; pointer-events: none; }
+    .btn-skip:hover { background: #ede9fe; border-color: #a78bfa; color: #7c3aed; }
+    .btn-skip.active { background: #7c3aed; color: white; border-color: #7c3aed; }
+    /* make room for the button inside option A */
+    .options .opt-label:first-child { padding-right: 72px; }
+    .q-card.skipped { box-shadow: 0 2px 14px rgba(124,58,237,0.12); }
+    .q-card.skipped .options .opt-label { opacity: 0.45; pointer-events: none; }
 
     /* ====== RESULT OPT-TEXT GREY ====== */
     .opt-label.res-dim .opt-text { color: #9ca3af; }
@@ -608,7 +610,7 @@
       </div>
       <h1>注音測驗</h1>
       <p>國中國語字音練習系統</p>
-      <p style="font-size:0.72rem;opacity:0.5;margin-top:2px;letter-spacing:0.04em;">v20260320_2038_12</p>
+      <p style="font-size:0.72rem;opacity:0.5;margin-top:2px;letter-spacing:0.04em;">v20260320_2312_13</p>
     </div>
     <div id="resume-card" class="resume-card" style="display:none">
       <div class="resume-info">
@@ -2520,7 +2522,6 @@ function wrongBankToItem(wb) {
 function startQuiz() {
   clearQuizSession();
   userAnswers = {};
-  quizReadyTime = Date.now() + 600;  // 在 render 前設定，防止鬼點
   const wb = getWrongBank();
   const wbList = Object.values(wb);
   let selected;
@@ -2537,6 +2538,7 @@ function startQuiz() {
   renderQuiz();
   showScreen('quiz-screen');
   window.scrollTo(0, 0);
+  quizReadyTime = Date.now() + 600;
   window.addEventListener('beforeunload', _quizBeforeUnload);
 }
 
@@ -2549,13 +2551,10 @@ function renderQuiz() {
           <span class="q-num">第 ${q.idx + 1} 題</span>
           <span class="q-sentence">${formatSentence(q.sentence, q.targetChar, false)}</span>
         </div>
-        <span style="display:flex;align-items:flex-start;gap:6px;flex-shrink:0;">
-          <span class="q-skip-badge" id="skip-badge-${q.idx}">？ 我不會</span>
-          <button class="btn-skip" id="skip-btn-${q.idx}" onclick="skipAnswer(${q.idx})">我不會</button>
-        </span>
       </div>
       <div class="q-ask">下列何者為「　」內字的正確讀音？</div>
       <div class="options" id="opts-${q.idx}">
+        <button class="btn-skip" id="skip-btn-${q.idx}" onclick="skipAnswer(${q.idx})">不確定</button>
         ${q.options.map((opt, oi) => `
           <div class="opt-label" id="opt-${q.idx}-${oi}"
                onclick="selectAnswer(${q.idx}, '${opt.replace(/'/g,"\\'")}', ${oi})">
@@ -2579,10 +2578,8 @@ function selectAnswer(qIdx, answer, optIdx) {
     if (lbl) lbl.classList.remove('selected');
   });
   // Clear skip state if skipped
-  const skipBadge = document.getElementById(`skip-badge-${qIdx}`);
-  const skipBtn   = document.getElementById(`skip-btn-${qIdx}`);
-  if (skipBadge) skipBadge.style.display = 'none';
-  if (skipBtn)   skipBtn.classList.remove('active');
+  const skipBtn = document.getElementById(`skip-btn-${qIdx}`);
+  if (skipBtn) skipBtn.classList.remove('active');
   // Mark new selection
   const lbl = document.getElementById(`opt-${qIdx}-${optIdx}`);
   if (lbl) lbl.classList.add('selected');
@@ -2621,7 +2618,6 @@ function skipAnswer(qIdx) {
   if (isSkipped) {
     // Toggle off — remove skip
     delete userAnswers[qIdx];
-    document.getElementById(`skip-badge-${qIdx}`).style.display = 'none';
     document.getElementById(`skip-btn-${qIdx}`).classList.remove('active');
     const card = document.getElementById(`qcard-${qIdx}`);
     if (card) { card.classList.remove('skipped'); card.classList.remove('answered'); }
@@ -2633,11 +2629,26 @@ function skipAnswer(qIdx) {
       if (lbl) lbl.classList.remove('selected');
     });
     userAnswers[qIdx] = '';
-    document.getElementById(`skip-badge-${qIdx}`).style.display = 'inline';
     document.getElementById(`skip-btn-${qIdx}`).classList.add('active');
     const card = document.getElementById(`qcard-${qIdx}`);
     if (card) { card.classList.remove('answered'); card.classList.add('skipped'); }
+    // Auto-scroll: same logic as selectAnswer
+    if (card) {
+      setTimeout(() => {
+        const rect  = card.getBoundingClientRect();
+        const cardTop = rect.top + window.pageYOffset;
+        const cardH   = card.offsetHeight + 14;
+        const stickyH = 70;
+        if (window.innerHeight >= 5 * cardH) {
+          if (rect.top + rect.height / 2 <= window.innerHeight / 2) return;
+          window.scrollTo({ top: Math.max(0, cardTop - (window.innerHeight - card.offsetHeight) / 2), behavior: 'smooth' });
+        } else {
+          window.scrollTo({ top: Math.max(0, cardTop - stickyH), behavior: 'smooth' });
+        }
+      }, 160);
+    }
   }
+  saveQuizSession();
   updateProgress();
 }
 function updateProgress() {
@@ -2736,6 +2747,7 @@ function showResults(record) {
   const container = document.getElementById('results-container');
   container.innerHTML = record.details.map((q, i) => {
     const isCorrect = q.isCorrect;
+    const isSkipped = !isCorrect && q.userAnswer === '';
     const optionsHtml = q.options.map((opt, oi) => {
       const isSelected  = opt === q.userAnswer;
       const isCorrectOpt = opt === q.correctPinyin;
@@ -2757,12 +2769,15 @@ function showResults(record) {
 
     const explanationHtml = (!isCorrect && q.meaning)
       ? `<div class="res-explanation"><strong>字義：</strong>${escHtml(q.meaning)}</div>` : '';
+    const skipNoteHtml = isSkipped
+      ? `<div class="res-skip-note">不確定（未作答）</div>` : '';
 
     return `
       <div class="res-card" data-correct="${isCorrect ? '1' : '0'}" style="${isCorrect ? 'display:none' : ''}">
-        <div class="res-badge ${isCorrect ? 'correct' : 'wrong'}">${isCorrect ? '✓' : '✗'}</div>
+        <div class="res-badge ${isCorrect ? 'correct' : isSkipped ? 'skipped' : 'wrong'}">${isCorrect ? '✓' : isSkipped ? '？' : '✗'}</div>
         <div class="q-num" style="margin-bottom:8px;">第 ${i+1} 題</div>
         <div class="q-sentence">${formatSentence(q.sentence, q.targetChar, true)}</div>
+        ${skipNoteHtml}
         <div class="q-ask">下列何者為「　」內字的正確讀音？</div>
         <div class="options">${optionsHtml}</div>
         ${explanationHtml}
@@ -3119,18 +3134,16 @@ function resumeQuiz() {
     if (!saved) return;
     currentQuiz  = saved.currentQuiz;
     userAnswers  = saved.userAnswers;
-    quizReadyTime = Date.now() + 600;
     renderQuiz();
     showScreen('quiz-screen');
     window.scrollTo(0, 0);
+    quizReadyTime = Date.now() + 600;
     // 還原視覺選取狀態
     Object.entries(userAnswers).forEach(([qi, ans]) => {
       const qIdx = parseInt(qi);
       if (ans === '') {
-        const sb = document.getElementById(`skip-badge-${qIdx}`);
         const sk = document.getElementById(`skip-btn-${qIdx}`);
         const cd = document.getElementById(`qcard-${qIdx}`);
-        if (sb) sb.style.display = 'inline';
         if (sk) sk.classList.add('active');
         if (cd) cd.classList.add('skipped');
       } else if (ans) {
