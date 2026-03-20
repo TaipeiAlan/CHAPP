@@ -521,6 +521,26 @@
       background: white; border-radius: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.08);
     }
     .log-footer { text-align: center; padding: 12px 0 4px; }
+
+    /* ====== RESUME BANNER ====== */
+    .resume-card {
+      background: linear-gradient(135deg, #1e3a5f, #1e4080);
+      border-radius: 16px; padding: 16px 20px; margin-bottom: 14px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      flex-wrap: wrap;
+    }
+    .resume-info { color: white; font-size: 0.88rem; line-height: 1.4; }
+    .resume-info strong { font-size: 1rem; display: block; margin-bottom: 2px; }
+    .resume-btns { display: flex; gap: 8px; }
+    .btn-resume {
+      padding: 8px 16px; border-radius: 10px; border: none; cursor: pointer;
+      font-size: 0.85rem; font-weight: 700;
+    }
+    .btn-resume-go   { background: #7c3aed; color: white; }
+    .btn-resume-go:hover { background: #6d28d9; }
+    .btn-resume-disc { background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.75); }
+    .btn-resume-disc:hover { background: rgba(255,255,255,0.2); }
     /* Home wrong-bank button */
     .btn-warn {
       background: rgba(239,68,68,0.15); border: 2px solid rgba(239,68,68,0.5);
@@ -543,7 +563,17 @@
     <div class="home-header">
       <h1>注音測驗</h1>
       <p>國中國語字音練習系統</p>
-      <p style="font-size:0.72rem;opacity:0.5;margin-top:2px;letter-spacing:0.04em;">v20260320_1937_8</p>
+      <p style="font-size:0.72rem;opacity:0.5;margin-top:2px;letter-spacing:0.04em;">v20260320_1950_9</p>
+    </div>
+    <div id="resume-card" class="resume-card" style="display:none">
+      <div class="resume-info">
+        <strong>偵測到未完成的測驗</strong>
+        <span id="resume-meta"></span>
+      </div>
+      <div class="resume-btns">
+        <button class="btn-resume btn-resume-go"   onclick="resumeQuiz()">繼續作答</button>
+        <button class="btn-resume btn-resume-disc" onclick="discardResume()">放棄</button>
+      </div>
     </div>
     <div class="card home-card">
       <div class="home-icon">🎯</div>
@@ -556,7 +586,7 @@
         <button class="btn btn-primary" onclick="startQuiz()">開始測驗</button>
         <button class="btn btn-outline" onclick="showHistory()">歷史記錄</button>
         <button class="btn btn-warn" onclick="showWrongBank()">錯題本</button>
-        <button class="btn btn-outline" onclick="showTestLog()">測驗日誌</button>
+        <button class="btn btn-outline" onclick="showTestLog()">應考記錄</button>
       </div>
       <div id="home-stats"></div>
     </div>
@@ -653,7 +683,7 @@
   <div id="log-screen" class="screen">
     <div class="nav">
       <button class="nav-back" onclick="showHome()">← 首頁</button>
-      <span class="nav-title">測驗日誌</span>
+      <span class="nav-title">應考記錄</span>
       <span style="width:70px"></span>
     </div>
     <div id="log-list"></div>
@@ -2317,6 +2347,7 @@ function initData() {
   audioItems = all.filter(r => r.type && r.type.includes('音') && r.correct_pinyin && r.sentence && r.target_char);
   all.forEach(r => { if (r.correct_pinyin) allPinyinPool.add(r.correct_pinyin); });
   updateHomeStats();
+  checkResumeSession();
 }
 
 // ============================================================
@@ -2403,6 +2434,7 @@ function generateWrongAnswers(correctPinyin, hintPinyin) {
 // ============================================================
 let currentQuiz = [];
 let userAnswers = {};
+let quizReadyTime = 0;  // 防止進入測驗瞬間的鬼點
 
 function buildQuestion(item, idx) {
   const wrong = generateWrongAnswers(item.correct_pinyin, item.wrong_pinyin);
@@ -2434,12 +2466,14 @@ function escHtml(s) {
 // START QUIZ
 // ============================================================
 function startQuiz() {
+  clearQuizSession();
   userAnswers = {};
   const selected = shuffle(audioItems).slice(0, QUIZ_SIZE);
   currentQuiz = selected.map((item, i) => buildQuestion(item, i));
   renderQuiz();
   showScreen('quiz-screen');
   window.scrollTo(0, 0);
+  quizReadyTime = Date.now() + 400;
   window.addEventListener('beforeunload', _quizBeforeUnload);
 }
 
@@ -2461,13 +2495,12 @@ function renderQuiz() {
       <div class="q-ask">下列何者為「　」內字的正確讀音？</div>
       <div class="options" id="opts-${q.idx}">
         ${q.options.map((opt, oi) => `
-          <label class="opt-label" id="opt-${q.idx}-${oi}"
-                 onclick="selectAnswer(${q.idx}, '${opt.replace(/'/g,"\\'")}', ${oi})">
-            <input type="radio" name="q${q.idx}" value="${escHtml(opt)}">
+          <div class="opt-label" id="opt-${q.idx}-${oi}"
+               onclick="selectAnswer(${q.idx}, '${opt.replace(/'/g,"\\'")}', ${oi})">
             <div class="opt-radio" id="radio-${q.idx}-${oi}"></div>
             <span class="opt-key">${OPTION_KEYS[oi]}</span>
             <span class="opt-text">${escHtml(opt)}</span>
-          </label>
+          </div>
         `).join('')}
       </div>
     </div>
@@ -2476,6 +2509,7 @@ function renderQuiz() {
 }
 
 function selectAnswer(qIdx, answer, optIdx) {
+  if (Date.now() < quizReadyTime) return;  // 忽略進入後 400ms 內的鬼點
   const q = currentQuiz[qIdx];
   // Clear previous selection
   q.options.forEach((_, oi) => {
@@ -2498,6 +2532,7 @@ function selectAnswer(qIdx, answer, optIdx) {
   // Mark card as answered (not skipped)
   const card = document.getElementById(`qcard-${qIdx}`);
   if (card) { card.classList.remove('skipped'); card.classList.add('answered'); }
+  saveQuizSession();
   updateProgress();
   // Auto-scroll: 把答完的題目捲到畫面頂（大螢幕則置中）
   const answeredCard = document.getElementById(`qcard-${qIdx}`);
@@ -2597,6 +2632,7 @@ function submitQuiz() {
   saveWrongBank(record.details);
   saveTestLog(record);
   window.removeEventListener('beforeunload', _quizBeforeUnload);
+  clearQuizSession();
   showResults(record);
 }
 
@@ -2743,7 +2779,7 @@ function showScreen(id) {
   if (fg) fg.style.display = (id === 'quiz-screen')    ? 'flex' : 'none';
   if (ft) ft.style.display = (id === 'results-screen') ? 'flex' : 'none';
 }
-function showHome() { window.removeEventListener('beforeunload', _quizBeforeUnload); showScreen('home-screen'); updateHomeStats(); }
+function showHome() { window.removeEventListener('beforeunload', _quizBeforeUnload); showScreen('home-screen'); updateHomeStats(); checkResumeSession(); }
 function _quizBeforeUnload(e) {
   if (Object.keys(userAnswers).length > 0) {
     e.preventDefault();
@@ -2901,7 +2937,7 @@ function saveTestLog(record) {
     })),
   };
   logs.unshift(session);
-  if (logs.length > 100) logs = logs.slice(0, 100);
+  if (logs.length > 500) logs = logs.slice(0, 500);
   try { localStorage.setItem(LOG_KEY, JSON.stringify(logs)); } catch(e) {}
 }
 
@@ -2911,7 +2947,7 @@ function showTestLog() {
   if (!logs.length) {
     list.innerHTML = `<div class="log-empty">
       <div style="font-size:2.5rem;margin-bottom:12px;">📋</div>
-      <div style="font-weight:600;color:#374151;margin-bottom:6px;">尚無測驗日誌</div>
+      <div style="font-weight:600;color:#374151;margin-bottom:6px;">尚無應考記錄</div>
       <div style="font-size:0.88rem;">完成測驗後，每道題目的結果都會記錄在這裡</div>
     </div>`;
   } else {
@@ -2953,10 +2989,80 @@ function showTestLog() {
 
 function clearTestLog() {
   if (!checkClearPassword()) { alert('密碼錯誤，無法清除。'); return; }
-  if (confirm('確定要清除所有測驗日誌嗎？')) {
+  if (confirm('確定要清除所有應考記錄嗎？')) {
     localStorage.removeItem(LOG_KEY);
     showTestLog();
   }
+}
+
+
+// ============================================================
+// QUIZ SESSION SAVE / RESUME  (sessionStorage, 防重整遺失)
+// ============================================================
+function saveQuizSession() {
+  if (!currentQuiz.length || !Object.keys(userAnswers).length) return;
+  try {
+    sessionStorage.setItem('Cquiz_session', JSON.stringify({
+      currentQuiz, userAnswers, savedAt: new Date().toLocaleString('zh-TW'),
+    }));
+  } catch(e) {}
+}
+
+function clearQuizSession() {
+  sessionStorage.removeItem('Cquiz_session');
+}
+
+function checkResumeSession() {
+  try {
+    const saved = JSON.parse(sessionStorage.getItem('Cquiz_session') || 'null');
+    if (!saved || !saved.currentQuiz || !saved.currentQuiz.length) return;
+    const answered = Object.keys(saved.userAnswers).length;
+    if (!answered) return;
+    const card = document.getElementById('resume-card');
+    const meta = document.getElementById('resume-meta');
+    if (card && meta) {
+      meta.textContent = `已作答 ${answered} / ${saved.currentQuiz.length} 題（${saved.savedAt}）`;
+      card.style.display = 'flex';
+    }
+  } catch(e) {}
+}
+
+function resumeQuiz() {
+  try {
+    const saved = JSON.parse(sessionStorage.getItem('Cquiz_session') || 'null');
+    if (!saved) return;
+    currentQuiz  = saved.currentQuiz;
+    userAnswers  = saved.userAnswers;
+    renderQuiz();
+    showScreen('quiz-screen');
+    window.scrollTo(0, 0);
+    // 還原視覺選取狀態
+    Object.entries(userAnswers).forEach(([qi, ans]) => {
+      const qIdx = parseInt(qi);
+      if (ans === '') {
+        const sb = document.getElementById(`skip-badge-${qIdx}`);
+        const sk = document.getElementById(`skip-btn-${qIdx}`);
+        const cd = document.getElementById(`qcard-${qIdx}`);
+        if (sb) sb.style.display = 'inline';
+        if (sk) sk.classList.add('active');
+        if (cd) cd.classList.add('skipped');
+      } else if (ans) {
+        const q  = currentQuiz[qIdx];
+        const oi = q ? q.options.indexOf(ans) : -1;
+        if (oi >= 0) document.getElementById(`opt-${qIdx}-${oi}`)?.classList.add('selected');
+        const bg = document.getElementById(`badge-${qIdx}`);
+        const cd = document.getElementById(`qcard-${qIdx}`);
+        if (bg) bg.style.display = 'inline';
+        if (cd) cd.classList.add('answered');
+      }
+    });
+    window.addEventListener('beforeunload', _quizBeforeUnload);
+  } catch(e) { console.error(e); }
+}
+
+function discardResume() {
+  clearQuizSession();
+  document.getElementById('resume-card').style.display = 'none';
 }
 
 // ============================================================
