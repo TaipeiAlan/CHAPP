@@ -163,9 +163,21 @@
     /* ====== HOME SCREEN ====== */
     .home-header {
       text-align: center; color: white; padding: 36px 0 28px;
+      position: relative;
     }
     .home-header h1 { font-size: 2.4rem; font-weight: 800; margin-bottom: 6px; }
     .home-header p { font-size: 0.95rem; opacity: 0.75; }
+    .home-top-btns {
+      position: absolute; top: 0; right: 0;
+      display: flex; gap: 6px; align-items: center;
+    }
+    .home-top-btns .btn-sm {
+      padding: 5px 11px; border-radius: 10px; border: none;
+      font-size: 0.72rem; font-weight: 600; cursor: pointer;
+      background: rgba(255,255,255,0.18); color: white;
+      transition: background 0.2s; letter-spacing: 0.02em;
+    }
+    .home-top-btns .btn-sm:hover { background: rgba(255,255,255,0.32); }
 
     .home-card { text-align: center; }
     .home-icon { font-size: 3.5rem; margin-bottom: 12px; }
@@ -354,19 +366,6 @@
     .hw-correct { color: #059669; font-size: 0.9rem; letter-spacing: 0.04em; }
     .hw-wrong   { color: #dc2626; font-size: 0.9rem; letter-spacing: 0.04em; text-decoration: line-through; opacity: 0.8; }
 
-    /* ====== HOME-ACTIONS 按鈕覆寫（白底可見色） ====== */
-    .home-actions .btn-outline {
-      background: rgba(124,58,237,0.07);
-      border: 2px solid rgba(124,58,237,0.35);
-      color: #5b21b6;
-    }
-    .home-actions .btn-outline:hover { background: rgba(124,58,237,0.14); }
-    .home-actions .btn-warn {
-      background: rgba(239,68,68,0.07);
-      border: 2px solid rgba(239,68,68,0.35);
-      color: #b91c1c;
-    }
-    .home-actions .btn-warn:hover { background: rgba(239,68,68,0.13); }
     /* ====== UNANSWERED HIGHLIGHT ====== */
     @keyframes highlight-pulse {
       0%   { background: white; box-shadow: 0 2px 14px rgba(0,0,0,0.08); }
@@ -603,9 +602,13 @@
   <!-- ===== HOME SCREEN ===== -->
   <div id="home-screen" class="screen active">
     <div class="home-header">
+      <div class="home-top-btns">
+        <button class="btn-sm" onclick="showHistory()">考試記錄</button>
+        <button class="btn-sm" onclick="showTestLog()">應考記錄</button>
+      </div>
       <h1>注音測驗</h1>
       <p>國中國語字音練習系統</p>
-      <p style="font-size:0.72rem;opacity:0.5;margin-top:2px;letter-spacing:0.04em;">v20260320_2027_11</p>
+      <p style="font-size:0.72rem;opacity:0.5;margin-top:2px;letter-spacing:0.04em;">v20260320_2038_12</p>
     </div>
     <div id="resume-card" class="resume-card" style="display:none">
       <div class="resume-info">
@@ -626,9 +629,6 @@
       </p>
       <div class="home-actions">
         <button class="btn btn-primary" onclick="startQuiz()">開始測驗</button>
-        <button class="btn btn-outline" onclick="showHistory()">考試記錄</button>
-        <button class="btn btn-warn" onclick="showWrongBank()">錯題本</button>
-        <button class="btn btn-outline" onclick="showTestLog()">應考記錄</button>
       </div>
       <div id="home-stats"></div>
     </div>
