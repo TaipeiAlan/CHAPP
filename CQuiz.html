@@ -1,6 +1,38 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
+<script>
+(function(){
+  var ua = navigator.userAgent || '';
+  var inApp = /Line|FBAN|FBAV|Instagram|Twitter|MicroMessenger|QQ|Weibo|DingTalk|Snapchat|Pinterest|LinkedIn/i.test(ua)
+           || /wv/.test(ua)                      // Android WebView flag
+           || (/iPhone|iPad|iPod/.test(ua) && !/Safari/.test(ua) && /AppleWebKit/.test(ua));
+  if (inApp) {
+    var url = location.href;
+    // iOS LINE / in-app: use openExternalBrowser scheme
+    if (/Line/i.test(ua)) {
+      location.href = url + (url.indexOf('?') >= 0 ? '&' : '?') + 'openExternalBrowser=1';
+      return;
+    }
+    // Android intent
+    if (/Android/.test(ua)) {
+      location.href = 'intent://' + url.replace(/^https?:\/\//, '') + '#Intent;scheme=https;action=android.intent.action.VIEW;end';
+      return;
+    }
+    // Fallback: show overlay asking user to open in browser
+    document.addEventListener('DOMContentLoaded', function() {
+      var d = document.createElement('div');
+      d.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.88);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;color:white;font-family:system-ui,sans-serif;';
+      d.innerHTML = '<div style="font-size:2rem;margin-bottom:16px;">🌐</div>'
+        + '<div style="font-size:1.15rem;font-weight:700;margin-bottom:10px;">請用瀏覽器開啟</div>'
+        + '<div style="font-size:0.9rem;opacity:0.8;text-align:center;line-height:1.7;margin-bottom:24px;">此頁面在內建瀏覽器中部分功能無法正常運作<br>請複製網址並貼到 Safari / Chrome 開啟</div>'
+        + '<input id="_urlbox" value="' + url + '" readonly style="width:100%;padding:10px;border-radius:10px;border:none;font-size:0.82rem;color:#111;text-align:center;margin-bottom:14px;">'
+        + '<button onclick="var b=document.getElementById('_urlbox');b.select();document.execCommand('copy');this.textContent='已複製！'" style="padding:12px 28px;border-radius:24px;background:#7c3aed;color:white;border:none;font-size:1rem;font-weight:700;cursor:pointer;">複製網址</button>';
+      document.body.appendChild(d);
+    });
+  }
+})();
+</script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>國語字音測驗系統</title>
@@ -437,6 +469,7 @@
     <div class="home-header">
       <h1>注音測驗</h1>
       <p>國中國語字音練習系統</p>
+      <p style="font-size:0.72rem;opacity:0.5;margin-top:2px;letter-spacing:0.04em;">v20260320_0815_3</p>
     </div>
     <div class="card home-card">
       <div class="home-icon">🎯</div>
@@ -2567,7 +2600,18 @@ function viewHistoryRecord(idx) {
   if (hist[idx]) showResults(hist[idx]);
 }
 
+
+// ============================================================
+// PASSWORD CHECK (clear operations)
+// ============================================================
+function checkClearPassword() {
+  const input = prompt('請輸入密碼以執行清除操作：');
+  if (input === null) return false;          // cancelled
+  return input.trim().toLowerCase() === 'edit';
+}
+
 function clearHistory() {
+  if (!checkClearPassword()) { alert('密碼錯誤，無法清除。'); return; }
   if (confirm('確定要清除所有歷史記錄嗎？')) {
     localStorage.removeItem(STORAGE_KEY);
     showHistory();
@@ -2701,6 +2745,7 @@ function showWrongBank() {
 }
 
 function clearWrongBank() {
+  if (!checkClearPassword()) { alert('密碼錯誤，無法清除。'); return; }
   if (confirm('確定要清除所有錯題記錄嗎？')) {
     localStorage.removeItem(WRONG_KEY);
     showWrongBank();
@@ -2785,6 +2830,7 @@ function showTestLog() {
 }
 
 function clearTestLog() {
+  if (!checkClearPassword()) { alert('密碼錯誤，無法清除。'); return; }
   if (confirm('確定要清除所有測驗日誌嗎？')) {
     localStorage.removeItem(LOG_KEY);
     showTestLog();
