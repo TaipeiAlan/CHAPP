@@ -4,51 +4,94 @@
 <script>
 (function(){
   var ua = navigator.userAgent || '';
-  var isLine = /Line/i.test(ua);
-  var isFB = /FBAN|FBAV|Instagram|Twitter/i.test(ua);
-  var isWeChat = /MicroMessenger/i.test(ua);
-  var isAndroidWebView = /Android/.test(ua) && /\bwv\b/.test(ua);
-  var isIOSInApp = /iPhone|iPad|iPod/.test(ua) && !/Safari/.test(ua) && /AppleWebKit/.test(ua);
-  var inApp = isLine || isFB || isWeChat || isAndroidWebView || isIOSInApp;
-  
-  if (inApp) {
-    document.addEventListener('DOMContentLoaded', function() {
-      var url = location.href;
-      var appName = isLine ? 'LINE' : isWeChat ? 'WeChat' : isFB ? '社群應用' : 'App';
-      var overlay = document.createElement('div');
-      overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.92);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;color:white;font-family:system-ui,-apple-system,sans-serif;overflow:hidden';
-      
-      var copyBtn = document.createElement('button');
-      copyBtn.textContent = '複製網址';
-      copyBtn.style.cssText = 'width:100%;padding:14px;border-radius:12px;background:#7c3aed;color:white;border:none;font-size:1rem;font-weight:700;cursor:pointer;transition:background 0.2s';
-      copyBtn.onclick = function(e) {
-        e.preventDefault();
-        var copyText = url;
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(copyText).then(function() {
-            copyBtn.textContent = '✓ 已複製！';
-            setTimeout(function() { copyBtn.textContent = '複製網址'; }, 2500);
-          });
-        } else {
-          var tmp = document.createElement('textarea');
-          tmp.value = copyText;
-          document.body.appendChild(tmp);
-          tmp.select();
-          try { document.execCommand('copy'); copyBtn.textContent = '✓ 已複製！'; setTimeout(function() { copyBtn.textContent = '複製網址'; }, 2500); } catch(e){}
-          document.body.removeChild(tmp);
-        }
+  var isIOS     = /iPhone|iPad|iPod/.test(ua);
+  var isAndroid = /Android/.test(ua);
+  var isLine    = /Line/i.test(ua);
+  var isFB      = /FBAN|FBAV|Instagram|Twitter/i.test(ua);
+  var isWeChat  = /MicroMessenger/i.test(ua);
+  var isAndroidWV = isAndroid && /\bwv\b/.test(ua);
+  var isIOSInApp  = isIOS && !/Safari/.test(ua) && /AppleWebKit/.test(ua);
+  var inApp = isLine || isFB || isWeChat || isAndroidWV || isIOSInApp;
+  if (!inApp) return;
+
+  var url = location.href;
+
+  // ── 1. LINE iOS：openExternalBrowser=1 讓 LINE 自動改用 Safari 開啟 ──
+  if (isLine && isIOS && url.indexOf('openExternalBrowser=1') === -1) {
+    location.replace(url + (url.indexOf('?') >= 0 ? '&' : '?') + 'openExternalBrowser=1');
+    return;
+  }
+
+  // ── 2. Android LINE / WebView：intent scheme 交給系統瀏覽器 ──
+  if (isAndroid && (isLine || isAndroidWV)) {
+    var intentUrl = 'intent://' + url.replace(/^https?:\/\//, '')
+      + '#Intent;scheme=' + (url.indexOf('https') === 0 ? 'https' : 'http')
+      + ';action=android.intent.action.VIEW;category=android.intent.category.BROWSABLE;end';
+    location.href = intentUrl;
+    // 若 intent 失敗（500ms 後還在），繼續顯示提示 overlay
+    setTimeout(showOverlay, 500);
+    return;
+  }
+
+  // ── 3. 其他 in-app（FB / IG / WeChat 等）：顯示提示 overlay ──
+  document.addEventListener('DOMContentLoaded', showOverlay);
+
+  function showOverlay() {
+    if (document.getElementById('_inapp_overlay')) return; // 避免重複
+    var appName = isLine ? 'LINE' : isWeChat ? 'WeChat' : isFB ? '社群應用' : 'App';
+
+    // 逐一用 createElement 建構，避免 innerHTML+= 覆蓋 event listener
+    var overlay = document.createElement('div');
+    overlay.id = '_inapp_overlay';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.93);'
+      + 'display:flex;flex-direction:column;align-items:center;justify-content:center;'
+      + 'padding:32px;color:white;font-family:system-ui,-apple-system,sans-serif;';
+
+    function el(tag, style, text) {
+      var e = document.createElement(tag);
+      if (style) e.style.cssText = style;
+      if (text)  e.textContent = text;
+      return e;
+    }
+
+    overlay.appendChild(el('div','font-size:2.5rem;margin-bottom:16px;','🌐'));
+    overlay.appendChild(el('div','font-size:1.2rem;font-weight:800;margin-bottom:8px;text-align:center;','用瀏覽器開啟'));
+
+    var sub = el('div','font-size:0.88rem;opacity:0.75;text-align:center;line-height:1.6;margin-bottom:28px;');
+    sub.innerHTML = '此頁面在 ' + appName + ' 內功能受限<br>請改用 Safari / Chrome 開啟完整體驗';
+    overlay.appendChild(sub);
+
+    overlay.appendChild(el('div',
+      'width:100%;padding:14px;border-radius:12px;background:rgba(255,255,255,0.08);'
+      + 'border:1px solid rgba(255,255,255,0.15);margin-bottom:16px;font-size:0.78rem;'
+      + 'color:#9ca3af;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;', url));
+
+    var copyBtn = el('button',
+      'width:100%;padding:14px;border-radius:12px;background:#7c3aed;color:white;'
+      + 'border:none;font-size:1rem;font-weight:700;cursor:pointer;', '複製網址');
+    copyBtn.addEventListener('click', function() {
+      var succeed = function() {
+        copyBtn.textContent = '✓ 已複製！';
+        copyBtn.style.background = '#059669';
+        setTimeout(function(){ copyBtn.textContent='複製網址'; copyBtn.style.background='#7c3aed'; }, 2500);
       };
-      
-      overlay.innerHTML = '<div style="font-size:2.5rem;margin-bottom:16px;">🌐</div>'
-        + '<div style="font-size:1.2rem;font-weight:800;margin-bottom:8px;text-align:center;">用瀏覽器開啟</div>'
-        + '<div style="font-size:0.88rem;opacity:0.75;text-align:center;line-height:1.6;margin-bottom:28px;">此頁面在 ' + appName + ' 內功能受限<br>請改用 Safari / Chrome 等瀏覽器開啟完整體驗</div>'
-        + '<div style="width:100%;padding:14px;border-radius:12px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);margin-bottom:16px;font-size:0.78rem;color:#9ca3af;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;word-break:break-all;">' + url + '</div>';
-      overlay.appendChild(copyBtn);
-      overlay.innerHTML += '<div style="margin-top:18px;font-size:0.8rem;opacity:0.6;text-align:center;">複製後貼到瀏覽器網址列開啟</div>';
-      
-      document.body.style.overflow = 'hidden';
-      document.body.appendChild(overlay);
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(succeed).catch(fallbackCopy);
+      } else { fallbackCopy(); }
+      function fallbackCopy() {
+        var t = document.createElement('textarea');
+        t.value = url; t.style.position='fixed'; t.style.opacity='0';
+        document.body.appendChild(t); t.focus(); t.select();
+        try { if (document.execCommand('copy')) succeed(); } catch(e) {}
+        document.body.removeChild(t);
+      }
     });
+    overlay.appendChild(copyBtn);
+    overlay.appendChild(el('div','margin-top:18px;font-size:0.8rem;opacity:0.55;text-align:center;',
+      '複製後貼到瀏覽器網址列開啟'));
+
+    document.body.style.overflow = 'hidden';
+    document.body.appendChild(overlay);
   }
 })();
 </script>
@@ -168,13 +211,21 @@
     .q-card.answered { box-shadow: 0 2px 14px rgba(79,70,229,0.12); }
 
     .q-header {
-      display: flex; justify-content: space-between; align-items: center;
-      margin-bottom: 10px;
+      display: flex; justify-content: space-between; align-items: flex-start;
+      margin-bottom: 8px; gap: 8px;
+    }
+    .q-header-left {
+      display: flex; align-items: baseline; flex-wrap: wrap;
+      gap: 6px; flex: 1; min-width: 0;
     }
     .q-num {
-      font-size: 0.75rem; font-weight: 700; color: #7c3aed;
+      font-size: 0.72rem; font-weight: 700; color: #7c3aed;
       text-transform: uppercase; letter-spacing: 0.08em;
       background: #ede9fe; padding: 3px 10px; border-radius: 20px;
+      white-space: nowrap; flex-shrink: 0;
+    }
+    .q-header-left .q-sentence {
+      font-size: 1.2rem; margin-bottom: 0;
     }
     .q-answered-badge {
       font-size: 0.72rem; font-weight: 600; color: #059669;
@@ -492,7 +543,7 @@
     <div class="home-header">
       <h1>注音測驗</h1>
       <p>國中國語字音練習系統</p>
-      <p style="font-size:0.72rem;opacity:0.5;margin-top:2px;letter-spacing:0.04em;">v20260320_1904_5</p>
+      <p style="font-size:0.72rem;opacity:0.5;margin-top:2px;letter-spacing:0.04em;">v20260320_1924_7</p>
     </div>
     <div class="card home-card">
       <div class="home-icon">🎯</div>
@@ -2274,49 +2325,73 @@ function initData() {
 function generateWrongAnswers(correctPinyin, hintPinyin) {
   const used = new Set([correctPinyin]);
   const result = [];
-
   const cp = parseBopo(correctPinyin);
-  // Returns true if p differs from correct only in tone
-  const isToneOnly = p => { const pp = parseBopo(p); return pp.initial === cp.initial && pp.medial === cp.medial && pp.final === cp.final; };
-  const toneOnlyCount = () => result.filter(isToneOnly).length;
 
-  // 1. CSV hint (most common mistake)
+  // ── Step 1: CSV hint ──
   const hint = (hintPinyin || '').trim();
   if (hint && !used.has(hint)) { result.push(hint); used.add(hint); }
 
-  // 2. Different initial (聲母) — same medial OR same final, any tone
-  if (result.length < 3) {
-    const cands = shuffle([...allPinyinPool].filter(p => {
-      if (used.has(p)) return false;
-      const pp = parseBopo(p);
-      return pp.initial !== cp.initial && (pp.medial === cp.medial || pp.final === cp.final);
-    }));
-    for (const p of cands) { if (result.length >= 3) break; result.push(p); used.add(p); }
+  // ── Step 2: 決定「伴隨聲母」(companion initial) ──
+  // 全部 4 個選項（含正確答案）合計最多只能有 2 種聲母
+  let companion = null;
+
+  // 先從 hint 取 companion
+  if (result.length > 0) {
+    const hp = parseBopo(result[0]);
+    if (hp.initial !== cp.initial) companion = hp.initial;
   }
 
-  // 3. Same initial, different final (韻母 body change)
-  if (result.length < 3) {
-    const cands = shuffle([...allPinyinPool].filter(p => {
-      if (used.has(p)) return false;
-      const pp = parseBopo(p);
-      return pp.initial === cp.initial && pp.final !== cp.final;
-    }));
-    for (const p of cands) { if (result.length >= 3) break; result.push(p); used.add(p); }
-  }
-
-  // 4. Tone-only variant — at most 1 total
-  if (result.length < 3 && toneOnlyCount() < 1) {
-    for (const t of shuffle(BOPO_TONES.filter(t => t !== cp.tone))) {
-      const c = cp.initial + cp.medial + cp.final + t;
-      if (!used.has(c) && allPinyinPool.has(c)) { result.push(c); used.add(c); break; }
+  // 若 hint 沒提供 companion，從同聲母群中挑一個有題庫存在的
+  if (!companion) {
+    const grp = INITIAL_GROUPS.find(g => g.includes(cp.initial)) || [];
+    const others = shuffle(grp.filter(i => i !== cp.initial));
+    for (const alt of others) {
+      if ([...allPinyinPool].some(p => parseBopo(p).initial === alt)) {
+        companion = alt; break;
+      }
+    }
+    // 若同群找不到，從任意其他聲母找
+    if (!companion) {
+      for (const alt of shuffle(BOPO_INITIALS.filter(i => i !== cp.initial))) {
+        if ([...allPinyinPool].some(p => parseBopo(p).initial === alt)) {
+          companion = alt; break;
+        }
+      }
     }
   }
 
-  // 5. Fallback: any random pinyin
-  if (result.length < 3) {
-    for (const p of shuffle([...allPinyinPool].filter(p => !used.has(p)))) {
+  const allowed = new Set([cp.initial, ...(companion ? [companion] : [])]);
+
+  // ── Step 3: 從允許的聲母池中填滿 3 個干擾項 ──
+  // 優先順序：同韻不同調 → 不同韻同聲母 → companion 聲母同韻 → 任意 allowed
+  const priorities = [
+    // (a) 同聲母同韻母，不同調（只限 1 個）
+    p => { if (result.filter(x => { const xp=parseBopo(x); return xp.initial===cp.initial && xp.medial===cp.medial && xp.final===cp.final; }).length > 0) return false;
+           const pp=parseBopo(p); return pp.initial===cp.initial && pp.medial===cp.medial && pp.final===cp.final; },
+    // (b) 同聲母，不同韻母
+    p => { const pp=parseBopo(p); return pp.initial===cp.initial && pp.final!==cp.final; },
+    // (c) companion 聲母，同韻
+    p => { const pp=parseBopo(p); return companion && pp.initial===companion && (pp.medial===cp.medial || pp.final===cp.final); },
+    // (d) companion 聲母，任意韻
+    p => { const pp=parseBopo(p); return companion && pp.initial===companion; },
+    // (e) allowed 聲母，任意
+    p => { const pp=parseBopo(p); return allowed.has(pp.initial); },
+  ];
+
+  const pool = shuffle([...allPinyinPool].filter(p => !used.has(p)));
+  for (const pred of priorities) {
+    if (result.length >= 3) break;
+    for (const p of pool) {
       if (result.length >= 3) break;
-      result.push(p); used.add(p);
+      if (!used.has(p) && pred(p)) { result.push(p); used.add(p); }
+    }
+  }
+
+  // ── Fallback: 任意（不受聲母限制） ──
+  if (result.length < 3) {
+    for (const p of pool) {
+      if (result.length >= 3) break;
+      if (!used.has(p)) { result.push(p); used.add(p); }
     }
   }
 
@@ -2372,14 +2447,16 @@ function renderQuiz() {
   container.innerHTML = currentQuiz.map(q => `
     <div class="q-card" id="qcard-${q.idx}">
       <div class="q-header">
-        <span class="q-num">第 ${q.idx + 1} 題</span>
-        <span style="display:flex;align-items:center;gap:6px;">
+        <div class="q-header-left">
+          <span class="q-num">第 ${q.idx + 1} 題</span>
+          <span class="q-sentence">${formatSentence(q.sentence, q.targetChar, false)}</span>
+        </div>
+        <span style="display:flex;align-items:flex-start;gap:6px;flex-shrink:0;">
           <span class="q-skip-badge" id="skip-badge-${q.idx}">？ 我不會</span>
           <span class="q-answered-badge" id="badge-${q.idx}">✓ 已作答</span>
           <button class="btn-skip" id="skip-btn-${q.idx}" onclick="skipAnswer(${q.idx})">我不會</button>
         </span>
       </div>
-      <div class="q-sentence">${formatSentence(q.sentence, q.targetChar, false)}</div>
       <div class="q-ask">下列何者為「　」內字的正確讀音？</div>
       <div class="options" id="opts-${q.idx}">
         ${q.options.map((opt, oi) => `
@@ -2425,8 +2502,9 @@ function selectAnswer(qIdx, answer, optIdx) {
   const nextCard = document.getElementById(`qcard-${qIdx + 1}`);
   if (nextCard) {
     setTimeout(() => {
-      const top = nextCard.getBoundingClientRect().top + window.pageYOffset - 72;
-      window.scrollTo({ top, behavior: 'smooth' });
+      const nextTop = nextCard.getBoundingClientRect().top + window.pageYOffset;
+      const peekScroll = nextTop - window.innerHeight + 80;
+      window.scrollTo({ top: Math.max(0, peekScroll), behavior: 'smooth' });
     }, 160);
   }
 }
