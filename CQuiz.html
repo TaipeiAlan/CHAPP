@@ -543,7 +543,7 @@
     <div class="home-header">
       <h1>注音測驗</h1>
       <p>國中國語字音練習系統</p>
-      <p style="font-size:0.72rem;opacity:0.5;margin-top:2px;letter-spacing:0.04em;">v20260320_1924_7</p>
+      <p style="font-size:0.72rem;opacity:0.5;margin-top:2px;letter-spacing:0.04em;">v20260320_1937_8</p>
     </div>
     <div class="card home-card">
       <div class="home-icon">🎯</div>
@@ -2440,6 +2440,7 @@ function startQuiz() {
   renderQuiz();
   showScreen('quiz-screen');
   window.scrollTo(0, 0);
+  window.addEventListener('beforeunload', _quizBeforeUnload);
 }
 
 function renderQuiz() {
@@ -2498,13 +2499,24 @@ function selectAnswer(qIdx, answer, optIdx) {
   const card = document.getElementById(`qcard-${qIdx}`);
   if (card) { card.classList.remove('skipped'); card.classList.add('answered'); }
   updateProgress();
-  // Auto-scroll: show enough of the next card
-  const nextCard = document.getElementById(`qcard-${qIdx + 1}`);
-  if (nextCard) {
+  // Auto-scroll: 把答完的題目捲到畫面頂（大螢幕則置中）
+  const answeredCard = document.getElementById(`qcard-${qIdx}`);
+  if (answeredCard) {
     setTimeout(() => {
-      const nextTop = nextCard.getBoundingClientRect().top + window.pageYOffset;
-      const peekScroll = nextTop - window.innerHeight + 80;
-      window.scrollTo({ top: Math.max(0, peekScroll), behavior: 'smooth' });
+      const rect  = answeredCard.getBoundingClientRect();
+      const cardTop = rect.top + window.pageYOffset;
+      const cardH   = answeredCard.offsetHeight + 14; // 含 margin-bottom
+      const stickyH = 70; // 黏性進度條高度
+
+      if (window.innerHeight >= 5 * cardH) {
+        // 大螢幕：置中；若已在中線以上則不動
+        if (rect.top + rect.height / 2 <= window.innerHeight / 2) return;
+        const target = cardTop - (window.innerHeight - answeredCard.offsetHeight) / 2;
+        window.scrollTo({ top: Math.max(0, target), behavior: 'smooth' });
+      } else {
+        // 一般手機螢幕：把答完的題目頂部對齊黏性列下方
+        window.scrollTo({ top: Math.max(0, cardTop - stickyH), behavior: 'smooth' });
+      }
     }, 160);
   }
 }
@@ -2584,6 +2596,7 @@ function submitQuiz() {
   saveHistory(record);
   saveWrongBank(record.details);
   saveTestLog(record);
+  window.removeEventListener('beforeunload', _quizBeforeUnload);
   showResults(record);
 }
 
@@ -2730,8 +2743,16 @@ function showScreen(id) {
   if (fg) fg.style.display = (id === 'quiz-screen')    ? 'flex' : 'none';
   if (ft) ft.style.display = (id === 'results-screen') ? 'flex' : 'none';
 }
-function showHome() { showScreen('home-screen'); updateHomeStats(); }
+function showHome() { window.removeEventListener('beforeunload', _quizBeforeUnload); showScreen('home-screen'); updateHomeStats(); }
+function _quizBeforeUnload(e) {
+  if (Object.keys(userAnswers).length > 0) {
+    e.preventDefault();
+    e.returnValue = ''; // Chrome / Edge 需要此行
+  }
+}
+
 function confirmExit() {
+  if (Object.keys(userAnswers).length === 0) { showHome(); return; }
   if (confirm('確定要放棄目前測驗並返回首頁嗎？')) showHome();
 }
 
