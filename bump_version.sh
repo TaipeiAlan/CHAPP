@@ -1,13 +1,17 @@
 #!/bin/bash
-# bump_version.sh — 版本號管理
+# bump_version.sh — 版本號管理（台灣時間 UTC+8）
 # 格式：v年月日_時分_次（次數每天從 1 重新計算）
 #
 # 使用方式：bash bump_version.sh
 # 輸出範例：（初始） → v20260320_1540_1
 
-VERSION_FILE="$(cd "$(dirname "$0")" && pwd)/VERSION"
-TODAY=$(date +%Y%m%d)
-NOW=$(date +%H%M)
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+VERSION_FILE="$SCRIPT_DIR/VERSION"
+HTML_FILE="$SCRIPT_DIR/CQuiz.html"
+
+# 強制台灣時間 (UTC+8)
+TODAY=$(TZ=Asia/Taipei date +%Y%m%d)
+NOW=$(TZ=Asia/Taipei date +%H%M)
 
 if [ -f "$VERSION_FILE" ]; then
     OLD_DATE=$(awk 'NR==1{print}' "$VERSION_FILE")
@@ -27,5 +31,10 @@ fi
 
 NEW_VER="v${TODAY}_${NOW}_${NEW_COUNT}"
 printf '%s\n%s\n%s\n' "$TODAY" "$NEW_COUNT" "$NEW_VER" > "$VERSION_FILE"
+
+# 同步更新 CQuiz.html 內的版本字串
+if [ -f "$HTML_FILE" ] && [ -n "$OLD_VER" ] && [ "$OLD_VER" != "（初始）" ]; then
+    sed -i "s/${OLD_VER}/${NEW_VER}/g" "$HTML_FILE"
+fi
 
 echo "${OLD_VER} → ${NEW_VER}"
