@@ -9,7 +9,7 @@
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans TC', sans-serif;
-      background: linear-gradient(135deg, #5b21b6 0%, #3730a3 50%, #1e40af 100%);
+      background: linear-gradient(160deg, #050d1a 0%, #0a1e3d 40%, #0d2a52 100%);
       min-height: 100vh;
       padding: 16px 16px 60px;
     }
@@ -229,6 +229,49 @@
       .q-sentence { font-size: 1.2rem; }
       .opt-text { font-size: 1rem; }
     }
+
+    /* ====== UNANSWERED HIGHLIGHT ====== */
+    @keyframes highlight-pulse {
+      0%   { background: white; box-shadow: 0 2px 14px rgba(0,0,0,0.08); }
+      25%  { background: #fef2f2; box-shadow: 0 0 0 3px rgba(239,68,68,0.4); }
+      75%  { background: #fef2f2; box-shadow: 0 0 0 3px rgba(239,68,68,0.4); }
+      100% { background: white; box-shadow: 0 2px 14px rgba(0,0,0,0.08); }
+    }
+    .q-card.highlight-unanswered { animation: highlight-pulse 1.2s ease 2; }
+
+    /* ====== ANSWER GRID (in score card) ====== */
+    .answer-grid {
+      display: grid; grid-template-columns: repeat(10,1fr);
+      gap: 5px; margin: 14px 0 20px;
+    }
+    .ans-cell {
+      aspect-ratio: 1; border-radius: 7px;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      font-size: 0.6rem; font-weight: 700; cursor: pointer;
+      transition: transform 0.15s;
+    }
+    .ans-cell:hover { transform: scale(1.15); }
+    .ans-cell.grid-correct { background: #d1fae5; color: #059669; }
+    .ans-cell.grid-wrong   { background: #fee2e2; color: #dc2626; }
+    .ans-cell .cell-num    { font-size: 0.58rem; opacity: 0.7; line-height: 1; }
+    .ans-cell .cell-icon   { font-size: 0.75rem; line-height: 1; }
+
+    /* ====== HOME STATS GRID ====== */
+    .stats-grid {
+      display: grid; grid-template-columns: repeat(3,1fr);
+      gap: 12px; margin-bottom: 8px;
+    }
+    .stat-box {
+      background: #f5f3ff; border-radius: 12px; padding: 12px 8px;
+      text-align: center;
+    }
+    .stat-num  { font-size: 1.5rem; font-weight: 800; color: #4f46e5; line-height: 1.1; }
+    .stat-lbl  { font-size: 0.72rem; color: #6b7280; margin-top: 2px; }
+    .stat-divider {
+      margin: 12px 0 8px;
+      border: none; border-top: 1px solid #f3f4f6;
+    }
   </style>
 </head>
 <body>
@@ -251,7 +294,7 @@
         <button class="btn btn-primary" onclick="startQuiz()">開始測驗</button>
         <button class="btn btn-outline" onclick="showHistory()">歷史記錄</button>
       </div>
-      <div class="home-stats" id="home-stats"></div>
+      <div id="home-stats"></div>
     </div>
   </div>
 
@@ -271,7 +314,7 @@
     </div>
     <div id="questions-container"></div>
     <div class="submit-area">
-      <button class="btn btn-primary" id="submit-btn" onclick="submitQuiz()" disabled>批改測驗</button>
+      <button class="btn btn-primary" id="submit-btn" onclick="submitQuiz()">批改測驗</button>
       <p class="submit-hint" id="submit-hint">請完成所有題目後批改</p>
     </div>
   </div>
@@ -290,6 +333,7 @@
       </div>
       <div class="score-message" id="res-message"></div>
       <div class="score-date" id="res-date"></div>
+      <div id="res-answer-grid" class="answer-grid"></div>
       <div class="result-actions">
         <button class="btn btn-primary" onclick="startQuiz()">再測一次</button>
         <button class="btn btn-outline" onclick="showHistory()">歷史記錄</button>
@@ -1965,8 +2009,7 @@ function initData() {
   const all = parseCSV(CSV_DATA);
   audioItems = all.filter(r => r.type && r.type.includes('音') && r.correct_pinyin && r.sentence && r.target_char);
   all.forEach(r => { if (r.correct_pinyin) allPinyinPool.add(r.correct_pinyin); });
-  const el = document.getElementById('home-stats');
-  if (el) el.textContent = `題庫共 ${audioItems.length} 題字音題目`;
+  updateHomeStats();
 }
 
 // ============================================================
@@ -2116,6 +2159,14 @@ function selectAnswer(qIdx, answer, optIdx) {
   const card = document.getElementById(`qcard-${qIdx}`);
   if (card) card.classList.add('answered');
   updateProgress();
+  // Auto-scroll: show enough of the next card
+  const nextCard = document.getElementById(`qcard-${qIdx + 1}`);
+  if (nextCard) {
+    setTimeout(() => {
+      const top = nextCard.getBoundingClientRect().top + window.pageYOffset - 72;
+      window.scrollTo({ top, behavior: 'smooth' });
+    }, 160);
+  }
 }
 
 function updateProgress() {
@@ -2126,12 +2177,11 @@ function updateProgress() {
   document.getElementById('progress-count').textContent = `${done} / ${total}`;
   const btn = document.getElementById('submit-btn');
   const hint = document.getElementById('submit-hint');
+  btn.disabled = false;
   if (done === total) {
-    btn.disabled = false;
     hint.textContent = '已完成全部題目，可以批改了！';
   } else {
-    btn.disabled = true;
-    hint.textContent = `請完成所有題目後批改（還剩 ${total - done} 題）`;
+    hint.textContent = `點擊「批改測驗」可跳至未填答的題目（還剩 ${total - done} 題）`;
   }
 }
 
@@ -2139,6 +2189,19 @@ function updateProgress() {
 // SUBMIT & GRADE
 // ============================================================
 function submitQuiz() {
+  // Scroll to first unanswered if any
+  const firstMissing = currentQuiz.findIndex((_, i) => !userAnswers.hasOwnProperty(i));
+  if (firstMissing !== -1) {
+    const card = document.getElementById(`qcard-${firstMissing}`);
+    if (card) {
+      card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      card.classList.remove('highlight-unanswered');
+      void card.offsetWidth; // reflow to restart animation
+      card.classList.add('highlight-unanswered');
+      setTimeout(() => card.classList.remove('highlight-unanswered'), 2500);
+    }
+    return;
+  }
   let score = 0;
   const details = currentQuiz.map((q, i) => {
     const userAns = userAnswers[i] || '';
@@ -2162,6 +2225,17 @@ function submitQuiz() {
 function showResults(record) {
   document.getElementById('res-score').textContent = record.score;
   document.getElementById('res-date').textContent = record.date;
+  // Populate answer grid in summary card
+  const grid = document.getElementById('res-answer-grid');
+  if (grid) {
+    grid.innerHTML = record.details.map((q, i) => {
+      const cls = q.isCorrect ? 'grid-correct' : 'grid-wrong';
+      const icon = q.isCorrect ? '✓' : '✗';
+      return `<div class="ans-cell ${cls}" title="第${i+1}題: ${q.userAnswer||'未作答'}" onclick="scrollToResult(${i})">
+        <span class="cell-num">${i+1}</span><span class="cell-icon">${icon}</span>
+      </div>`;
+    }).join('');
+  }
   const pct = Math.round(record.score / record.total * 100);
   let msg = '';
   if (pct === 100)     msg = '🎉 完美！全對了！';
@@ -2272,9 +2346,42 @@ function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
 }
-function showHome() { showScreen('home-screen'); }
+function showHome() { showScreen('home-screen'); updateHomeStats(); }
 function confirmExit() {
   if (confirm('確定要放棄目前測驗並返回首頁嗎？')) showHome();
+}
+
+// ============================================================
+// HOME STATS
+// ============================================================
+function updateHomeStats() {
+  const hist = getHistory();
+  const el = document.getElementById('home-stats');
+  if (!el) return;
+  const bankInfo = `<div style="font-size:0.82rem;color:#9ca3af;margin-top:6px;">題庫共 ${audioItems.length} 題字音題目</div>`;
+  if (!hist.length) {
+    el.innerHTML = `<hr class="stat-divider"><div style="color:#9ca3af;font-size:0.85rem;padding:4px 0 8px;">尚無作答記錄</div>${bankInfo}`;
+    return;
+  }
+  const avgScore = (hist.reduce((s,r) => s + r.score, 0) / hist.length).toFixed(1);
+  const bestScore = Math.max(...hist.map(r => r.score));
+  const lastDate = hist[0].date;
+  el.innerHTML = `<hr class="stat-divider">
+    <div class="stats-grid">
+      <div class="stat-box"><div class="stat-num">${hist.length}</div><div class="stat-lbl">測驗次數</div></div>
+      <div class="stat-box"><div class="stat-num">${avgScore}</div><div class="stat-lbl">平均分數</div></div>
+      <div class="stat-box"><div class="stat-num">${bestScore}</div><div class="stat-lbl">最高分數</div></div>
+    </div>
+    <div style="font-size:0.78rem;color:#9ca3af;">上次測驗：${lastDate}</div>
+    ${bankInfo}`;
+}
+
+// ============================================================
+// SCROLL TO RESULT ITEM
+// ============================================================
+function scrollToResult(idx) {
+  const cards = document.querySelectorAll('#results-container .res-card');
+  if (cards[idx]) cards[idx].scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
 // ============================================================
