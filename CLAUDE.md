@@ -11,8 +11,8 @@ Voca2000/
 ├── CQuiz.html     # 主程式所在
 ├── CQBank.csv     # 初始題庫來源 CSV 檔案，格式請參考此檔案
 ├── CLAUDE.md      # 本說明檔
-├── CHANGELOG.md   # 變更日誌（記錄主要開發目標，儘量把每次的變更都記錄下來，若有東西做好又被移除，請一併統整）
-├── Introduction.md# 整體功能簡介 (根據當下開發方向，更新最新的功能介紹在此檔案中)
+├── CHANGELOG.md   # 變更日誌（記錄每次的變更指示，以及變更結果）
+├── Introduction.md# 整體功能簡介 (根據當下開發方向，整理最新的功能介紹在此檔案中)
 └── README.md      # GitHub README
 ```
 
