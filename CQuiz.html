@@ -4,51 +4,94 @@
 <script>
 (function(){
   var ua = navigator.userAgent || '';
-  var isLine = /Line/i.test(ua);
-  var isFB = /FBAN|FBAV|Instagram|Twitter/i.test(ua);
-  var isWeChat = /MicroMessenger/i.test(ua);
-  var isAndroidWebView = /Android/.test(ua) && /\bwv\b/.test(ua);
-  var isIOSInApp = /iPhone|iPad|iPod/.test(ua) && !/Safari/.test(ua) && /AppleWebKit/.test(ua);
-  var inApp = isLine || isFB || isWeChat || isAndroidWebView || isIOSInApp;
-  
-  if (inApp) {
-    document.addEventListener('DOMContentLoaded', function() {
-      var url = location.href;
-      var appName = isLine ? 'LINE' : isWeChat ? 'WeChat' : isFB ? '社群應用' : 'App';
-      var overlay = document.createElement('div');
-      overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.92);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;color:white;font-family:system-ui,-apple-system,sans-serif;overflow:hidden';
-      
-      var copyBtn = document.createElement('button');
-      copyBtn.textContent = '複製網址';
-      copyBtn.style.cssText = 'width:100%;padding:14px;border-radius:12px;background:#7c3aed;color:white;border:none;font-size:1rem;font-weight:700;cursor:pointer;transition:background 0.2s';
-      copyBtn.onclick = function(e) {
-        e.preventDefault();
-        var copyText = url;
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(copyText).then(function() {
-            copyBtn.textContent = '✓ 已複製！';
-            setTimeout(function() { copyBtn.textContent = '複製網址'; }, 2500);
-          });
-        } else {
-          var tmp = document.createElement('textarea');
-          tmp.value = copyText;
-          document.body.appendChild(tmp);
-          tmp.select();
-          try { document.execCommand('copy'); copyBtn.textContent = '✓ 已複製！'; setTimeout(function() { copyBtn.textContent = '複製網址'; }, 2500); } catch(e){}
-          document.body.removeChild(tmp);
-        }
+  var isIOS     = /iPhone|iPad|iPod/.test(ua);
+  var isAndroid = /Android/.test(ua);
+  var isLine    = /Line/i.test(ua);
+  var isFB      = /FBAN|FBAV|Instagram|Twitter/i.test(ua);
+  var isWeChat  = /MicroMessenger/i.test(ua);
+  var isAndroidWV = isAndroid && /\bwv\b/.test(ua);
+  var isIOSInApp  = isIOS && !/Safari/.test(ua) && /AppleWebKit/.test(ua);
+  var inApp = isLine || isFB || isWeChat || isAndroidWV || isIOSInApp;
+  if (!inApp) return;
+
+  var url = location.href;
+
+  // ── 1. LINE iOS：openExternalBrowser=1 讓 LINE 自動改用 Safari 開啟 ──
+  if (isLine && isIOS && url.indexOf('openExternalBrowser=1') === -1) {
+    location.replace(url + (url.indexOf('?') >= 0 ? '&' : '?') + 'openExternalBrowser=1');
+    return;
+  }
+
+  // ── 2. Android LINE / WebView：intent scheme 交給系統瀏覽器 ──
+  if (isAndroid && (isLine || isAndroidWV)) {
+    var intentUrl = 'intent://' + url.replace(/^https?:\/\//, '')
+      + '#Intent;scheme=' + (url.indexOf('https') === 0 ? 'https' : 'http')
+      + ';action=android.intent.action.VIEW;category=android.intent.category.BROWSABLE;end';
+    location.href = intentUrl;
+    // 若 intent 失敗（500ms 後還在），繼續顯示提示 overlay
+    setTimeout(showOverlay, 500);
+    return;
+  }
+
+  // ── 3. 其他 in-app（FB / IG / WeChat 等）：顯示提示 overlay ──
+  document.addEventListener('DOMContentLoaded', showOverlay);
+
+  function showOverlay() {
+    if (document.getElementById('_inapp_overlay')) return; // 避免重複
+    var appName = isLine ? 'LINE' : isWeChat ? 'WeChat' : isFB ? '社群應用' : 'App';
+
+    // 逐一用 createElement 建構，避免 innerHTML+= 覆蓋 event listener
+    var overlay = document.createElement('div');
+    overlay.id = '_inapp_overlay';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.93);'
+      + 'display:flex;flex-direction:column;align-items:center;justify-content:center;'
+      + 'padding:32px;color:white;font-family:system-ui,-apple-system,sans-serif;';
+
+    function el(tag, style, text) {
+      var e = document.createElement(tag);
+      if (style) e.style.cssText = style;
+      if (text)  e.textContent = text;
+      return e;
+    }
+
+    overlay.appendChild(el('div','font-size:2.5rem;margin-bottom:16px;','🌐'));
+    overlay.appendChild(el('div','font-size:1.2rem;font-weight:800;margin-bottom:8px;text-align:center;','用瀏覽器開啟'));
+
+    var sub = el('div','font-size:0.88rem;opacity:0.75;text-align:center;line-height:1.6;margin-bottom:28px;');
+    sub.innerHTML = '此頁面在 ' + appName + ' 內功能受限<br>請改用 Safari / Chrome 開啟完整體驗';
+    overlay.appendChild(sub);
+
+    overlay.appendChild(el('div',
+      'width:100%;padding:14px;border-radius:12px;background:rgba(255,255,255,0.08);'
+      + 'border:1px solid rgba(255,255,255,0.15);margin-bottom:16px;font-size:0.78rem;'
+      + 'color:#9ca3af;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;', url));
+
+    var copyBtn = el('button',
+      'width:100%;padding:14px;border-radius:12px;background:#7c3aed;color:white;'
+      + 'border:none;font-size:1rem;font-weight:700;cursor:pointer;', '複製網址');
+    copyBtn.addEventListener('click', function() {
+      var succeed = function() {
+        copyBtn.textContent = '✓ 已複製！';
+        copyBtn.style.background = '#059669';
+        setTimeout(function(){ copyBtn.textContent='複製網址'; copyBtn.style.background='#7c3aed'; }, 2500);
       };
-      
-      overlay.innerHTML = '<div style="font-size:2.5rem;margin-bottom:16px;">🌐</div>'
-        + '<div style="font-size:1.2rem;font-weight:800;margin-bottom:8px;text-align:center;">用瀏覽器開啟</div>'
-        + '<div style="font-size:0.88rem;opacity:0.75;text-align:center;line-height:1.6;margin-bottom:28px;">此頁面在 ' + appName + ' 內功能受限<br>請改用 Safari / Chrome 等瀏覽器開啟完整體驗</div>'
-        + '<div style="width:100%;padding:14px;border-radius:12px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);margin-bottom:16px;font-size:0.78rem;color:#9ca3af;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;word-break:break-all;">' + url + '</div>';
-      overlay.appendChild(copyBtn);
-      overlay.innerHTML += '<div style="margin-top:18px;font-size:0.8rem;opacity:0.6;text-align:center;">複製後貼到瀏覽器網址列開啟</div>';
-      
-      document.body.style.overflow = 'hidden';
-      document.body.appendChild(overlay);
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(succeed).catch(fallbackCopy);
+      } else { fallbackCopy(); }
+      function fallbackCopy() {
+        var t = document.createElement('textarea');
+        t.value = url; t.style.position='fixed'; t.style.opacity='0';
+        document.body.appendChild(t); t.focus(); t.select();
+        try { if (document.execCommand('copy')) succeed(); } catch(e) {}
+        document.body.removeChild(t);
+      }
     });
+    overlay.appendChild(copyBtn);
+    overlay.appendChild(el('div','margin-top:18px;font-size:0.8rem;opacity:0.55;text-align:center;',
+      '複製後貼到瀏覽器網址列開啟'));
+
+    document.body.style.overflow = 'hidden';
+    document.body.appendChild(overlay);
   }
 })();
 </script>
@@ -492,7 +535,7 @@
     <div class="home-header">
       <h1>注音測驗</h1>
       <p>國中國語字音練習系統</p>
-      <p style="font-size:0.72rem;opacity:0.5;margin-top:2px;letter-spacing:0.04em;">v20260320_1904_5</p>
+      <p style="font-size:0.72rem;opacity:0.5;margin-top:2px;letter-spacing:0.04em;">v20260320_1913_6</p>
     </div>
     <div class="card home-card">
       <div class="home-icon">🎯</div>
