@@ -263,7 +263,7 @@
 
     /* Results states */
     .opt-label.res-correct { border-color: #10b981; background: #ecfdf5; cursor: default; }
-    .opt-label.res-wrong   { border-color: #ef4444; background: #fef2f2; cursor: default; }
+    .opt-label.res-wrong   { cursor: default; }
     .opt-label.res-show    { border-color: #10b981; background: #ecfdf5; cursor: default; }
     .opt-label.res-dim     { opacity: 0.45; cursor: default; }
 
@@ -275,7 +275,7 @@
     .opt-label.selected .opt-radio { border-color: #7c3aed; background: #7c3aed; color: white; }
     .opt-label.selected .opt-radio::after { content: '●'; color: white; font-size: 8px; }
     .opt-label.res-correct .opt-radio { border-color: #10b981; background: #10b981; color: white; }
-    .opt-label.res-wrong   .opt-radio { border-color: #ef4444; background: #ef4444; color: white; }
+    .opt-label.res-wrong   .opt-radio { }
     .opt-label.res-show    .opt-radio { border-color: #10b981; background: #10b981; color: white; }
 
     .opt-key { font-weight: 700; color: #6b7280; min-width: 18px; font-size: 0.9rem; }
@@ -625,7 +625,7 @@
       </div>
       <h1>注音測驗</h1>
       <p>國中國語字音練習系統</p>
-      <p style="font-size:0.72rem;opacity:0.5;margin-top:2px;letter-spacing:0.04em;">v20260321_2132_2</p>
+      <p style="font-size:0.72rem;opacity:0.5;margin-top:2px;letter-spacing:0.04em;">v20260321_2146_4</p>
     </div>
     <div id="resume-card" class="resume-card" style="display:none">
       <div class="resume-info">
@@ -2537,18 +2537,33 @@ function wrongBankToItem(wb) {
 function startQuiz() {
   clearQuizSession();
   userAnswers = {};
-  const wb = getWrongBank();
-  const wbList = Object.values(wb);
-  let selected;
-  if (wbList.length >= 10) {
-    // 按錯誤次數排序後取前10，再隨機挑2題
-    const topWrong = shuffle(wbList.sort((a, b) => b.wrongCount - a.wrongCount).slice(0, 10)).slice(0, 2);
-    const wbKeys = new Set(topWrong.map(w => w.sentence + '|' + w.targetChar));
-    const remaining = audioItems.filter(a => !wbKeys.has(a.sentence + '|' + a.target_char));
-    selected = shuffle([...topWrong.map(wrongBankToItem), ...shuffle(remaining).slice(0, QUIZ_SIZE - 2)]);
-  } else {
-    selected = shuffle(audioItems).slice(0, QUIZ_SIZE);
+  // 收集曾出現過的題目 key
+  const hist = getHistory();
+  const seenKeys = new Set();
+  for (const rec of hist) {
+    for (const d of (rec.details || [])) {
+      seenKeys.add(d.sentence + '|' + d.targetChar);
+    }
   }
+  // 按最近答錯時間排序（最近的在前）
+  const wbSorted = Object.values(getWrongBank()).sort((a, b) => new Date(b.lastWrong) - new Date(a.lastWrong));
+  // 規則1：累積達10題錯題 → 從近10題隨機抽2題
+  const wrongPicks = [];
+  if (wbSorted.length >= 10) {
+    wrongPicks.push(...shuffle(wbSorted.slice(0, 10)).slice(0, 2));
+  }
+  // 規則2：累積達50題錯題 → 從近11至50題再隨機抽3題
+  if (wbSorted.length >= 50) {
+    wrongPicks.push(...shuffle(wbSorted.slice(10, 50)).slice(0, 3));
+  }
+  // 規則3：剩餘題目優先出未考過的，不足再補已考過的
+  const wrongKeys = new Set(wrongPicks.map(w => w.sentence + '|' + w.targetChar));
+  const remaining = audioItems.filter(a => !wrongKeys.has(a.sentence + '|' + a.target_char));
+  const fillCount = QUIZ_SIZE - wrongPicks.length;
+  const unseen = shuffle(remaining.filter(a => !seenKeys.has(a.sentence + '|' + a.target_char)));
+  const seen   = shuffle(remaining.filter(a =>  seenKeys.has(a.sentence + '|' + a.target_char)));
+  const pool   = unseen.length >= fillCount ? unseen : [...unseen, ...seen];
+  const selected = shuffle([...wrongPicks.map(wrongBankToItem), ...pool.slice(0, fillCount)]);
   currentQuiz = selected.map((item, i) => buildQuestion(item, i));
   renderQuiz();
   showScreen('quiz-screen');
@@ -2772,7 +2787,7 @@ function showResults(record) {
       let indicator = '';
       let tag = '';
       if (isSelected && isCorrect)   { cls = 'res-correct'; indicator = '✓'; }
-      else if (isSelected && !isCorrect) { cls = 'res-wrong'; indicator = '✕'; tag = '<span class="opt-wrong-tag">錯誤選擇</span>'; }
+      else if (isSelected && !isCorrect) { cls = 'res-wrong'; tag = '<span class="opt-wrong-tag">錯誤選擇</span>'; }
       else if (!isSelected && isCorrectOpt && !isCorrect) { cls = 'res-show'; tag = '<span class="opt-correct-tag">正確答案</span>'; }
       else { cls = 'res-dim'; }
       return `
