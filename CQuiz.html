@@ -625,7 +625,7 @@
       </div>
       <h1>注音測驗</h1>
       <p>國中國語字音練習系統</p>
-      <p style="font-size:0.72rem;opacity:0.5;margin-top:2px;letter-spacing:0.04em;">v20260321_2141_3</p>
+      <p style="font-size:0.72rem;opacity:0.5;margin-top:2px;letter-spacing:0.04em;">v20260321_2146_4</p>
     </div>
     <div id="resume-card" class="resume-card" style="display:none">
       <div class="resume-info">
@@ -2545,24 +2545,25 @@ function startQuiz() {
       seenKeys.add(d.sentence + '|' + d.targetChar);
     }
   }
-  const wb = getWrongBank();
-  const wbList = Object.values(wb);
-  let selected;
-  if (wbList.length >= 10) {
-    // 按錯誤次數排序後取前10，再隨機挑2題
-    const topWrong = shuffle(wbList.sort((a, b) => b.wrongCount - a.wrongCount).slice(0, 10)).slice(0, 2);
-    const wbKeys = new Set(topWrong.map(w => w.sentence + '|' + w.targetChar));
-    const remaining = audioItems.filter(a => !wbKeys.has(a.sentence + '|' + a.target_char));
-    const unseenRemaining = shuffle(remaining.filter(a => !seenKeys.has(a.sentence + '|' + a.target_char)));
-    const seenRemaining   = shuffle(remaining.filter(a =>  seenKeys.has(a.sentence + '|' + a.target_char)));
-    const pool = unseenRemaining.length >= QUIZ_SIZE - 2 ? unseenRemaining : [...unseenRemaining, ...seenRemaining];
-    selected = shuffle([...topWrong.map(wrongBankToItem), ...pool.slice(0, QUIZ_SIZE - 2)]);
-  } else {
-    const unseen = shuffle(audioItems.filter(a => !seenKeys.has(a.sentence + '|' + a.target_char)));
-    const seen   = shuffle(audioItems.filter(a =>  seenKeys.has(a.sentence + '|' + a.target_char)));
-    const pool = unseen.length >= QUIZ_SIZE ? unseen : [...unseen, ...seen];
-    selected = shuffle(pool.slice(0, QUIZ_SIZE));
+  // 按最近答錯時間排序（最近的在前）
+  const wbSorted = Object.values(getWrongBank()).sort((a, b) => new Date(b.lastWrong) - new Date(a.lastWrong));
+  // 規則1：累積達10題錯題 → 從近10題隨機抽2題
+  const wrongPicks = [];
+  if (wbSorted.length >= 10) {
+    wrongPicks.push(...shuffle(wbSorted.slice(0, 10)).slice(0, 2));
   }
+  // 規則2：累積達50題錯題 → 從近11至50題再隨機抽3題
+  if (wbSorted.length >= 50) {
+    wrongPicks.push(...shuffle(wbSorted.slice(10, 50)).slice(0, 3));
+  }
+  // 規則3：剩餘題目優先出未考過的，不足再補已考過的
+  const wrongKeys = new Set(wrongPicks.map(w => w.sentence + '|' + w.targetChar));
+  const remaining = audioItems.filter(a => !wrongKeys.has(a.sentence + '|' + a.target_char));
+  const fillCount = QUIZ_SIZE - wrongPicks.length;
+  const unseen = shuffle(remaining.filter(a => !seenKeys.has(a.sentence + '|' + a.target_char)));
+  const seen   = shuffle(remaining.filter(a =>  seenKeys.has(a.sentence + '|' + a.target_char)));
+  const pool   = unseen.length >= fillCount ? unseen : [...unseen, ...seen];
+  const selected = shuffle([...wrongPicks.map(wrongBankToItem), ...pool.slice(0, fillCount)]);
   currentQuiz = selected.map((item, i) => buildQuestion(item, i));
   renderQuiz();
   showScreen('quiz-screen');
