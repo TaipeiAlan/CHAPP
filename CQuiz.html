@@ -284,6 +284,20 @@
       margin-left: auto; font-size: 0.72rem; font-weight: 600;
       color: #059669; background: #d1fae5; padding: 2px 8px; border-radius: 10px;
     }
+    .opt-wrong-tag {
+      margin-left: auto; font-size: 0.72rem; font-weight: 600;
+      color: #dc2626; background: #fee2e2; padding: 2px 8px; border-radius: 10px;
+    }
+    .res-sentence-row {
+      display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;
+    }
+    .btn-google {
+      flex-shrink: 0; font-size: 0.72rem; font-weight: 700; padding: 3px 9px;
+      border-radius: 8px; border: 1.5px solid #d1d5db; background: #f9fafb;
+      color: #4285f4; cursor: pointer; white-space: nowrap; text-decoration: none;
+      transition: all 0.15s; display: inline-flex; align-items: center;
+    }
+    .btn-google:hover { background: #e8f0fe; border-color: #4285f4; }
     input[type="radio"] { display: none; }
 
     /* Submit */
@@ -611,7 +625,7 @@
       </div>
       <h1>注音測驗</h1>
       <p>國中國語字音練習系統</p>
-      <p style="font-size:0.72rem;opacity:0.5;margin-top:2px;letter-spacing:0.04em;">v20260320_2322_14</p>
+      <p style="font-size:0.72rem;opacity:0.5;margin-top:2px;letter-spacing:0.04em;">v20260321_2129_1</p>
     </div>
     <div id="resume-card" class="resume-card" style="display:none">
       <div class="resume-info">
@@ -1815,7 +1829,7 @@ const CSV_DATA = `id|sentence|target_char|correct_pinyin|wrong_pinyin|correct_ch
 1070|掌櫃|櫃|ㄍㄨㄟˋ||櫃||櫃檯|||音||貴||
 1071|衣冠|冠|ㄍㄨㄢ||冠||帽子|||音||官||
 1072|戴綸巾|綸|ㄍㄨㄢ||綸||絲帶|||音||侖||
-1073|當鸛雀樓|鸛|ㄍㄨㄢˋ||鸛||鳥名|||音||雚||
+1073|登鸛雀樓|鸛|ㄍㄨㄢˋ||鸛||鳥名|||音||雚||
 1074|東莞縣|莞|ㄍㄨㄢˇ||莞||地名|||音||完||
 1075|供他到村學堂讀書|供|ㄍㄨㄥ||供||供給|||音||共||
 1076|橫柯上蔽|柯|ㄎㄜ||柯||樹枝|||音|吳均〈與朱元思書〉|可||
@@ -2758,7 +2772,7 @@ function showResults(record) {
       let indicator = '';
       let tag = '';
       if (isSelected && isCorrect)   { cls = 'res-correct'; indicator = '✓'; }
-      else if (isSelected && !isCorrect) { cls = 'res-wrong'; indicator = '✕'; }
+      else if (isSelected && !isCorrect) { cls = 'res-wrong'; indicator = '✕'; tag = '<span class="opt-wrong-tag">錯誤選擇</span>'; }
       else if (!isSelected && isCorrectOpt && !isCorrect) { cls = 'res-show'; tag = '<span class="opt-correct-tag">正確答案</span>'; }
       else { cls = 'res-dim'; }
       return `
@@ -2779,7 +2793,10 @@ function showResults(record) {
       <div class="res-card" data-correct="${isCorrect ? '1' : '0'}" style="${isCorrect ? 'display:none' : ''}">
         <div class="res-badge ${isCorrect ? 'correct' : isSkipped ? 'skipped' : 'wrong'}">${isCorrect ? '✓' : isSkipped ? '？' : '✗'}</div>
         <div class="q-num" style="margin-bottom:8px;">第 ${i+1} 題</div>
-        <div class="q-sentence">${formatSentence(q.sentence, q.targetChar, true)}</div>
+        <div class="res-sentence-row">
+          <div class="q-sentence">${formatSentence(q.sentence, q.targetChar, true)}</div>
+          <a class="btn-google" href="https://www.google.com/search?q=${encodeURIComponent(q.sentence)}" target="_blank" rel="noopener">G</a>
+        </div>
         ${skipNoteHtml}
         <div class="q-ask">下列何者為「　」內字的正確讀音？</div>
         <div class="options">${optionsHtml}</div>
