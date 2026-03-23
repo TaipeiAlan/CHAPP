@@ -699,7 +699,7 @@
       </div>
       <h1>國語測驗</h1>
       <p>國中國語字音字形練習系統</p>
-      <p style="font-size:0.72rem;opacity:0.5;margin-top:2px;letter-spacing:0.04em;">v20260323_1115_1</p>
+      <p style="font-size:0.72rem;opacity:0.5;margin-top:2px;letter-spacing:0.04em;">v20260323_1132_2</p>
     </div>
     <div id="resume-card" class="resume-card" style="display:none">
       <div class="resume-info">
@@ -3095,10 +3095,27 @@ function buildShape1ResultCard(q, i) {
     else if (isSelected && !isCorrect)  { cls = 'res-wrong'; tag = '<span class="opt-wrong-tag">錯誤選擇</span>'; }
     else if (!isSelected && isCorrectOpt && !isCorrect) { cls = 'res-show'; tag = '<span class="opt-correct-tag">有錯別字</span>'; }
     else { cls = 'res-dim'; }
-    return `<div class="opt-label ${cls} opt-sentence">
+
+    // For the wrong sentence option: highlight wrong char in red + show correction
+    let optDisplay = escHtml(opt);
+    if (isCorrectOpt && q.wrongChar && q.correctChar) {
+      const wc = escHtml(q.wrongChar);
+      optDisplay = escHtml(opt).replace(
+        wc,
+        `<span style="color:#dc2626;font-weight:900;border-bottom:2px solid #dc2626;">${wc}</span>`
+      );
+      optDisplay += `<span style="color:#059669;font-size:0.82rem;margin-left:8px;font-weight:700;">→ ${escHtml(q.correctChar)}</span>`;
+    }
+
+    // G button for each option (search the sentence)
+    const gBtn = `<a class="btn-google" href="https://www.google.com/search?q=${encodeURIComponent(opt)}" target="_blank" rel="noopener">G</a>`;
+
+    return `<div class="opt-label ${cls} opt-sentence" style="flex-wrap:wrap;gap:6px;">
       <div class="opt-radio ${cls}">${indicator}</div>
       <span class="opt-key">${OPTION_KEYS[oi]}</span>
-      <span class="opt-text opt-text-sentence">${escHtml(opt)}</span>${tag}</div>`;
+      <span class="opt-text opt-text-sentence" style="flex:1;">${optDisplay}</span>
+      <span style="margin-left:auto;display:flex;align-items:center;gap:5px;flex-shrink:0;">${tag}${gBtn}</span>
+    </div>`;
   }).join('');
   const skipNoteHtml = isSkipped ? `<div class="res-skip-note">不確定（未作答）</div>` : '';
   const explanationHtml = !isCorrect
