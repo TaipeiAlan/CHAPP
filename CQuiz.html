@@ -97,7 +97,7 @@
 </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>國語字音測驗系統</title>
+  <title>國語字音字形測驗系統</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -367,6 +367,80 @@
       .opt-text { font-size: 1rem; }
     }
 
+    /* ====== SHAPE QUIZ ====== */
+    .btn-shape-start {
+      padding: 13px 28px; border-radius: 12px; border: none;
+      font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s;
+      letter-spacing: 0.02em;
+      background: linear-gradient(135deg, #059669, #0d9488);
+      color: white; box-shadow: 0 4px 14px rgba(5,150,105,0.4);
+    }
+    .btn-shape-start:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(5,150,105,0.5); }
+    .home-actions-dual { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+    .home-actions-dual .btn { width: 100%; }
+    .home-actions-dual .btn-shape-start { width: 100%; }
+
+    .q-type-badge {
+      font-size: 0.65rem; font-weight: 700; padding: 2px 8px; border-radius: 10px;
+      white-space: nowrap; flex-shrink: 0;
+    }
+    .q-type-badge.badge-audio { background: #ede9fe; color: #7c3aed; }
+    .q-type-badge.badge-shape { background: #d1fae5; color: #059669; }
+
+    /* Shape1 options (full sentences) */
+    .opt-text-sentence { font-size: 0.95rem; letter-spacing: 0.02em; }
+
+    /* Shape2 options (single characters) */
+    .options-char { grid-template-columns: 1fr 1fr; }
+    .opt-text-char { font-size: 1.6rem; font-weight: 800; letter-spacing: 0; }
+    .q-shape2-sent { color: #1f2937; }
+    .q-shape2-sent .shape2-pinyin { color: #059669; font-weight: 800; }
+
+    /* History filter tabs */
+    .hist-filter-tabs {
+      display: flex; gap: 0; padding: 10px 16px 0;
+      border-bottom: 2px solid #f3f4f6;
+      background: white; border-radius: 20px 20px 0 0;
+    }
+    .hist-tab {
+      padding: 8px 16px; font-size: 0.82rem; font-weight: 600;
+      border: none; background: none; cursor: pointer; color: #9ca3af;
+      border-bottom: 2px solid transparent; margin-bottom: -2px;
+      transition: color 0.15s;
+    }
+    .hist-tab.active { color: #7c3aed; border-bottom-color: #7c3aed; }
+    .hist-tab:hover:not(.active) { color: #4b5563; }
+
+    /* Wrong bank tabs */
+    .wb-tabs {
+      display: flex; gap: 0; padding: 10px 16px 0;
+      border-bottom: 2px solid #f3f4f6;
+      background: white; border-radius: 20px 20px 0 0;
+      margin-bottom: 0;
+    }
+    .wb-tab {
+      padding: 8px 16px; font-size: 0.82rem; font-weight: 600;
+      border: none; background: none; cursor: pointer; color: #9ca3af;
+      border-bottom: 2px solid transparent; margin-bottom: -2px;
+      transition: color 0.15s;
+    }
+    .wb-tab.active { color: #dc2626; border-bottom-color: #dc2626; }
+    .wb-tab:hover:not(.active) { color: #4b5563; }
+
+    /* Shape wrong bank card */
+    .swb-card {
+      background: white; border-radius: 16px; padding: 18px 20px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08); margin-bottom: 12px;
+    }
+    .swb-sentence { font-size: 1.2rem; font-weight: 700; color: #111827; margin-bottom: 8px; }
+    .swb-chars { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+    .swb-char-correct { font-size: 1.1rem; font-weight: 800; color: #059669; background: #d1fae5; padding: 3px 12px; border-radius: 8px; }
+    .swb-char-wrong { font-size: 1.1rem; font-weight: 800; color: #dc2626; background: #fee2e2; padding: 3px 12px; border-radius: 8px; text-decoration: line-through; opacity: 0.85; }
+    .swb-arrow { color: #9ca3af; font-size: 0.85rem; }
+    .swb-meta { font-size: 0.75rem; color: #9ca3af; display: flex; gap: 12px; flex-wrap: wrap; margin-top: 6px; }
+    .swb-meaning { color: #78350f; background: #fef3c7; padding: 2px 8px; border-radius: 6px; }
+    .swb-type-lbl { font-size: 0.65rem; font-weight: 700; background: #d1fae5; color: #059669; padding: 2px 8px; border-radius: 10px; }
+
 
     /* ====== HISTORY WITH WRONG QUESTIONS ====== */
     .history-item { cursor: pointer; }
@@ -623,9 +697,9 @@
         <button class="btn-sm" onclick="showHistory()">考試記錄</button>
         <button class="btn-sm" onclick="showTestLog()">應考記錄</button>
       </div>
-      <h1>注音測驗</h1>
-      <p>國中國語字音練習系統</p>
-      <p style="font-size:0.72rem;opacity:0.5;margin-top:2px;letter-spacing:0.04em;">v20260321_2146_4</p>
+      <h1>國語測驗</h1>
+      <p>國中國語字音字形練習系統</p>
+      <p style="font-size:0.72rem;opacity:0.5;margin-top:2px;letter-spacing:0.04em;">v20260323_1115_1</p>
     </div>
     <div id="resume-card" class="resume-card" style="display:none">
       <div class="resume-info">
@@ -639,13 +713,13 @@
     </div>
     <div class="card home-card">
       <div class="home-icon">🎯</div>
-      <h2 class="home-title">字音測驗</h2>
+      <h2 class="home-title">國語測驗</h2>
       <p class="home-subtitle">
-        從題庫隨機抽取 20 題字音測驗<br>
-        選完所有題目後進行批改，結果自動儲存
+        隨機抽取 20 題，選完後批改，結果自動儲存
       </p>
-      <div class="home-actions">
-        <button class="btn btn-primary" onclick="startQuiz()">開始測驗</button>
+      <div class="home-actions-dual">
+        <button class="btn btn-primary" onclick="startQuiz('audio')">🎵 開始字音測驗</button>
+        <button class="btn-shape-start" onclick="startQuiz('shape')">📝 開始字形測驗</button>
       </div>
       <div id="home-stats"></div>
     </div>
@@ -655,7 +729,7 @@
   <div id="quiz-screen" class="screen">
     <div class="nav">
       <button class="nav-back" onclick="confirmExit()">← 返回</button>
-      <span class="nav-title">字音測驗</span>
+      <span class="nav-title" id="quiz-nav-title">字音測驗</span>
       <span style="width:70px"></span>
     </div>
     <div class="progress-sticky" id="progress-sticky">
@@ -681,7 +755,7 @@
     <div class="nav">
       <button class="nav-back" onclick="showHome()">← 首頁</button>
       <span class="nav-title">測驗結果</span>
-      <button onclick="startQuiz()" style="background:#7c3aed;color:white;border:none;border-radius:20px;padding:6px 16px;font-size:0.82rem;font-weight:700;cursor:pointer;white-space:nowrap;">再測一次</button>
+      <button id="btn-retest" onclick="startQuiz(quizMode)" style="background:#7c3aed;color:white;border:none;border-radius:20px;padding:6px 16px;font-size:0.82rem;font-weight:700;cursor:pointer;white-space:nowrap;">再測一次</button>
     </div>
     <div class="card score-card">
       <div class="score-ring">
@@ -708,6 +782,11 @@
       <span style="width:70px"></span>
     </div>
     <div class="card" style="padding:0; overflow:hidden;">
+      <div class="hist-filter-tabs">
+        <button class="hist-tab active" id="hist-tab-all" onclick="showHistory('all')">全部</button>
+        <button class="hist-tab" id="hist-tab-audio" onclick="showHistory('audio')">字音</button>
+        <button class="hist-tab" id="hist-tab-shape" onclick="showHistory('shape')">字形</button>
+      </div>
       <div id="history-list"></div>
     </div>
     <div class="history-footer">
@@ -723,7 +802,13 @@
       <span class="nav-title">錯題本</span>
       <span style="width:70px"></span>
     </div>
-    <div id="wb-stats-bar" class="wb-stats-bar" style="display:none">
+    <div style="background:white;border-radius:20px 20px 0 0;margin-bottom:0;box-shadow:0 2px 12px rgba(0,0,0,0.08);">
+      <div class="wb-tabs">
+        <button class="wb-tab active" id="wb-tab-audio" onclick="showWrongBank('audio')">字音錯題</button>
+        <button class="wb-tab" id="wb-tab-shape" onclick="showWrongBank('shape')">字形錯題</button>
+      </div>
+    </div>
+    <div id="wb-stats-bar" class="wb-stats-bar" style="display:none;border-radius:0 0 16px 16px;margin-top:0;">
       <div class="wb-stats-left">
         <div class="wb-stat"><div class="wb-stat-num" id="wb-total">0</div><div class="wb-stat-lbl">錯題數</div></div>
         <div class="wb-stat"><div class="wb-stat-num" id="wb-maxwrong">0</div><div class="wb-stat-lbl">最多錯誤次數</div></div>
@@ -2338,9 +2423,10 @@ const CSV_DATA = `id|sentence|target_char|correct_pinyin|wrong_pinyin|correct_ch
 // CONSTANTS
 // ============================================================
 const QUIZ_SIZE = 20;
-const STORAGE_KEY = 'Cquiz_history';
-const WRONG_KEY   = 'Cquiz_wrong_bank';
-const LOG_KEY     = 'Cquiz_test_log';
+const STORAGE_KEY      = 'Cquiz_history';
+const WRONG_KEY        = 'Cquiz_wrong_bank';
+const SHAPE_WRONG_KEY  = 'Cquiz_shape_wrong_bank';
+const LOG_KEY          = 'Cquiz_test_log';
 const OPTION_KEYS = ['A', 'B', 'C', 'D'];
 
 // ============================================================
@@ -2387,7 +2473,12 @@ function shuffle(arr) {
 // DATA LAYER
 // ============================================================
 let audioItems = [];
+let shapeItems = [];
 let allPinyinPool = new Set();
+let charsByPinyin = {}; // correct_pinyin → [target_char, ...]
+let quizMode = 'audio'; // 'audio' | 'shape'
+let histFilter = 'all'; // 'all' | 'audio' | 'shape'
+let wbFilter   = 'audio'; // 'audio' | 'shape'
 
 function parseCSV(raw) {
   const lines = raw.trim().split('\n');
@@ -2403,7 +2494,15 @@ function parseCSV(raw) {
 function initData() {
   const all = parseCSV(CSV_DATA);
   audioItems = all.filter(r => r.type && r.type.includes('音') && r.correct_pinyin && r.sentence && r.target_char);
-  all.forEach(r => { if (r.correct_pinyin) allPinyinPool.add(r.correct_pinyin); });
+  shapeItems = all.filter(r => r.type && r.type.includes('形') && r.wrong_char && r.sentence && r.target_char);
+  all.forEach(r => {
+    if (r.correct_pinyin) allPinyinPool.add(r.correct_pinyin);
+    if (r.correct_pinyin && r.target_char) {
+      if (!charsByPinyin[r.correct_pinyin]) charsByPinyin[r.correct_pinyin] = [];
+      if (!charsByPinyin[r.correct_pinyin].includes(r.target_char))
+        charsByPinyin[r.correct_pinyin].push(r.target_char);
+    }
+  });
   updateHomeStats();
   checkResumeSession();
 }
@@ -2500,9 +2599,11 @@ function buildQuestion(item, idx) {
   const options = shuffle([item.correct_pinyin, ...wrong]);
   return {
     idx,
+    qType: 'audio',
     sentence: item.sentence,
     targetChar: item.target_char,
     correctPinyin: item.correct_pinyin,
+    correctAnswer: item.correct_pinyin,
     meaning: item.meaning || '',
     options,
   };
@@ -2522,6 +2623,82 @@ function escHtml(s) {
 }
 
 // ============================================================
+// SHAPE QUESTION BUILDERS
+// ============================================================
+function buildShapeQuestion(item, idx) {
+  // Decide shape1 (錯別字辨識) or shape2 (注音辨字)
+  const canShape2 = item.correct_pinyin && (
+    ((charsByPinyin[item.correct_pinyin] || []).length > 1) || item.wrong_char
+  );
+  const useShape2 = canShape2 && Math.random() < 0.5;
+  return useShape2 ? buildShape2(item, idx) : buildShape1(item, idx);
+}
+
+function buildShape1(item, idx) {
+  // Wrong sentence: replace correct_char (=target_char) with wrong_char
+  const wrongSent = item.sentence.replace(item.target_char, item.wrong_char);
+  // 3 correct sentences from other shape items
+  const others = shuffle(shapeItems.filter(s => s.sentence !== item.sentence)).slice(0, 3);
+  const options = shuffle([wrongSent, ...others.map(o => o.sentence)]);
+  return {
+    idx, qType: 'shape1',
+    sentence: item.sentence,
+    targetChar: item.target_char,
+    correctChar: item.correct_char || item.target_char,
+    wrongChar: item.wrong_char,
+    meaning: item.meaning || '',
+    wrongMeaning: item.wrong_meaning || '',
+    questionText: '下列選項中，何者有錯別字？',
+    options,
+    correctAnswer: wrongSent,
+  };
+}
+
+function buildShape2(item, idx) {
+  const pinyin = item.correct_pinyin;
+  const correctChar = item.correct_char || item.target_char;
+  // Build display sentence: replace target_char with 「pinyin」
+  const sentIdx = item.sentence.indexOf(item.target_char);
+  const qSentence = sentIdx >= 0
+    ? item.sentence.slice(0, sentIdx) + '「' + pinyin + '」' + item.sentence.slice(sentIdx + item.target_char.length)
+    : item.sentence;
+
+  // Build distractors: wrong_char first, then same-pinyin chars, then other wrong_chars
+  const used = new Set([correctChar]);
+  const distractors = [];
+  if (item.wrong_char && !used.has(item.wrong_char)) {
+    distractors.push(item.wrong_char); used.add(item.wrong_char);
+  }
+  const samePinyin = shuffle((charsByPinyin[pinyin] || []).filter(c => !used.has(c)));
+  for (const c of samePinyin) {
+    if (distractors.length >= 3) break;
+    distractors.push(c); used.add(c);
+  }
+  if (distractors.length < 3) {
+    const allWrong = shuffle([...new Set(shapeItems.map(s => s.wrong_char).filter(c => c && !used.has(c)))]);
+    for (const c of allWrong) {
+      if (distractors.length >= 3) break;
+      distractors.push(c); used.add(c);
+    }
+  }
+  const options = shuffle([correctChar, ...distractors.slice(0, 3)]);
+  return {
+    idx, qType: 'shape2',
+    sentence: item.sentence,
+    targetChar: item.target_char,
+    correctChar,
+    wrongChar: item.wrong_char || '',
+    pinyin,
+    qSentence,
+    meaning: item.meaning || '',
+    wrongMeaning: item.wrong_meaning || '',
+    questionText: '其中注音應寫成哪個字？',
+    options,
+    correctAnswer: correctChar,
+  };
+}
+
+// ============================================================
 // START QUIZ
 // ============================================================
 function wrongBankToItem(wb) {
@@ -2534,37 +2711,47 @@ function wrongBankToItem(wb) {
   };
 }
 
-function startQuiz() {
+function startQuiz(mode) {
+  quizMode = mode || 'audio';
   clearQuizSession();
   userAnswers = {};
-  // 收集曾出現過的題目 key
-  const hist = getHistory();
-  const seenKeys = new Set();
-  for (const rec of hist) {
-    for (const d of (rec.details || [])) {
-      seenKeys.add(d.sentence + '|' + d.targetChar);
+
+  if (quizMode === 'shape') {
+    // 字形測驗：隨機抽取 20 題字形題
+    const selected = shuffle(shapeItems).slice(0, QUIZ_SIZE);
+    currentQuiz = selected.map((item, i) => buildShapeQuestion(item, i));
+  } else {
+    // 字音測驗：原有邏輯（優先錯題 + 未考過題目）
+    const hist = getHistory();
+    const seenKeys = new Set();
+    for (const rec of hist) {
+      if ((rec.quizType || 'audio') !== 'audio') continue;
+      for (const d of (rec.details || [])) {
+        seenKeys.add(d.sentence + '|' + d.targetChar);
+      }
     }
+    const wbSorted = Object.values(getWrongBank()).sort((a, b) => new Date(b.lastWrong) - new Date(a.lastWrong));
+    const wrongPicks = [];
+    if (wbSorted.length >= 10) {
+      wrongPicks.push(...shuffle(wbSorted.slice(0, 10)).slice(0, 2));
+    }
+    if (wbSorted.length >= 50) {
+      wrongPicks.push(...shuffle(wbSorted.slice(10, 50)).slice(0, 3));
+    }
+    const wrongKeys = new Set(wrongPicks.map(w => w.sentence + '|' + w.targetChar));
+    const remaining = audioItems.filter(a => !wrongKeys.has(a.sentence + '|' + a.target_char));
+    const fillCount = QUIZ_SIZE - wrongPicks.length;
+    const unseen = shuffle(remaining.filter(a => !seenKeys.has(a.sentence + '|' + a.target_char)));
+    const seen   = shuffle(remaining.filter(a =>  seenKeys.has(a.sentence + '|' + a.target_char)));
+    const pool   = unseen.length >= fillCount ? unseen : [...unseen, ...seen];
+    const selected = shuffle([...wrongPicks.map(wrongBankToItem), ...pool.slice(0, fillCount)]);
+    currentQuiz = selected.map((item, i) => buildQuestion(item, i));
   }
-  // 按最近答錯時間排序（最近的在前）
-  const wbSorted = Object.values(getWrongBank()).sort((a, b) => new Date(b.lastWrong) - new Date(a.lastWrong));
-  // 規則1：累積達10題錯題 → 從近10題隨機抽2題
-  const wrongPicks = [];
-  if (wbSorted.length >= 10) {
-    wrongPicks.push(...shuffle(wbSorted.slice(0, 10)).slice(0, 2));
-  }
-  // 規則2：累積達50題錯題 → 從近11至50題再隨機抽3題
-  if (wbSorted.length >= 50) {
-    wrongPicks.push(...shuffle(wbSorted.slice(10, 50)).slice(0, 3));
-  }
-  // 規則3：剩餘題目優先出未考過的，不足再補已考過的
-  const wrongKeys = new Set(wrongPicks.map(w => w.sentence + '|' + w.targetChar));
-  const remaining = audioItems.filter(a => !wrongKeys.has(a.sentence + '|' + a.target_char));
-  const fillCount = QUIZ_SIZE - wrongPicks.length;
-  const unseen = shuffle(remaining.filter(a => !seenKeys.has(a.sentence + '|' + a.target_char)));
-  const seen   = shuffle(remaining.filter(a =>  seenKeys.has(a.sentence + '|' + a.target_char)));
-  const pool   = unseen.length >= fillCount ? unseen : [...unseen, ...seen];
-  const selected = shuffle([...wrongPicks.map(wrongBankToItem), ...pool.slice(0, fillCount)]);
-  currentQuiz = selected.map((item, i) => buildQuestion(item, i));
+
+  // Update nav title
+  const navTitle = document.getElementById('quiz-nav-title');
+  if (navTitle) navTitle.textContent = quizMode === 'shape' ? '字形測驗' : '字音測驗';
+
   renderQuiz();
   showScreen('quiz-screen');
   window.scrollTo(0, 0);
@@ -2574,7 +2761,18 @@ function startQuiz() {
 
 function renderQuiz() {
   const container = document.getElementById('questions-container');
-  container.innerHTML = currentQuiz.map(q => `
+  container.innerHTML = currentQuiz.map(q => renderQuizCard(q)).join('');
+  updateProgress();
+}
+
+function renderQuizCard(q) {
+  if (q.qType === 'shape1') return renderShape1Card(q);
+  if (q.qType === 'shape2') return renderShape2Card(q);
+  return renderAudioCard(q);
+}
+
+function renderAudioCard(q) {
+  return `
     <div class="q-card" id="qcard-${q.idx}">
       <div class="q-header">
         <div class="q-header-left">
@@ -2596,9 +2794,65 @@ function renderQuiz() {
           </div>
         `).join('')}
       </div>
-    </div>
-  `).join('');
-  updateProgress();
+    </div>`;
+}
+
+function renderShape1Card(q) {
+  return `
+    <div class="q-card" id="qcard-${q.idx}">
+      <div class="q-header">
+        <div class="q-header-left">
+          <span class="q-num">第 ${q.idx + 1} 題</span>
+          <span class="q-type-badge badge-shape">字形</span>
+        </div>
+      </div>
+      <div class="q-ask-row">
+        <span class="q-ask">下列選項中，何者有錯別字？</span>
+        <button class="btn-skip" id="skip-btn-${q.idx}" onclick="skipAnswer(${q.idx})">不確定</button>
+      </div>
+      <div class="options" id="opts-${q.idx}">
+        ${q.options.map((opt, oi) => `
+          <div class="opt-label opt-sentence" id="opt-${q.idx}-${oi}"
+               onclick="selectAnswer(${q.idx}, '${opt.replace(/'/g,"\\'")}', ${oi})">
+            <div class="opt-radio" id="radio-${q.idx}-${oi}"></div>
+            <span class="opt-key">${OPTION_KEYS[oi]}</span>
+            <span class="opt-text opt-text-sentence">${escHtml(opt)}</span>
+          </div>
+        `).join('')}
+      </div>
+    </div>`;
+}
+
+function renderShape2Card(q) {
+  // Highlight the pinyin part in the display sentence
+  const dispSentence = escHtml(q.qSentence).replace(
+    escHtml('「' + q.pinyin + '」'),
+    `<span class="shape2-pinyin">「${escHtml(q.pinyin)}」</span>`
+  );
+  return `
+    <div class="q-card" id="qcard-${q.idx}">
+      <div class="q-header">
+        <div class="q-header-left">
+          <span class="q-num">第 ${q.idx + 1} 題</span>
+          <span class="q-type-badge badge-shape">字形</span>
+          <span class="q-sentence q-shape2-sent">${dispSentence}</span>
+        </div>
+      </div>
+      <div class="q-ask-row">
+        <span class="q-ask">其中注音應寫成哪個字？</span>
+        <button class="btn-skip" id="skip-btn-${q.idx}" onclick="skipAnswer(${q.idx})">不確定</button>
+      </div>
+      <div class="options options-char" id="opts-${q.idx}">
+        ${q.options.map((opt, oi) => `
+          <div class="opt-label opt-char" id="opt-${q.idx}-${oi}"
+               onclick="selectAnswer(${q.idx}, '${opt.replace(/'/g,"\\'")}', ${oi})">
+            <div class="opt-radio" id="radio-${q.idx}-${oi}"></div>
+            <span class="opt-key">${OPTION_KEYS[oi]}</span>
+            <span class="opt-text opt-text-char">${escHtml(opt)}</span>
+          </div>
+        `).join('')}
+      </div>
+    </div>`;
 }
 
 function selectAnswer(qIdx, answer, optIdx) {
@@ -2719,7 +2973,7 @@ function submitQuiz() {
   let score = 0;
   const details = currentQuiz.map((q, i) => {
     const userAns = userAnswers[i] || '';
-    const isCorrect = userAns === q.correctPinyin;
+    const isCorrect = userAns !== '' && userAns === q.correctAnswer;
     if (isCorrect) score++;
     return { ...q, userAnswer: userAns, isCorrect };
   });
@@ -2727,6 +2981,7 @@ function submitQuiz() {
     date: new Date().toLocaleString('zh-TW'),
     score,
     total: currentQuiz.length,
+    quizType: quizMode,
     details,
   };
   saveHistory(record);
@@ -2767,6 +3022,12 @@ function showResults(record) {
       </div>`;
     }).join('');
   }
+  // Update "再測一次" button to use correct mode
+  const retestBtn = document.getElementById('btn-retest');
+  if (retestBtn) {
+    const rMode = record.quizType || quizMode;
+    retestBtn.onclick = () => startQuiz(rMode);
+  }
   const pct = Math.round(record.score / record.total * 100);
   let msg = '';
   if (pct === 100)     msg = '🎉 完美！全對了！';
@@ -2777,50 +3038,115 @@ function showResults(record) {
   document.getElementById('res-message').textContent = msg;
 
   const container = document.getElementById('results-container');
-  container.innerHTML = record.details.map((q, i) => {
-    const isCorrect = q.isCorrect;
-    const isSkipped = !isCorrect && q.userAnswer === '';
-    const optionsHtml = q.options.map((opt, oi) => {
-      const isSelected  = opt === q.userAnswer;
-      const isCorrectOpt = opt === q.correctPinyin;
-      let cls = '';
-      let indicator = '';
-      let tag = '';
-      if (isSelected && isCorrect)   { cls = 'res-correct'; indicator = '✓'; }
-      else if (isSelected && !isCorrect) { cls = 'res-wrong'; tag = '<span class="opt-wrong-tag">錯誤選擇</span>'; }
-      else if (!isSelected && isCorrectOpt && !isCorrect) { cls = 'res-show'; tag = '<span class="opt-correct-tag">正確答案</span>'; }
-      else { cls = 'res-dim'; }
-      return `
-        <div class="opt-label ${cls}">
-          <div class="opt-radio ${cls}">${indicator}</div>
-          <span class="opt-key">${OPTION_KEYS[oi]}</span>
-          <span class="opt-text">${escHtml(opt)}</span>
-          ${tag}
-        </div>`;
-    }).join('');
-
-    const explanationHtml = (!isCorrect && q.meaning)
-      ? `<div class="res-explanation"><strong>字義：</strong>${escHtml(q.meaning)}</div>` : '';
-    const skipNoteHtml = isSkipped
-      ? `<div class="res-skip-note">不確定（未作答）</div>` : '';
-
-    return `
-      <div class="res-card" data-correct="${isCorrect ? '1' : '0'}" style="${isCorrect ? 'display:none' : ''}">
-        <div class="res-badge ${isCorrect ? 'correct' : isSkipped ? 'skipped' : 'wrong'}">${isCorrect ? '✓' : isSkipped ? '？' : '✗'}</div>
-        <div class="q-num" style="margin-bottom:8px;">第 ${i+1} 題</div>
-        <div class="res-sentence-row">
-          <div class="q-sentence">${formatSentence(q.sentence, q.targetChar, true)}</div>
-          <a class="btn-google" href="https://www.google.com/search?q=${encodeURIComponent(q.sentence)}" target="_blank" rel="noopener">G</a>
-        </div>
-        ${skipNoteHtml}
-        <div class="q-ask">下列何者為「　」內字的正確讀音？</div>
-        <div class="options">${optionsHtml}</div>
-        ${explanationHtml}
-      </div>`;
-  }).join('');
+  container.innerHTML = record.details.map((q, i) => buildResultCard(q, i)).join('');
 
   showScreen('results-screen');
   window.scrollTo(0, 0);
+}
+
+function buildResultCard(q, i) {
+  if (q.qType === 'shape1') return buildShape1ResultCard(q, i);
+  if (q.qType === 'shape2') return buildShape2ResultCard(q, i);
+  return buildAudioResultCard(q, i);
+}
+
+function buildAudioResultCard(q, i) {
+  const isCorrect = q.isCorrect;
+  const isSkipped = !isCorrect && q.userAnswer === '';
+  const optionsHtml = q.options.map((opt, oi) => {
+    const isSelected   = opt === q.userAnswer;
+    const isCorrectOpt = opt === (q.correctAnswer || q.correctPinyin);
+    let cls = '', indicator = '', tag = '';
+    if (isSelected && isCorrect)        { cls = 'res-correct'; indicator = '✓'; }
+    else if (isSelected && !isCorrect)  { cls = 'res-wrong'; tag = '<span class="opt-wrong-tag">錯誤選擇</span>'; }
+    else if (!isSelected && isCorrectOpt && !isCorrect) { cls = 'res-show'; tag = '<span class="opt-correct-tag">正確答案</span>'; }
+    else { cls = 'res-dim'; }
+    return `<div class="opt-label ${cls}">
+      <div class="opt-radio ${cls}">${indicator}</div>
+      <span class="opt-key">${OPTION_KEYS[oi]}</span>
+      <span class="opt-text">${escHtml(opt)}</span>${tag}</div>`;
+  }).join('');
+  const explanationHtml = (!isCorrect && q.meaning)
+    ? `<div class="res-explanation"><strong>字義：</strong>${escHtml(q.meaning)}</div>` : '';
+  const skipNoteHtml = isSkipped ? `<div class="res-skip-note">不確定（未作答）</div>` : '';
+  return `
+    <div class="res-card" data-correct="${isCorrect?'1':'0'}" style="${isCorrect?'display:none':''}">
+      <div class="res-badge ${isCorrect?'correct':isSkipped?'skipped':'wrong'}">${isCorrect?'✓':isSkipped?'？':'✗'}</div>
+      <div class="q-num" style="margin-bottom:8px;">第 ${i+1} 題</div>
+      <div class="res-sentence-row">
+        <div class="q-sentence">${formatSentence(q.sentence, q.targetChar, true)}</div>
+        <a class="btn-google" href="https://www.google.com/search?q=${encodeURIComponent(q.sentence)}" target="_blank" rel="noopener">G</a>
+      </div>
+      ${skipNoteHtml}
+      <div class="q-ask">下列何者為「　」內字的正確讀音？</div>
+      <div class="options">${optionsHtml}</div>
+      ${explanationHtml}
+    </div>`;
+}
+
+function buildShape1ResultCard(q, i) {
+  const isCorrect = q.isCorrect;
+  const isSkipped = !isCorrect && q.userAnswer === '';
+  const optionsHtml = q.options.map((opt, oi) => {
+    const isSelected   = opt === q.userAnswer;
+    const isCorrectOpt = opt === q.correctAnswer;
+    let cls = '', indicator = '', tag = '';
+    if (isSelected && isCorrect)        { cls = 'res-correct'; indicator = '✓'; }
+    else if (isSelected && !isCorrect)  { cls = 'res-wrong'; tag = '<span class="opt-wrong-tag">錯誤選擇</span>'; }
+    else if (!isSelected && isCorrectOpt && !isCorrect) { cls = 'res-show'; tag = '<span class="opt-correct-tag">有錯別字</span>'; }
+    else { cls = 'res-dim'; }
+    return `<div class="opt-label ${cls} opt-sentence">
+      <div class="opt-radio ${cls}">${indicator}</div>
+      <span class="opt-key">${OPTION_KEYS[oi]}</span>
+      <span class="opt-text opt-text-sentence">${escHtml(opt)}</span>${tag}</div>`;
+  }).join('');
+  const skipNoteHtml = isSkipped ? `<div class="res-skip-note">不確定（未作答）</div>` : '';
+  const explanationHtml = !isCorrect
+    ? `<div class="res-explanation"><strong>說明：</strong>「${escHtml(q.correctChar)}」誤寫為「${escHtml(q.wrongChar)}」${q.meaning ? `；正確字義：${escHtml(q.meaning)}` : ''}</div>` : '';
+  return `
+    <div class="res-card" data-correct="${isCorrect?'1':'0'}" style="${isCorrect?'display:none':''}">
+      <div class="res-badge ${isCorrect?'correct':isSkipped?'skipped':'wrong'}">${isCorrect?'✓':isSkipped?'？':'✗'}</div>
+      <div class="q-num" style="margin-bottom:8px;">第 ${i+1} 題 <span class="q-type-badge badge-shape" style="font-size:0.65rem;vertical-align:middle;">字形</span></div>
+      <div class="q-ask" style="margin-bottom:12px;">下列選項中，何者有錯別字？</div>
+      ${skipNoteHtml}
+      <div class="options">${optionsHtml}</div>
+      ${explanationHtml}
+    </div>`;
+}
+
+function buildShape2ResultCard(q, i) {
+  const isCorrect = q.isCorrect;
+  const isSkipped = !isCorrect && q.userAnswer === '';
+  const optionsHtml = q.options.map((opt, oi) => {
+    const isSelected   = opt === q.userAnswer;
+    const isCorrectOpt = opt === q.correctAnswer;
+    let cls = '', indicator = '', tag = '';
+    if (isSelected && isCorrect)        { cls = 'res-correct'; indicator = '✓'; }
+    else if (isSelected && !isCorrect)  { cls = 'res-wrong'; tag = '<span class="opt-wrong-tag">錯誤選擇</span>'; }
+    else if (!isSelected && isCorrectOpt && !isCorrect) { cls = 'res-show'; tag = '<span class="opt-correct-tag">正確答案</span>'; }
+    else { cls = 'res-dim'; }
+    return `<div class="opt-label ${cls} opt-char">
+      <div class="opt-radio ${cls}">${indicator}</div>
+      <span class="opt-key">${OPTION_KEYS[oi]}</span>
+      <span class="opt-text opt-text-char">${escHtml(opt)}</span>${tag}</div>`;
+  }).join('');
+  const skipNoteHtml = isSkipped ? `<div class="res-skip-note">不確定（未作答）</div>` : '';
+  const explanationHtml = !isCorrect
+    ? `<div class="res-explanation"><strong>正確字：</strong>「${escHtml(q.correctChar)}」${q.meaning ? `；字義：${escHtml(q.meaning)}` : ''}</div>` : '';
+  const dispSentence = escHtml(q.qSentence).replace(
+    escHtml('「' + q.pinyin + '」'),
+    `<span style="color:#059669;font-weight:800;">「${escHtml(q.pinyin)}」</span>`
+  );
+  return `
+    <div class="res-card" data-correct="${isCorrect?'1':'0'}" style="${isCorrect?'display:none':''}">
+      <div class="res-badge ${isCorrect?'correct':isSkipped?'skipped':'wrong'}">${isCorrect?'✓':isSkipped?'？':'✗'}</div>
+      <div class="q-num" style="margin-bottom:8px;">第 ${i+1} 題 <span class="q-type-badge badge-shape" style="font-size:0.65rem;vertical-align:middle;">字形</span></div>
+      <div class="q-sentence" style="margin-bottom:8px;">${dispSentence}</div>
+      <div class="q-ask" style="margin-bottom:12px;">其中注音應寫成哪個字？</div>
+      ${skipNoteHtml}
+      <div class="options options-char">${optionsHtml}</div>
+      ${explanationHtml}
+    </div>`;
 }
 
 // ============================================================
@@ -2838,33 +3164,67 @@ function getHistory() {
   try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch { return []; }
 }
 
-function showHistory() {
-  const hist = getHistory();
+function showHistory(filter) {
+  if (filter !== undefined) histFilter = filter;
+  // Update tab active states
+  ['all','audio','shape'].forEach(f => {
+    const tab = document.getElementById(`hist-tab-${f}`);
+    if (tab) tab.classList.toggle('active', f === histFilter);
+  });
+  const allHist = getHistory();
+  const filteredWithIdx = allHist.map((rec, origIdx) => ({ rec, origIdx }))
+    .filter(({ rec }) => histFilter === 'all' || (rec.quizType || 'audio') === histFilter);
   const list = document.getElementById('history-list');
-  if (!hist.length) {
+  if (!filteredWithIdx.length) {
     list.innerHTML = '<div class="history-empty">尚無考試記錄<br><small>完成測驗後會自動儲存</small></div>';
   } else {
-    list.innerHTML = hist.map((rec, idx) => {
+    list.innerHTML = filteredWithIdx.map(({ rec, origIdx }) => {
       const pct = Math.round(rec.score / rec.total * 100);
       const barColor = pct >= 80 ? '#10b981' : pct >= 60 ? '#f59e0b' : '#ef4444';
+      const rType = rec.quizType || 'audio';
+      const typeBadge = rType === 'shape'
+        ? '<span class="q-type-badge badge-shape" style="font-size:0.65rem;margin-left:6px;">字形</span>'
+        : '<span class="q-type-badge badge-audio" style="font-size:0.65rem;margin-left:6px;">字音</span>';
       const wrongs = (rec.details || []).filter(d => !d.isCorrect && d.userAnswer !== '');
       const skipped = (rec.details || []).filter(d => d.userAnswer === '').length;
+      // Build wrong items HTML
+      let wrongItemsHtml = '';
+      if (rType === 'shape') {
+        wrongItemsHtml = wrongs.map(d => {
+          if (d.qType === 'shape2') {
+            return `<div class="hw-item">
+              <span class="hw-sentence">${escHtml(d.sentence)}</span>
+              <span class="hw-char">「${escHtml(d.correctChar)}」</span>
+              <span class="hw-correct">${escHtml(d.correctAnswer)}</span>
+              ${d.userAnswer ? `<span class="hw-wrong">${escHtml(d.userAnswer)}</span>` : ''}
+            </div>`;
+          }
+          return `<div class="hw-item">
+            <span class="hw-sentence">${escHtml(d.sentence)}</span>
+            <span class="hw-char">「${escHtml(d.targetChar)}」</span>
+            <span class="hw-correct">→${escHtml(d.correctChar||d.targetChar)}</span>
+            ${d.wrongChar ? `<span class="hw-wrong">${escHtml(d.wrongChar)}</span>` : ''}
+          </div>`;
+        }).join('');
+      } else {
+        wrongItemsHtml = wrongs.map(d => `
+          <div class="hw-item">
+            <span class="hw-sentence">${escHtml((d.sentence||'').replace(d.targetChar||'', ''))}</span>
+            <span class="hw-char">「${escHtml(d.targetChar||'')}」</span>
+            <span class="hw-correct">${escHtml(d.correctPinyin||d.correctAnswer||'')}</span>
+            ${d.userAnswer ? `<span class="hw-wrong">${escHtml(d.userAnswer)}</span>` : ''}
+          </div>`).join('');
+      }
       const wrongHtml = wrongs.length ? `
         <div class="history-wrong-list">
           <div class="history-wrong-title">✗ 錯題 ${wrongs.length} 題${skipped ? `　略過 ${skipped} 題` : ''}</div>
-          ${wrongs.map(d => `
-            <div class="hw-item">
-              <span class="hw-sentence">${escHtml(d.sentence.replace(d.targetChar, ''))}</span>
-              <span class="hw-char">「${escHtml(d.targetChar)}」</span>
-              <span class="hw-correct">${escHtml(d.correctPinyin)}</span>
-              ${d.userAnswer ? `<span class="hw-wrong">${escHtml(d.userAnswer)}</span>` : ''}
-            </div>`).join('')}
+          ${wrongItemsHtml}
         </div>` : (skipped ? `<div class="history-wrong-list"><div class="history-wrong-title">略過 ${skipped} 題</div></div>` : '');
       return `
         <div>
-          <div class="history-item" onclick="viewHistoryRecord(${idx})">
+          <div class="history-item" onclick="viewHistoryRecord(${origIdx})">
             <div>
-              <div class="history-date">${escHtml(rec.date)}</div>
+              <div class="history-date">${escHtml(rec.date)}${typeBadge}</div>
               <div class="history-bar">
                 <div class="history-bar-fill" style="width:${pct}%; background:${barColor};"></div>
               </div>
@@ -2883,7 +3243,10 @@ function showHistory() {
 
 function viewHistoryRecord(idx) {
   const hist = getHistory();
-  if (hist[idx]) showResults(hist[idx]);
+  if (hist[idx]) {
+    quizMode = hist[idx].quizType || 'audio';
+    showResults(hist[idx]);
+  }
 }
 
 
@@ -2935,7 +3298,7 @@ function updateHomeStats() {
   const hist = getHistory();
   const el = document.getElementById('home-stats');
   if (!el) return;
-  const bankInfo = `<div style="font-size:0.82rem;color:#9ca3af;margin-top:6px;">題庫共 ${audioItems.length} 題字音題目</div>`;
+  const bankInfo = `<div style="font-size:0.78rem;color:#9ca3af;margin-top:6px;">題庫：字音 ${audioItems.length} 題　字形 ${shapeItems.length} 題</div>`;
   if (!hist.length) {
     el.innerHTML = `<hr class="stat-divider"><div style="color:#9ca3af;font-size:0.85rem;padding:4px 0 8px;">尚無作答記錄</div>${bankInfo}`;
     return;
@@ -2943,8 +3306,19 @@ function updateHomeStats() {
   const avgScore = (hist.reduce((s,r) => s + r.score, 0) / hist.length).toFixed(1);
   const bestScore = Math.max(...hist.map(r => r.score));
   const lastDate = hist[0].date;
-  const wb = getWrongBank();
-  const wbCount = Object.keys(wb).length;
+  const wb  = getWrongBank();
+  const swb = getShapeWrongBank();
+  const wbCount  = Object.keys(wb).length;
+  const swbCount = Object.keys(swb).length;
+  const wrongBtnHtml = (wbCount || swbCount) ? `<div class="wb-home-row">
+    <span class="wb-home-label">錯題本</span>
+    <span>
+      ${wbCount ? `<span class="wb-home-count">${wbCount}</span><span style="font-size:0.78rem;color:#9ca3af;">字音</span>
+      <button onclick="showWrongBank('audio')" style="margin-left:6px;font-size:0.75rem;padding:3px 10px;border-radius:8px;border:1.5px solid rgba(239,68,68,0.4);background:rgba(239,68,68,0.08);color:#f87171;cursor:pointer;font-weight:600;">字音</button>` : ''}
+      ${swbCount ? `<span class="wb-home-count" style="margin-left:8px;">${swbCount}</span><span style="font-size:0.78rem;color:#9ca3af;">字形</span>
+      <button onclick="showWrongBank('shape')" style="margin-left:6px;font-size:0.75rem;padding:3px 10px;border-radius:8px;border:1.5px solid rgba(5,150,105,0.4);background:rgba(5,150,105,0.08);color:#059669;cursor:pointer;font-weight:600;">字形</button>` : ''}
+    </span>
+  </div>` : '';
   el.innerHTML = `<hr class="stat-divider">
     <div class="stats-grid">
       <div class="stat-box"><div class="stat-num">${hist.length}</div><div class="stat-lbl">測驗次數</div></div>
@@ -2952,11 +3326,7 @@ function updateHomeStats() {
       <div class="stat-box"><div class="stat-num">${bestScore}</div><div class="stat-lbl">最高分數</div></div>
     </div>
     <div style="font-size:0.78rem;color:#9ca3af;margin-bottom:4px;">上次測驗：${lastDate}</div>
-    ${wbCount ? `<div class="wb-home-row">
-      <span class="wb-home-label">累積錯題</span>
-      <span><span class="wb-home-count">${wbCount}</span> <span style="font-size:0.8rem;color:#9ca3af;">題</span>
-      <button onclick="showWrongBank()" style="margin-left:10px;font-size:0.78rem;padding:4px 12px;border-radius:8px;border:1.5px solid rgba(239,68,68,0.4);background:rgba(239,68,68,0.08);color:#f87171;cursor:pointer;font-weight:600;">複習 \u2192</button></span>
-    </div>` : ''}
+    ${wrongBtnHtml}
     ${bankInfo}`;
 }
 
@@ -2969,11 +3339,19 @@ function getWrongBank() {
 }
 
 function saveWrongBank(details) {
+  // Split by type
+  const audioDetails = details.filter(q => !q.qType || q.qType === 'audio');
+  const shapeDetails = details.filter(q => q.qType === 'shape1' || q.qType === 'shape2');
+  if (audioDetails.length > 0) saveAudioWrongBank(audioDetails);
+  if (shapeDetails.length > 0) saveShapeWrongBankData(shapeDetails);
+}
+
+function saveAudioWrongBank(details) {
   const bank = getWrongBank();
   const now  = new Date().toLocaleString('zh-TW');
   details.forEach(q => {
     if (q.isCorrect) return;
-    const key = `${q.sentence}::${q.targetChar}::${q.correctPinyin}`;
+    const key = `${q.sentence}::${q.targetChar}::${q.correctPinyin||q.correctAnswer}`;
     if (bank[key]) {
       bank[key].wrongCount++;
       bank[key].lastWrong      = now;
@@ -2982,7 +3360,7 @@ function saveWrongBank(details) {
       bank[key] = {
         sentence:       q.sentence,
         targetChar:     q.targetChar,
-        correctPinyin:  q.correctPinyin,
+        correctPinyin:  q.correctPinyin || q.correctAnswer,
         meaning:        q.meaning || '',
         wrongCount:     1,
         firstWrong:     now,
@@ -2994,45 +3372,138 @@ function saveWrongBank(details) {
   try { localStorage.setItem(WRONG_KEY, JSON.stringify(bank)); } catch(e) {}
 }
 
-function showWrongBank() {
-  const bank   = getWrongBank();
-  const items  = Object.values(bank).sort((a, b) => b.wrongCount - a.wrongCount || b.lastWrong.localeCompare(a.lastWrong));
+function getShapeWrongBank() {
+  try { return JSON.parse(localStorage.getItem(SHAPE_WRONG_KEY) || '{}'); } catch { return {}; }
+}
+
+function saveShapeWrongBankData(details) {
+  const bank = getShapeWrongBank();
+  const now  = new Date().toLocaleString('zh-TW');
+  details.forEach(q => {
+    if (q.isCorrect) return;
+    const key = `${q.sentence}::${q.targetChar}`;
+    if (bank[key]) {
+      bank[key].wrongCount++;
+      bank[key].lastWrong      = now;
+      bank[key].lastUserAnswer = q.userAnswer;
+      bank[key].shapeType      = q.qType;
+    } else {
+      bank[key] = {
+        shapeType:      q.qType,
+        sentence:       q.sentence,
+        targetChar:     q.targetChar,
+        correctChar:    q.correctChar || q.targetChar,
+        wrongChar:      q.wrongChar || '',
+        pinyin:         q.pinyin || '',
+        meaning:        q.meaning || '',
+        wrongMeaning:   q.wrongMeaning || '',
+        correctAnswer:  q.correctAnswer,
+        wrongCount:     1,
+        firstWrong:     now,
+        lastWrong:      now,
+        lastUserAnswer: q.userAnswer,
+      };
+    }
+  });
+  try { localStorage.setItem(SHAPE_WRONG_KEY, JSON.stringify(bank)); } catch(e) {}
+}
+
+function showWrongBank(mode) {
+  if (mode !== undefined) wbFilter = mode;
+  // Update tab active states
+  ['audio','shape'].forEach(f => {
+    const tab = document.getElementById(`wb-tab-${f}`);
+    if (tab) tab.classList.toggle('active', f === wbFilter);
+  });
   const statsBar = document.getElementById('wb-stats-bar');
   const list     = document.getElementById('wb-list');
 
-  if (!items.length) {
-    statsBar.style.display = 'none';
-    list.innerHTML = `<div class="wb-empty">
-      <div class="wb-empty-icon">📝</div>
-      <div style="font-weight:600;color:#374151;margin-bottom:6px;">尚無錯題記錄</div>
-      <div style="font-size:0.88rem;">完成測驗後，答錯的題目會自動收錄在這裡</div>
-    </div>`;
-  } else {
-    statsBar.style.display = 'flex';
-    document.getElementById('wb-total').textContent    = items.length;
-    document.getElementById('wb-maxwrong').textContent = items[0].wrongCount;
-    list.innerHTML = items.map(it => {
-      const sentenceHtml = formatSentence(it.sentence, it.targetChar, false);
-      const meaningHtml  = it.meaning
-        ? `<span class="wb-meaning">${escHtml(it.meaning)}</span>` : '';
-      return `<div class="wb-card">
-        <div class="wb-sentence">${sentenceHtml}</div>
-        <div class="wb-count-badge">
-          <span class="badge-num">${it.wrongCount}</span>
-          <span class="badge-lbl">次錯誤</span>
-        </div>
-        <div class="wb-pinyins">
-          <span class="wb-pin-correct">${escHtml(it.correctPinyin)}</span>
-          <span class="wb-arrow">←正確</span>
-          ${it.lastUserAnswer ? `<span class="wb-pin-wrong">${escHtml(it.lastUserAnswer)}</span>` : ''}
-        </div>
-        <div class="wb-meta">
-          ${meaningHtml}
-          <span>最近：${escHtml(it.lastWrong)}</span>
-          <span>初次：${escHtml(it.firstWrong)}</span>
-        </div>
+  if (wbFilter === 'shape') {
+    // Shape wrong bank
+    const bank  = getShapeWrongBank();
+    const items = Object.values(bank).sort((a, b) => b.wrongCount - a.wrongCount || b.lastWrong.localeCompare(a.lastWrong));
+    if (!items.length) {
+      statsBar.style.display = 'none';
+      list.innerHTML = `<div class="wb-empty">
+        <div class="wb-empty-icon">📝</div>
+        <div style="font-weight:600;color:#374151;margin-bottom:6px;">尚無字形錯題記錄</div>
+        <div style="font-size:0.88rem;">完成字形測驗後，答錯的題目會自動收錄在這裡</div>
       </div>`;
-    }).join('');
+    } else {
+      statsBar.style.display = 'flex';
+      document.getElementById('wb-total').textContent    = items.length;
+      document.getElementById('wb-maxwrong').textContent = items[0].wrongCount;
+      list.innerHTML = items.map(it => {
+        const meaningHtml = it.meaning ? `<span class="swb-meaning">${escHtml(it.meaning)}</span>` : '';
+        const typeLabel = it.shapeType === 'shape2' ? '辨字題' : '錯別字題';
+        if (it.shapeType === 'shape2') {
+          return `<div class="swb-card">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+              <span class="swb-sentence">${escHtml(it.sentence)}</span>
+              <div class="wb-count-badge"><span class="badge-num">${it.wrongCount}</span><span class="badge-lbl">次錯誤</span></div>
+            </div>
+            <div class="swb-chars">
+              <span class="swb-type-lbl">${typeLabel}</span>
+              <span class="swb-char-correct">${escHtml(it.correctChar)}</span>
+              <span class="swb-arrow">← 正確字</span>
+              ${it.lastUserAnswer ? `<span class="swb-char-wrong">${escHtml(it.lastUserAnswer)}</span>` : ''}
+            </div>
+            <div class="swb-meta">${meaningHtml}<span>最近：${escHtml(it.lastWrong)}</span><span>初次：${escHtml(it.firstWrong)}</span></div>
+          </div>`;
+        }
+        // shape1
+        return `<div class="swb-card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+            <span class="swb-sentence">${escHtml(it.sentence)}</span>
+            <div class="wb-count-badge"><span class="badge-num">${it.wrongCount}</span><span class="badge-lbl">次錯誤</span></div>
+          </div>
+          <div class="swb-chars">
+            <span class="swb-type-lbl">${typeLabel}</span>
+            <span class="swb-char-correct">${escHtml(it.correctChar)}</span>
+            <span class="swb-arrow">← 正確　誤寫</span>
+            ${it.wrongChar ? `<span class="swb-char-wrong">${escHtml(it.wrongChar)}</span>` : ''}
+          </div>
+          <div class="swb-meta">${meaningHtml}<span>最近：${escHtml(it.lastWrong)}</span><span>初次：${escHtml(it.firstWrong)}</span></div>
+        </div>`;
+      }).join('');
+    }
+  } else {
+    // Audio wrong bank (original)
+    const bank  = getWrongBank();
+    const items = Object.values(bank).sort((a, b) => b.wrongCount - a.wrongCount || b.lastWrong.localeCompare(a.lastWrong));
+    if (!items.length) {
+      statsBar.style.display = 'none';
+      list.innerHTML = `<div class="wb-empty">
+        <div class="wb-empty-icon">📝</div>
+        <div style="font-weight:600;color:#374151;margin-bottom:6px;">尚無字音錯題記錄</div>
+        <div style="font-size:0.88rem;">完成測驗後，答錯的題目會自動收錄在這裡</div>
+      </div>`;
+    } else {
+      statsBar.style.display = 'flex';
+      document.getElementById('wb-total').textContent    = items.length;
+      document.getElementById('wb-maxwrong').textContent = items[0].wrongCount;
+      list.innerHTML = items.map(it => {
+        const sentenceHtml = formatSentence(it.sentence, it.targetChar, false);
+        const meaningHtml  = it.meaning ? `<span class="wb-meaning">${escHtml(it.meaning)}</span>` : '';
+        return `<div class="wb-card">
+          <div class="wb-sentence">${sentenceHtml}</div>
+          <div class="wb-count-badge">
+            <span class="badge-num">${it.wrongCount}</span>
+            <span class="badge-lbl">次錯誤</span>
+          </div>
+          <div class="wb-pinyins">
+            <span class="wb-pin-correct">${escHtml(it.correctPinyin)}</span>
+            <span class="wb-arrow">←正確</span>
+            ${it.lastUserAnswer ? `<span class="wb-pin-wrong">${escHtml(it.lastUserAnswer)}</span>` : ''}
+          </div>
+          <div class="wb-meta">
+            ${meaningHtml}
+            <span>最近：${escHtml(it.lastWrong)}</span>
+            <span>初次：${escHtml(it.firstWrong)}</span>
+          </div>
+        </div>`;
+      }).join('');
+    }
   }
   showScreen('wrong-bank-screen');
   window.scrollTo(0, 0);
@@ -3040,10 +3511,18 @@ function showWrongBank() {
 
 function clearWrongBank() {
   if (!checkClearPassword()) { alert('密碼錯誤，無法清除。'); return; }
-  if (confirm('確定要清除所有錯題記錄嗎？')) {
-    localStorage.removeItem(WRONG_KEY);
-    showWrongBank();
-    updateHomeStats();
+  if (wbFilter === 'shape') {
+    if (confirm('確定要清除所有字形錯題記錄嗎？')) {
+      localStorage.removeItem(SHAPE_WRONG_KEY);
+      showWrongBank();
+      updateHomeStats();
+    }
+  } else {
+    if (confirm('確定要清除所有字音錯題記錄嗎？')) {
+      localStorage.removeItem(WRONG_KEY);
+      showWrongBank();
+      updateHomeStats();
+    }
   }
 }
 
@@ -3058,19 +3537,38 @@ function getTestLog() {
 function saveTestLog(record) {
   let logs = getTestLog();
   const session = {
-    date:  record.date,
-    score: record.score,
-    total: record.total,
-    entries: record.details.map(q => ({
-      sentence:      q.sentence,
-      targetChar:    q.targetChar,
-      correctPinyin: q.correctPinyin,
-      meaning:       q.meaning || '',
-      isCorrect:     q.isCorrect,
-      isSkipped:     q.userAnswer === '',
-      userPinyin:    (!q.isCorrect && q.userAnswer) ? q.userAnswer : '',
-      userMeaning:   '',
-    })),
+    date:      record.date,
+    score:     record.score,
+    total:     record.total,
+    quizType:  record.quizType || 'audio',
+    entries: record.details.map(q => {
+      if (q.qType === 'shape1' || q.qType === 'shape2') {
+        return {
+          qType:         q.qType,
+          sentence:      q.sentence,
+          targetChar:    q.targetChar,
+          correctChar:   q.correctChar || q.targetChar,
+          wrongChar:     q.wrongChar || '',
+          pinyin:        q.pinyin || '',
+          correctAnswer: q.correctAnswer,
+          meaning:       q.meaning || '',
+          isCorrect:     q.isCorrect,
+          isSkipped:     q.userAnswer === '',
+          userAnswer:    q.userAnswer || '',
+        };
+      }
+      return {
+        qType:         'audio',
+        sentence:      q.sentence,
+        targetChar:    q.targetChar,
+        correctPinyin: q.correctPinyin || q.correctAnswer,
+        meaning:       q.meaning || '',
+        isCorrect:     q.isCorrect,
+        isSkipped:     q.userAnswer === '',
+        userPinyin:    (!q.isCorrect && q.userAnswer) ? q.userAnswer : '',
+        userMeaning:   '',
+      };
+    }),
   };
   logs.unshift(session);
   if (logs.length > 500) logs = logs.slice(0, 500);
@@ -3089,29 +3587,48 @@ function showTestLog() {
   } else {
     list.innerHTML = logs.map((session, si) => {
       const pct = Math.round(session.score / session.total * 100);
+      const sType = session.quizType || 'audio';
+      const typeLabel = sType === 'shape'
+        ? '<span class="q-type-badge badge-shape" style="font-size:0.65rem;margin-left:4px;">字形</span>'
+        : '<span class="q-type-badge badge-audio" style="font-size:0.65rem;margin-left:4px;">字音</span>';
       const rows = session.entries.map(e => {
         const rowCls  = e.isSkipped ? 'log-row-skip' : e.isCorrect ? '' : 'log-row-wrong';
         const resCls  = e.isSkipped ? 'log-skip-lbl' : e.isCorrect ? 'log-ok' : 'log-err';
         const resText = e.isSkipped ? '略過' : e.isCorrect ? '✓ 正確' : '✗ 錯誤';
+        if (e.qType === 'shape1' || e.qType === 'shape2') {
+          const correctDisp = e.qType === 'shape2'
+            ? escHtml(e.correctChar || '')
+            : `${escHtml(e.correctChar||'')}≠${escHtml(e.wrongChar||'')}`;
+          const wrongDisp = e.userAnswer && !e.isCorrect ? escHtml(e.userAnswer) : '';
+          return `<tr class="${rowCls}">
+            <td>${escHtml(e.sentence)}</td>
+            <td style="font-weight:700;color:#059669;">${escHtml(e.targetChar)}</td>
+            <td style="font-weight:700;">${correctDisp}</td>
+            <td style="color:#78350f;">${escHtml(e.meaning||'')}</td>
+            <td class="${resCls}">${resText}</td>
+            <td style="color:#dc2626;">${wrongDisp}</td>
+            <td></td>
+          </tr>`;
+        }
         return `<tr class="${rowCls}">
           <td>${escHtml(e.sentence)}</td>
           <td style="font-weight:700;color:#7c3aed;">${escHtml(e.targetChar)}</td>
-          <td style="letter-spacing:0.04em;">${escHtml(e.correctPinyin)}</td>
-          <td style="color:#78350f;">${escHtml(e.meaning)}</td>
+          <td style="letter-spacing:0.04em;">${escHtml(e.correctPinyin||'')}</td>
+          <td style="color:#78350f;">${escHtml(e.meaning||'')}</td>
           <td class="${resCls}">${resText}</td>
-          <td style="letter-spacing:0.04em;color:#dc2626;">${escHtml(e.userPinyin)}</td>
-          <td style="color:#6b7280;">${escHtml(e.userMeaning)}</td>
+          <td style="letter-spacing:0.04em;color:#dc2626;">${escHtml(e.userPinyin||'')}</td>
+          <td style="color:#6b7280;">${escHtml(e.userMeaning||'')}</td>
         </tr>`;
       }).join('');
       return `<div class="log-session">
         <div class="log-session-hdr" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">
-          <span class="log-session-date">${escHtml(session.date)}</span>
+          <span class="log-session-date">${escHtml(session.date)}${typeLabel}</span>
           <span class="log-session-meta">${session.score} / ${session.total}（${pct}%）▾</span>
         </div>
         <div class="log-session-body" ${si > 0 ? 'style="display:none"' : ''}>
           <table class="log-table">
             <thead><tr>
-              <th>原句</th><th>字</th><th>正確音</th><th>正確義</th><th>結果</th><th>寫錯音</th><th>寫錯義</th>
+              <th>原句</th><th>字</th><th>正確答案</th><th>字義</th><th>結果</th><th>答錯內容</th><th>備注</th>
             </tr></thead>
             <tbody>${rows}</tbody>
           </table>
@@ -3139,7 +3656,7 @@ function saveQuizSession() {
   if (!currentQuiz.length || !Object.keys(userAnswers).length) return;
   try {
     sessionStorage.setItem('Cquiz_session', JSON.stringify({
-      currentQuiz, userAnswers, savedAt: new Date().toLocaleString('zh-TW'),
+      currentQuiz, userAnswers, quizMode, savedAt: new Date().toLocaleString('zh-TW'),
     }));
   } catch(e) {}
 }
@@ -3169,6 +3686,9 @@ function resumeQuiz() {
     if (!saved) return;
     currentQuiz  = saved.currentQuiz;
     userAnswers  = saved.userAnswers;
+    quizMode     = saved.quizMode || 'audio';
+    const navTitle = document.getElementById('quiz-nav-title');
+    if (navTitle) navTitle.textContent = quizMode === 'shape' ? '字形測驗' : '字音測驗';
     renderQuiz();
     showScreen('quiz-screen');
     window.scrollTo(0, 0);
