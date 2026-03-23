@@ -320,11 +320,11 @@
     .result-actions { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
 
     .res-card {
-      background: white; border-radius: 18px; padding: 20px 20px 16px;
+      background: white; border-radius: 18px; padding: 20px 20px 16px 52px;
       box-shadow: 0 2px 12px rgba(0,0,0,0.08); margin-bottom: 14px; position: relative;
     }
     .res-badge {
-      position: absolute; top: 16px; right: 16px; width: 28px; height: 28px;
+      position: absolute; top: 16px; left: 16px; width: 28px; height: 28px;
       border-radius: 50%; display: flex; align-items: center; justify-content: center;
       font-size: 0.9rem; font-weight: 700;
     }
@@ -699,7 +699,7 @@
       </div>
       <h1>國語測驗</h1>
       <p>國中國語字音字形練習系統</p>
-      <p style="font-size:0.72rem;opacity:0.5;margin-top:2px;letter-spacing:0.04em;">v20260323_1332_3</p>
+      <p style="font-size:0.72rem;opacity:0.5;margin-top:2px;letter-spacing:0.04em;">v20260323_1344_4</p>
     </div>
     <div id="resume-card" class="resume-card" style="display:none">
       <div class="resume-info">
@@ -755,7 +755,7 @@
     <div class="nav">
       <button class="nav-back" onclick="showHome()">← 首頁</button>
       <span class="nav-title">測驗結果</span>
-      <button id="btn-retest" onclick="startQuiz(quizMode)" style="background:#7c3aed;color:white;border:none;border-radius:20px;padding:6px 16px;font-size:0.82rem;font-weight:700;cursor:pointer;white-space:nowrap;">再測一次</button>
+      <span></span>
     </div>
     <div class="card score-card">
       <div class="score-ring">
@@ -2423,7 +2423,7 @@ const CSV_DATA = `id|sentence|target_char|correct_pinyin|wrong_pinyin|correct_ch
 // CONSTANTS
 // ============================================================
 const QUIZ_SIZE = 20;
-const APP_VERSION      = 'v20260323_1332_3';
+const APP_VERSION      = 'v20260323_1344_4';
 const STORAGE_KEY      = 'Cquiz_history';
 const WRONG_KEY        = 'Cquiz_wrong_bank';
 const SHAPE_WRONG_KEY  = 'Cquiz_shape_wrong_bank';
@@ -2636,20 +2636,25 @@ function escHtml(s) {
 // ============================================================
 // SHAPE QUESTION BUILDERS
 // ============================================================
-function buildShapeQuestion(item, idx) {
+function buildShapeQuestion(item, idx, usedSentences) {
   // Decide shape1 (錯別字辨識) or shape2 (注音辨字)
   const canShape2 = item.correct_pinyin && (
     ((charsByPinyin[item.correct_pinyin] || []).length > 1) || item.wrong_char
   );
   const useShape2 = canShape2 && Math.random() < 0.5;
-  return useShape2 ? buildShape2(item, idx) : buildShape1(item, idx);
+  return useShape2 ? buildShape2(item, idx, usedSentences) : buildShape1(item, idx, usedSentences);
 }
 
-function buildShape1(item, idx) {
+function buildShape1(item, idx, usedSentences) {
   // Wrong sentence: replace correct_char (=target_char) with wrong_char
   const wrongSent = item.sentence.split(item.target_char).join(item.wrong_char);
-  // 3 correct sentences from other shape items
-  const others = shuffle(shapeItems.filter(s => s.sentence !== item.sentence)).slice(0, 3);
+  // Mark this question's sentences as used
+  if (usedSentences) { usedSentences.add(item.sentence); usedSentences.add(wrongSent); }
+  // 3 correct sentences from other shape items, excluding already-used sentences
+  const others = shuffle(shapeItems.filter(s =>
+    s.sentence !== item.sentence && (!usedSentences || !usedSentences.has(s.sentence))
+  )).slice(0, 3);
+  if (usedSentences) others.forEach(o => usedSentences.add(o.sentence));
   const options = shuffle([wrongSent, ...others.map(o => o.sentence)]);
   return {
     idx, qType: 'shape1',
@@ -2665,7 +2670,8 @@ function buildShape1(item, idx) {
   };
 }
 
-function buildShape2(item, idx) {
+function buildShape2(item, idx, usedSentences) {
+  if (usedSentences) usedSentences.add(item.sentence);
   const pinyin = item.correct_pinyin;
   const correctChar = item.correct_char || item.target_char;
   // Build display sentence: replace target_char with 「pinyin」
@@ -2738,9 +2744,10 @@ function startQuiz(mode) {
   userAnswers = {};
 
   if (quizMode === 'shape') {
-    // 字形測驗：隨機抽取 20 題字形題
+    // 字形測驗：隨機抽取 20 題字形題，題目與選項不重複
     const selected = shuffle(shapeItems).slice(0, QUIZ_SIZE);
-    currentQuiz = selected.map((item, i) => buildShapeQuestion(item, i));
+    const usedSentences = new Set();
+    currentQuiz = selected.map((item, i) => buildShapeQuestion(item, i, usedSentences));
   } else {
     // 字音測驗：原有邏輯（優先錯題 + 未考過題目）
     const hist = getHistory();
@@ -3042,12 +3049,6 @@ function showResults(record) {
         <span class="cell-num">${i+1}</span><span class="cell-icon">${icon}</span>
       </div>`;
     }).join('');
-  }
-  // Update "再測一次" button to use correct mode
-  const retestBtn = document.getElementById('btn-retest');
-  if (retestBtn) {
-    const rMode = record.quizType || quizMode;
-    retestBtn.onclick = () => startQuiz(rMode);
   }
   const pct = Math.round(record.score / record.total * 100);
   let msg = '';
