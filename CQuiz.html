@@ -699,7 +699,7 @@
       </div>
       <h1>國語測驗</h1>
       <p>國中國語字音字形練習系統</p>
-      <p style="font-size:0.72rem;opacity:0.5;margin-top:2px;letter-spacing:0.04em;">v20260323_1132_2</p>
+      <p style="font-size:0.72rem;opacity:0.5;margin-top:2px;letter-spacing:0.04em;">v20260323_1332_3</p>
     </div>
     <div id="resume-card" class="resume-card" style="display:none">
       <div class="resume-info">
@@ -2423,10 +2423,12 @@ const CSV_DATA = `id|sentence|target_char|correct_pinyin|wrong_pinyin|correct_ch
 // CONSTANTS
 // ============================================================
 const QUIZ_SIZE = 20;
+const APP_VERSION      = 'v20260323_1332_3';
 const STORAGE_KEY      = 'Cquiz_history';
 const WRONG_KEY        = 'Cquiz_wrong_bank';
 const SHAPE_WRONG_KEY  = 'Cquiz_shape_wrong_bank';
 const LOG_KEY          = 'Cquiz_test_log';
+const LOAD_DATE_KEY    = 'Cquiz_load_date';
 const OPTION_KEYS = ['A', 'B', 'C', 'D'];
 
 // ============================================================
@@ -2491,7 +2493,16 @@ function parseCSV(raw) {
   });
 }
 
+function todayStr() {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const d = String(now.getDate()).padStart(2, '0');
+  return `${y}${m}${d}`;
+}
+
 function initData() {
+  try { localStorage.setItem(LOAD_DATE_KEY, todayStr()); } catch(e) {}
   const all = parseCSV(CSV_DATA);
   audioItems = all.filter(r => r.type && r.type.includes('音') && r.correct_pinyin && r.sentence && r.target_char);
   shapeItems = all.filter(r => r.type && r.type.includes('形') && r.wrong_char && r.sentence && r.target_char);
@@ -2636,7 +2647,7 @@ function buildShapeQuestion(item, idx) {
 
 function buildShape1(item, idx) {
   // Wrong sentence: replace correct_char (=target_char) with wrong_char
-  const wrongSent = item.sentence.replace(item.target_char, item.wrong_char);
+  const wrongSent = item.sentence.split(item.target_char).join(item.wrong_char);
   // 3 correct sentences from other shape items
   const others = shuffle(shapeItems.filter(s => s.sentence !== item.sentence)).slice(0, 3);
   const options = shuffle([wrongSent, ...others.map(o => o.sentence)]);
@@ -2712,6 +2723,16 @@ function wrongBankToItem(wb) {
 }
 
 function startQuiz(mode) {
+  // 若當下日期比版本號中的日期晚，且也比載入日期晚，重新讀取此網址取得最新版本
+  const today = todayStr();
+  const verDateMatch = APP_VERSION.match(/v(\d{8})/);
+  const verDate = verDateMatch ? verDateMatch[1] : '0';
+  const loadDate = localStorage.getItem(LOAD_DATE_KEY) || '0';
+  if (today > verDate && today > loadDate) {
+    location.href = location.href;
+    return;
+  }
+
   quizMode = mode || 'audio';
   clearQuizSession();
   userAnswers = {};
@@ -3100,11 +3121,13 @@ function buildShape1ResultCard(q, i) {
     let optDisplay = escHtml(opt);
     if (isCorrectOpt && q.wrongChar && q.correctChar) {
       const wc = escHtml(q.wrongChar);
-      optDisplay = escHtml(opt).replace(
-        wc,
+      optDisplay = escHtml(opt).split(wc).join(
         `<span style="color:#dc2626;font-weight:900;border-bottom:2px solid #dc2626;">${wc}</span>`
       );
       optDisplay += `<span style="color:#059669;font-size:0.82rem;margin-left:8px;font-weight:700;">→ ${escHtml(q.correctChar)}</span>`;
+    }
+    if (isSelected && !isCorrect) {
+      optDisplay += `<span style="color:#6b7280;font-size:0.82rem;margin-left:8px;font-weight:700;">→ 沒錯字</span>`;
     }
 
     // G button for each option (search the sentence)
