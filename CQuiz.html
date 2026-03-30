@@ -764,11 +764,10 @@
     <div class="home-header">
       <div class="home-top-btns">
         <button class="btn-sm" onclick="showHistory()">考試記錄</button>
-        <button class="btn-sm" onclick="showTestLog()">應考記錄</button>
       </div>
       <h1>國語測驗</h1>
       <p>國中國語字音字形練習系統</p>
-      <p style="font-size:0.72rem;opacity:0.5;margin-top:2px;letter-spacing:0.04em;">v20260330_1703_1</p>
+      <p style="font-size:0.72rem;opacity:0.5;margin-top:2px;letter-spacing:0.04em;">v20260330_1750_2</p>
     </div>
     <div id="resume-card" class="resume-card" style="display:none">
       <div class="resume-info">
@@ -852,14 +851,14 @@
     </div>
     <div class="card" style="padding:0; overflow:hidden;">
       <div class="hist-filter-tabs">
-        <button class="hist-tab active" id="hist-tab-all" onclick="showHistory('all')">全部</button>
-        <button class="hist-tab" id="hist-tab-audio" onclick="showHistory('audio')">字音</button>
-        <button class="hist-tab" id="hist-tab-shape" onclick="showHistory('shape')">字形</button>
+        <button class="hist-tab active" id="hist-tab-all" onclick="showRecords('all')">全部</button>
+        <button class="hist-tab" id="hist-tab-audio" onclick="showRecords('audio')">字音</button>
+        <button class="hist-tab" id="hist-tab-shape" onclick="showRecords('shape')">字形</button>
       </div>
       <div id="history-list"></div>
     </div>
     <div class="history-footer">
-      <button class="btn btn-danger" onclick="clearHistory()">清除所有記錄</button>
+      <button class="btn btn-danger" onclick="clearRecords()">清除所有記錄</button>
     </div>
   </div>
 
@@ -928,18 +927,6 @@
     </div>
   </div>
 
-  <!-- ===== TEST LOG SCREEN ===== -->
-  <div id="log-screen" class="screen">
-    <div class="nav">
-      <button class="nav-back" onclick="showHome()">← 首頁</button>
-      <span class="nav-title">應考記錄</span>
-      <span style="width:70px"></span>
-    </div>
-    <div id="log-list"></div>
-    <div class="log-footer">
-      <button class="btn btn-danger" onclick="clearTestLog()">清除所有日誌</button>
-    </div>
-  </div>
 
 </div><!-- /container -->
 
@@ -2529,11 +2516,12 @@ const CSV_DATA = `id|sentence|target_char|correct_pinyin|wrong_pinyin|correct_ch
 // CONSTANTS
 // ============================================================
 const QUIZ_SIZE = 20;
-const APP_VERSION      = 'v20260330_1703_1';
-const STORAGE_KEY      = 'Cquiz_history';
+const APP_VERSION      = 'v20260330_1750_2';
+const RECORDS_KEY      = 'Cquiz_records';
+const _OLD_HIST_KEY    = 'Cquiz_history';   // migration only
+const _OLD_LOG_KEY     = 'Cquiz_test_log';  // migration only
 const WRONG_KEY        = 'Cquiz_wrong_bank';
 const SHAPE_WRONG_KEY  = 'Cquiz_shape_wrong_bank';
-const LOG_KEY          = 'Cquiz_test_log';
 const LOAD_DATE_KEY    = 'Cquiz_load_date';
 const OPTION_KEYS = ['A', 'B', 'C', 'D'];
 
@@ -2609,6 +2597,7 @@ function todayStr() {
 
 function initData() {
   try { localStorage.setItem(LOAD_DATE_KEY, todayStr()); } catch(e) {}
+  migrateOldRecords();
   const all = parseCSV(CSV_DATA);
   audioItems = all.filter(r => r.type && r.type.includes('音') && r.correct_pinyin && r.sentence && r.target_char);
   shapeItems = all.filter(r => r.type && r.type.includes('形') && r.wrong_char && r.sentence && r.target_char);
@@ -2856,11 +2845,11 @@ function startQuiz(mode) {
     currentQuiz = selected.map((item, i) => buildShapeQuestion(item, i, usedSentences));
   } else {
     // 字音測驗：原有邏輯（優先錯題 + 未考過題目）
-    const hist = getHistory();
+    const hist = getRecords();
     const seenKeys = new Set();
     for (const rec of hist) {
       if ((rec.quizType || 'audio') !== 'audio') continue;
-      for (const d of (rec.details || [])) {
+      for (const d of (rec.entries || [])) {
         seenKeys.add(d.sentence + '|' + d.targetChar);
       }
     }
@@ -3118,9 +3107,8 @@ function submitQuiz() {
     quizType: quizMode,
     details,
   };
-  saveHistory(record);
+  saveRecord(record);
   saveWrongBank(record.details);
-  saveTestLog(record);
   window.removeEventListener('beforeunload', _quizBeforeUnload);
   clearQuizSession();
   showResults(record);
@@ -3297,103 +3285,247 @@ function buildShape2ResultCard(q, i) {
 }
 
 // ============================================================
-// HISTORY
+// UNIFIED RECORDS  (replaces Cquiz_history + Cquiz_test_log)
 // ============================================================
-function saveHistory(record) {
-  let hist = getHistory();
-  // Strip large details to save space — keep only summary + answers
-  hist.unshift(record);
-  if (hist.length > 50) hist = hist.slice(0, 50);
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(hist)); } catch(e) {}
+function getRecords() {
+  try { return JSON.parse(localStorage.getItem(RECORDS_KEY) || '[]'); } catch { return []; }
 }
 
-function getHistory() {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch { return []; }
+function saveRecord(record) {
+  let recs = getRecords();
+  const entry = {
+    date:     record.date,
+    score:    record.score,
+    total:    record.total,
+    quizType: record.quizType || 'audio',
+    entries: record.details.map(q => {
+      if (q.qType === 'shape1' || q.qType === 'shape2') {
+        return {
+          qType:         q.qType,
+          sentence:      q.sentence,
+          targetChar:    q.targetChar,
+          correctChar:   q.correctChar || q.targetChar,
+          wrongChar:     q.wrongChar || '',
+          correctAnswer: q.correctAnswer,
+          meaning:       q.meaning || '',
+          isCorrect:     q.isCorrect,
+          isSkipped:     q.userAnswer === '',
+          userAnswer:    q.userAnswer || '',
+        };
+      }
+      return {
+        qType:         'audio',
+        sentence:      q.sentence,
+        targetChar:    q.targetChar,
+        correctPinyin: q.correctPinyin || q.correctAnswer,
+        meaning:       q.meaning || '',
+        isCorrect:     q.isCorrect,
+        isSkipped:     q.userAnswer === '',
+        userAnswer:    (!q.isCorrect && q.userAnswer) ? q.userAnswer : '',
+      };
+    }),
+  };
+  recs.unshift(entry);
+  if (recs.length > 1000) recs = recs.slice(0, 1000);
+  try { localStorage.setItem(RECORDS_KEY, JSON.stringify(recs)); } catch(e) {}
 }
 
-function showHistory(filter) {
+function migrateOldRecords() {
+  if (localStorage.getItem(RECORDS_KEY)) return;
+  let oldLog = [], oldHist = [];
+  try { oldLog  = JSON.parse(localStorage.getItem(_OLD_LOG_KEY)  || '[]'); } catch {}
+  try { oldHist = JSON.parse(localStorage.getItem(_OLD_HIST_KEY) || '[]'); } catch {}
+  if (!oldLog.length && !oldHist.length) return;
+
+  const logConverted = oldLog.map(s => ({
+    date: s.date, score: s.score, total: s.total,
+    quizType: s.quizType || 'audio',
+    entries: (s.entries || []).map(e => ({
+      qType:         e.qType || 'audio',
+      sentence:      e.sentence,      targetChar:    e.targetChar,
+      correctPinyin: e.correctPinyin || '',
+      correctChar:   e.correctChar   || '',
+      wrongChar:     e.wrongChar     || '',
+      correctAnswer: e.correctAnswer || '',
+      meaning:       e.meaning       || '',
+      isCorrect:     e.isCorrect,
+      isSkipped:     e.isSkipped || false,
+      userAnswer:    e.userPinyin || e.userAnswer || '',
+    })),
+  }));
+
+  const logDates = new Set(logConverted.map(s => s.date));
+  const histConverted = oldHist
+    .filter(s => !logDates.has(s.date))
+    .map(s => ({
+      date: s.date, score: s.score, total: s.total,
+      quizType: s.quizType || 'audio',
+      entries: (s.details || []).map(d => {
+        if (d.qType === 'shape1' || d.qType === 'shape2') {
+          return {
+            qType: d.qType,
+            sentence: d.sentence, targetChar: d.targetChar,
+            correctChar: d.correctChar || d.targetChar,
+            wrongChar: d.wrongChar || '', correctAnswer: d.correctAnswer || '',
+            meaning: d.meaning || '', isCorrect: d.isCorrect,
+            isSkipped: d.userAnswer === '', userAnswer: d.userAnswer || '',
+          };
+        }
+        return {
+          qType: 'audio',
+          sentence: d.sentence, targetChar: d.targetChar,
+          correctPinyin: d.correctPinyin || d.correctAnswer || '',
+          meaning: d.meaning || '', isCorrect: d.isCorrect,
+          isSkipped: d.userAnswer === '',
+          userAnswer: (!d.isCorrect && d.userAnswer) ? d.userAnswer : '',
+        };
+      }),
+    }));
+
+  const merged = [...logConverted, ...histConverted]
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .slice(0, 1000);
+  try { localStorage.setItem(RECORDS_KEY, JSON.stringify(merged)); } catch(e) {}
+  try { localStorage.removeItem(_OLD_HIST_KEY); } catch(e) {}
+  try { localStorage.removeItem(_OLD_LOG_KEY);  } catch(e) {}
+}
+
+function showHistory(filter) { showRecords(filter); }
+
+function showRecords(filter) {
   if (filter !== undefined) histFilter = filter;
-  // Update tab active states
   ['all','audio','shape'].forEach(f => {
     const tab = document.getElementById(`hist-tab-${f}`);
     if (tab) tab.classList.toggle('active', f === histFilter);
   });
-  const allHist = getHistory();
-  const filteredWithIdx = allHist.map((rec, origIdx) => ({ rec, origIdx }))
-    .filter(({ rec }) => histFilter === 'all' || (rec.quizType || 'audio') === histFilter);
+  const allRecs  = getRecords();
+  const filtered = allRecs.filter(r => histFilter === 'all' || (r.quizType || 'audio') === histFilter);
   const list = document.getElementById('history-list');
-  if (!filteredWithIdx.length) {
+  if (!filtered.length) {
     list.innerHTML = '<div class="history-empty">尚無考試記錄<br><small>完成測驗後會自動儲存</small></div>';
-  } else {
-    list.innerHTML = filteredWithIdx.map(({ rec, origIdx }) => {
-      const pct = Math.round(rec.score / rec.total * 100);
-      const barColor = pct >= 80 ? '#10b981' : pct >= 60 ? '#f59e0b' : '#ef4444';
-      const rType = rec.quizType || 'audio';
-      const typeBadge = rType === 'shape'
-        ? '<span class="q-type-badge badge-shape" style="font-size:0.65rem;margin-left:6px;">字形</span>'
-        : '<span class="q-type-badge badge-audio" style="font-size:0.65rem;margin-left:6px;">字音</span>';
-      const wrongs = (rec.details || []).filter(d => !d.isCorrect && d.userAnswer !== '');
-      const skipped = (rec.details || []).filter(d => d.userAnswer === '').length;
-      // Build wrong items HTML
-      let wrongItemsHtml = '';
-      if (rType === 'shape') {
-        wrongItemsHtml = wrongs.map(d => {
-          if (d.qType === 'shape2') {
-            return `<div class="hw-item">
-              <span class="hw-sentence">${escHtml(d.sentence)}</span>
-              <span class="hw-char">「${escHtml(d.correctChar)}」</span>
-              <span class="hw-correct">${escHtml(d.correctAnswer)}</span>
-              ${d.userAnswer ? `<span class="hw-wrong">${escHtml(d.userAnswer)}</span>` : ''}
-            </div>`;
-          }
+    showScreen('history-screen');
+    window.scrollTo(0, 0);
+    return;
+  }
+  list.innerHTML = filtered.map((rec, idx) => {
+    const pct      = Math.round(rec.score / rec.total * 100);
+    const barColor = pct >= 80 ? '#10b981' : pct >= 60 ? '#f59e0b' : '#ef4444';
+    const rType    = rec.quizType || 'audio';
+    const typeBadge = rType === 'shape'
+      ? '<span class="q-type-badge badge-shape" style="font-size:0.65rem;margin-left:6px;">字形</span>'
+      : '<span class="q-type-badge badge-audio" style="font-size:0.65rem;margin-left:6px;">字音</span>';
+
+    const entries = rec.entries || [];
+    const wrongs  = entries.filter(d => !d.isCorrect && !d.isSkipped);
+    const skipped = entries.filter(d => d.isSkipped).length;
+
+    let wrongItemsHtml = '';
+    if (rType === 'shape') {
+      wrongItemsHtml = wrongs.map(d => {
+        if (d.qType === 'shape2') {
           return `<div class="hw-item">
             <span class="hw-sentence">${escHtml(d.sentence)}</span>
-            <span class="hw-char">「${escHtml(d.targetChar)}」</span>
-            <span class="hw-correct">→${escHtml(d.correctChar||d.targetChar)}</span>
-            ${d.wrongChar ? `<span class="hw-wrong">${escHtml(d.wrongChar)}</span>` : ''}
-          </div>`;
-        }).join('');
-      } else {
-        wrongItemsHtml = wrongs.map(d => `
-          <div class="hw-item">
-            <span class="hw-sentence">${escHtml((d.sentence||'').replace(d.targetChar||'', ''))}</span>
-            <span class="hw-char">「${escHtml(d.targetChar||'')}」</span>
-            <span class="hw-correct">${escHtml(d.correctPinyin||d.correctAnswer||'')}</span>
+            <span class="hw-char">「${escHtml(d.correctChar)}」</span>
+            <span class="hw-correct">${escHtml(d.correctAnswer)}</span>
             ${d.userAnswer ? `<span class="hw-wrong">${escHtml(d.userAnswer)}</span>` : ''}
-          </div>`).join('');
-      }
-      const wrongHtml = wrongs.length ? `
-        <div class="history-wrong-list">
-          <div class="history-wrong-title">✗ 錯題 ${wrongs.length} 題${skipped ? `　略過 ${skipped} 題` : ''}</div>
-          ${wrongItemsHtml}
-        </div>` : (skipped ? `<div class="history-wrong-list"><div class="history-wrong-title">略過 ${skipped} 題</div></div>` : '');
-      return `
-        <div>
-          <div class="history-item" onclick="viewHistoryRecord(${origIdx})">
-            <div>
-              <div class="history-date">${escHtml(rec.date)}${typeBadge}</div>
-              <div class="history-bar">
-                <div class="history-bar-fill" style="width:${pct}%; background:${barColor};"></div>
-              </div>
-            </div>
-            <div>
-              <div class="history-score">${rec.score} / ${rec.total}</div>
-              <div class="history-pct">${pct}%</div>
-            </div>
-          </div>
-          ${wrongHtml}
+          </div>`;
+        }
+        return `<div class="hw-item">
+          <span class="hw-sentence">${escHtml(d.sentence)}</span>
+          <span class="hw-char">「${escHtml(d.targetChar)}」</span>
+          <span class="hw-correct">→${escHtml(d.correctChar||d.targetChar)}</span>
+          ${d.wrongChar ? `<span class="hw-wrong">${escHtml(d.wrongChar)}</span>` : ''}
         </div>`;
+      }).join('');
+    } else {
+      wrongItemsHtml = wrongs.map(d => `
+        <div class="hw-item">
+          <span class="hw-sentence">${escHtml((d.sentence||'').replace(d.targetChar||'', ''))}</span>
+          <span class="hw-char">「${escHtml(d.targetChar||'')}」</span>
+          <span class="hw-correct">${escHtml(d.correctPinyin||'')}</span>
+          ${d.userAnswer ? `<span class="hw-wrong">${escHtml(d.userAnswer)}</span>` : ''}
+        </div>`).join('');
+    }
+    const wrongHtml = wrongs.length
+      ? `<div class="history-wrong-list">
+           <div class="history-wrong-title">✗ 錯題 ${wrongs.length} 題${skipped ? `　略過 ${skipped} 題` : ''}</div>
+           ${wrongItemsHtml}
+         </div>`
+      : (skipped ? `<div class="history-wrong-list"><div class="history-wrong-title">略過 ${skipped} 題</div></div>` : '');
+
+    const tableRows = entries.map(e => {
+      const rowCls  = e.isSkipped ? 'log-row-skip' : e.isCorrect ? '' : 'log-row-wrong';
+      const resCls  = e.isSkipped ? 'log-skip-lbl' : e.isCorrect ? 'log-ok' : 'log-err';
+      const resText = e.isSkipped ? '略' : e.isCorrect ? '✓' : '✗';
+      if (e.qType === 'shape1' || e.qType === 'shape2') {
+        const correctDisp = e.qType === 'shape2'
+          ? escHtml(e.correctChar || '')
+          : `${escHtml(e.correctChar||'')}≠${escHtml(e.wrongChar||'')}`;
+        return `<tr class="${rowCls}">
+          <td>${escHtml(e.sentence)}</td>
+          <td style="font-weight:700;color:#059669;">${escHtml(e.targetChar)}</td>
+          <td style="font-weight:700;">${correctDisp}</td>
+          <td style="color:#78350f;font-size:0.7rem;">${escHtml(e.meaning||'')}</td>
+          <td class="${resCls}">${resText}</td>
+          <td style="color:#dc2626;">${e.userAnswer && !e.isCorrect ? escHtml(e.userAnswer) : ''}</td>
+        </tr>`;
+      }
+      return `<tr class="${rowCls}">
+        <td>${escHtml(e.sentence)}</td>
+        <td style="font-weight:700;color:#7c3aed;">${escHtml(e.targetChar)}</td>
+        <td style="letter-spacing:0.04em;">${escHtml(e.correctPinyin||'')}</td>
+        <td style="color:#78350f;font-size:0.7rem;">${escHtml(e.meaning||'')}</td>
+        <td class="${resCls}">${resText}</td>
+        <td style="letter-spacing:0.04em;color:#dc2626;">${escHtml(e.userAnswer||'')}</td>
+      </tr>`;
     }).join('');
-  }
+
+    const detailHtml = entries.length ? `
+      <div style="padding:4px 22px 8px;border-top:1px solid #f3f4f6;">
+        <button onclick="toggleRecDetail(${idx})" id="rec-detail-btn-${idx}"
+          style="font-size:0.75rem;color:#7c3aed;background:none;border:none;cursor:pointer;padding:4px 0;font-weight:600;">
+          ▸ 展開全部 ${entries.length} 題明細
+        </button>
+      </div>
+      <div id="rec-detail-${idx}" style="display:none;overflow-x:auto;">
+        <table class="log-table">
+          <thead><tr>
+            <th>原句</th><th>字</th><th>正確答案</th><th>字義</th><th>結果</th><th>答錯</th>
+          </tr></thead>
+          <tbody>${tableRows}</tbody>
+        </table>
+      </div>` : '';
+
+    return `<div>
+      <div class="history-item">
+        <div>
+          <div class="history-date">${escHtml(rec.date)}${typeBadge}</div>
+          <div class="history-bar">
+            <div class="history-bar-fill" style="width:${pct}%;background:${barColor};"></div>
+          </div>
+        </div>
+        <div>
+          <div class="history-score">${rec.score} / ${rec.total}</div>
+          <div class="history-pct">${pct}%</div>
+        </div>
+      </div>
+      ${wrongHtml}
+      ${detailHtml}
+    </div>`;
+  }).join('');
+
   showScreen('history-screen');
+  window.scrollTo(0, 0);
 }
 
-function viewHistoryRecord(idx) {
-  const hist = getHistory();
-  if (hist[idx]) {
-    quizMode = hist[idx].quizType || 'audio';
-    showResults(hist[idx]);
-  }
+function toggleRecDetail(idx) {
+  const detail = document.getElementById(`rec-detail-${idx}`);
+  const btn    = document.getElementById(`rec-detail-btn-${idx}`);
+  if (!detail || !btn) return;
+  const isOpen = detail.style.display !== 'none';
+  detail.style.display = isOpen ? 'none' : 'block';
+  const rowCount = detail.querySelectorAll('tbody tr').length;
+  btn.textContent = isOpen ? `▸ 展開全部 ${rowCount} 題明細` : '▴ 收起明細';
 }
 
 
@@ -3406,11 +3538,12 @@ function checkClearPassword() {
   return input.trim().toLowerCase() === 'edit';
 }
 
-function clearHistory() {
+function clearRecords() {
   if (!checkClearPassword()) { alert('密碼錯誤，無法清除。'); return; }
-  if (confirm('確定要清除所有歷史記錄嗎？')) {
-    localStorage.removeItem(STORAGE_KEY);
-    showHistory();
+  if (confirm('確定要清除所有考試記錄嗎？')) {
+    localStorage.removeItem(RECORDS_KEY);
+    showRecords();
+    updateHomeStats();
   }
 }
 
@@ -3442,7 +3575,7 @@ function confirmExit() {
 // HOME STATS
 // ============================================================
 function updateHomeStats() {
-  const hist = getHistory();
+  const hist = getRecords();
   const el = document.getElementById('home-stats');
   if (!el) return;
   const bankInfo = `<div style="font-size:0.78rem;color:#9ca3af;margin-top:6px;">題庫：字音 ${audioItems.length} 題　字形 ${shapeItems.length} 題</div>`;
@@ -3679,126 +3812,6 @@ function clearWrongBank() {
 }
 
 
-// ============================================================
-// TEST LOG
-// ============================================================
-function getTestLog() {
-  try { return JSON.parse(localStorage.getItem(LOG_KEY) || '[]'); } catch { return []; }
-}
-
-function saveTestLog(record) {
-  let logs = getTestLog();
-  const session = {
-    date:      record.date,
-    score:     record.score,
-    total:     record.total,
-    quizType:  record.quizType || 'audio',
-    entries: record.details.map(q => {
-      if (q.qType === 'shape1' || q.qType === 'shape2') {
-        return {
-          qType:         q.qType,
-          sentence:      q.sentence,
-          targetChar:    q.targetChar,
-          correctChar:   q.correctChar || q.targetChar,
-          wrongChar:     q.wrongChar || '',
-          pinyin:        q.pinyin || '',
-          correctAnswer: q.correctAnswer,
-          meaning:       q.meaning || '',
-          isCorrect:     q.isCorrect,
-          isSkipped:     q.userAnswer === '',
-          userAnswer:    q.userAnswer || '',
-        };
-      }
-      return {
-        qType:         'audio',
-        sentence:      q.sentence,
-        targetChar:    q.targetChar,
-        correctPinyin: q.correctPinyin || q.correctAnswer,
-        meaning:       q.meaning || '',
-        isCorrect:     q.isCorrect,
-        isSkipped:     q.userAnswer === '',
-        userPinyin:    (!q.isCorrect && q.userAnswer) ? q.userAnswer : '',
-        userMeaning:   '',
-      };
-    }),
-  };
-  logs.unshift(session);
-  if (logs.length > 500) logs = logs.slice(0, 500);
-  try { localStorage.setItem(LOG_KEY, JSON.stringify(logs)); } catch(e) {}
-}
-
-function showTestLog() {
-  const logs = getTestLog();
-  const list = document.getElementById('log-list');
-  if (!logs.length) {
-    list.innerHTML = `<div class="log-empty">
-      <div style="font-size:2.5rem;margin-bottom:12px;">📋</div>
-      <div style="font-weight:600;color:#374151;margin-bottom:6px;">尚無應考記錄</div>
-      <div style="font-size:0.88rem;">完成測驗後，每道題目的結果都會記錄在這裡</div>
-    </div>`;
-  } else {
-    list.innerHTML = logs.map((session, si) => {
-      const pct = Math.round(session.score / session.total * 100);
-      const sType = session.quizType || 'audio';
-      const typeLabel = sType === 'shape'
-        ? '<span class="q-type-badge badge-shape" style="font-size:0.65rem;margin-left:4px;">字形</span>'
-        : '<span class="q-type-badge badge-audio" style="font-size:0.65rem;margin-left:4px;">字音</span>';
-      const rows = session.entries.map(e => {
-        const rowCls  = e.isSkipped ? 'log-row-skip' : e.isCorrect ? '' : 'log-row-wrong';
-        const resCls  = e.isSkipped ? 'log-skip-lbl' : e.isCorrect ? 'log-ok' : 'log-err';
-        const resText = e.isSkipped ? '略過' : e.isCorrect ? '✓ 正確' : '✗ 錯誤';
-        if (e.qType === 'shape1' || e.qType === 'shape2') {
-          const correctDisp = e.qType === 'shape2'
-            ? escHtml(e.correctChar || '')
-            : `${escHtml(e.correctChar||'')}≠${escHtml(e.wrongChar||'')}`;
-          const wrongDisp = e.userAnswer && !e.isCorrect ? escHtml(e.userAnswer) : '';
-          return `<tr class="${rowCls}">
-            <td>${escHtml(e.sentence)}</td>
-            <td style="font-weight:700;color:#059669;">${escHtml(e.targetChar)}</td>
-            <td style="font-weight:700;">${correctDisp}</td>
-            <td style="color:#78350f;">${escHtml(e.meaning||'')}</td>
-            <td class="${resCls}">${resText}</td>
-            <td style="color:#dc2626;">${wrongDisp}</td>
-            <td></td>
-          </tr>`;
-        }
-        return `<tr class="${rowCls}">
-          <td>${escHtml(e.sentence)}</td>
-          <td style="font-weight:700;color:#7c3aed;">${escHtml(e.targetChar)}</td>
-          <td style="letter-spacing:0.04em;">${escHtml(e.correctPinyin||'')}</td>
-          <td style="color:#78350f;">${escHtml(e.meaning||'')}</td>
-          <td class="${resCls}">${resText}</td>
-          <td style="letter-spacing:0.04em;color:#dc2626;">${escHtml(e.userPinyin||'')}</td>
-          <td style="color:#6b7280;">${escHtml(e.userMeaning||'')}</td>
-        </tr>`;
-      }).join('');
-      return `<div class="log-session">
-        <div class="log-session-hdr" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">
-          <span class="log-session-date">${escHtml(session.date)}${typeLabel}</span>
-          <span class="log-session-meta">${session.score} / ${session.total}（${pct}%）▾</span>
-        </div>
-        <div class="log-session-body" ${si > 0 ? 'style="display:none"' : ''}>
-          <table class="log-table">
-            <thead><tr>
-              <th>原句</th><th>字</th><th>正確答案</th><th>字義</th><th>結果</th><th>答錯內容</th><th>備注</th>
-            </tr></thead>
-            <tbody>${rows}</tbody>
-          </table>
-        </div>
-      </div>`;
-    }).join('');
-  }
-  showScreen('log-screen');
-  window.scrollTo(0, 0);
-}
-
-function clearTestLog() {
-  if (!checkClearPassword()) { alert('密碼錯誤，無法清除。'); return; }
-  if (confirm('確定要清除所有應考記錄嗎？')) {
-    localStorage.removeItem(LOG_KEY);
-    showTestLog();
-  }
-}
 
 
 // ============================================================
@@ -3900,7 +3913,7 @@ function parseDateToYMD(dateStr) {
 }
 
 function getWeeklyProgress() {
-  const logs = getTestLog();
+  const logs = getRecords();
   const counts = {};
   const days = [];
   for (let i = 6; i >= 0; i--) {
@@ -3918,7 +3931,7 @@ function getWeeklyProgress() {
 }
 
 function getLearningData() {
-  const logs = getTestLog();
+  const logs = getRecords();
   // Per-question most-recent result (logs are stored newest-first)
   const audioSeen = {};
   const shapeSeen = {};
