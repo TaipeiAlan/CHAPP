@@ -685,6 +685,75 @@
     }
     .wb-home-label { font-size: 0.85rem; color: #6b7280; }
     .wb-home-count { font-size: 1rem; font-weight: 700; color: #dc2626; }
+
+    /* ====== LEARNING STATS SCREEN ====== */
+    .ls-section {
+      background: white; border-radius: 16px; padding: 18px 20px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08); margin-bottom: 14px;
+    }
+    .ls-section-title {
+      font-size: 0.75rem; font-weight: 700; color: #6b7280;
+      text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 14px;
+    }
+    /* 7-day bar */
+    .ls-week-bar {
+      display: flex; justify-content: space-between; align-items: flex-end;
+      gap: 4px; position: relative;
+    }
+    .ls-week-bar::before {
+      content: ''; position: absolute;
+      top: 19px; left: 19px; right: 19px; height: 2px;
+      background: #e0e7ff; z-index: 0;
+    }
+    .ls-day-col {
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+      flex: 1; position: relative; z-index: 1;
+    }
+    .ls-day-circle {
+      width: 38px; height: 38px; border-radius: 50%;
+      background: #4f46e5;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.82rem; font-weight: 700; color: white;
+      box-shadow: 0 2px 8px rgba(79,70,229,0.35);
+    }
+    .ls-day-circle.ls-day-today { background: #7c3aed; box-shadow: 0 2px 12px rgba(124,58,237,0.5); }
+    .ls-day-label {
+      font-size: 0.7rem; color: #9ca3af; font-weight: 600;
+    }
+    /* category buttons */
+    .ls-cats {
+      display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 6px;
+    }
+    .ls-cat-btn {
+      border: none; border-radius: 12px; padding: 12px 6px;
+      cursor: pointer; text-align: center; transition: all 0.18s;
+    }
+    .ls-cat-btn.active { transform: scale(0.96); box-shadow: inset 0 2px 6px rgba(0,0,0,0.1); }
+    .ls-cat-mastered { background: #d1fae5; color: #059669; }
+    .ls-cat-mastered:hover { background: #a7f3d0; }
+    .ls-cat-unsure   { background: #fef3c7; color: #d97706; }
+    .ls-cat-unsure:hover { background: #fde68a; }
+    .ls-cat-unseen   { background: #f3f4f6; color: #6b7280; cursor: default; }
+    .ls-cat-num { font-size: 1.4rem; font-weight: 800; line-height: 1.1; }
+    .ls-cat-lbl { font-size: 0.72rem; font-weight: 600; margin-top: 3px; }
+    /* detail panel */
+    .ls-detail-panel {
+      background: #f9fafb; border-radius: 12px; padding: 12px 14px; margin-top: 8px;
+      max-height: 320px; overflow-y: auto;
+    }
+    .ls-detail-item {
+      font-size: 0.82rem; padding: 6px 0; border-bottom: 1px solid #f0f0f0;
+      display: flex; flex-wrap: wrap; gap: 5px; align-items: center;
+    }
+    .ls-detail-item:last-child { border-bottom: none; }
+    .ls-detail-char    { font-weight: 800; color: #1f2937; font-size: 0.95rem; }
+    .ls-detail-pinyin  { color: #4f46e5; font-weight: 700; font-size: 0.85rem; }
+    .ls-detail-sentence { color: #6b7280; font-size: 0.78rem; }
+    .ls-info-box {
+      background: rgba(249,250,251,0.9); border-radius: 12px; padding: 14px 16px;
+      font-size: 0.78rem; color: #9ca3af; line-height: 1.85;
+    }
+    .ls-info-box b { color: #374151; }
   </style>
 </head>
 <body>
@@ -699,7 +768,7 @@
       </div>
       <h1>國語測驗</h1>
       <p>國中國語字音字形練習系統</p>
-      <p style="font-size:0.72rem;opacity:0.5;margin-top:2px;letter-spacing:0.04em;">v20260323_1344_4</p>
+      <p style="font-size:0.72rem;opacity:0.5;margin-top:2px;letter-spacing:0.04em;">v20260330_1703_1</p>
     </div>
     <div id="resume-card" class="resume-card" style="display:none">
       <div class="resume-info">
@@ -821,6 +890,43 @@
     </div>
   </div>
 
+
+  <!-- ===== LEARNING STATS SCREEN ===== -->
+  <div id="learn-stats-screen" class="screen">
+    <div class="nav">
+      <button class="nav-back" onclick="showHome()">← 首頁</button>
+      <span class="nav-title">學習統計</span>
+      <span style="width:70px"></span>
+    </div>
+    <!-- 7-day bar -->
+    <div class="ls-section">
+      <div class="ls-section-title">近七天學習進度</div>
+      <div id="ls-week-bar" class="ls-week-bar"></div>
+    </div>
+    <!-- Audio stats -->
+    <div class="ls-section">
+      <div class="ls-section-title">字音題 — 學習狀況</div>
+      <div id="ls-audio-cats" class="ls-cats"></div>
+      <div id="ls-audio-detail" style="display:none;"></div>
+    </div>
+    <!-- Shape stats -->
+    <div class="ls-section">
+      <div class="ls-section-title">字形題 — 學習狀況</div>
+      <div id="ls-shape-cats" class="ls-cats"></div>
+      <div id="ls-shape-detail" style="display:none;"></div>
+    </div>
+    <!-- Data retention info -->
+    <div class="ls-section">
+      <div class="ls-section-title">資料保存原則</div>
+      <div class="ls-info-box">
+        <b>考試記錄</b>：最多保存 50 筆（含每題答題結果）<br>
+        <b>應考記錄</b>（題目詳情）：最多保存 500 筆<br>
+        <b>錯題本</b>（字音 / 字形）：不限數量，以題目為 key 累積計次<br>
+        <b>學習統計</b>：從應考記錄即時計算，不額外儲存<br>
+        以上資料均存於瀏覽器 <code>localStorage</code>，不上傳任何伺服器
+      </div>
+    </div>
+  </div>
 
   <!-- ===== TEST LOG SCREEN ===== -->
   <div id="log-screen" class="screen">
@@ -2423,7 +2529,7 @@ const CSV_DATA = `id|sentence|target_char|correct_pinyin|wrong_pinyin|correct_ch
 // CONSTANTS
 // ============================================================
 const QUIZ_SIZE = 20;
-const APP_VERSION      = 'v20260323_1344_4';
+const APP_VERSION      = 'v20260330_1703_1';
 const STORAGE_KEY      = 'Cquiz_history';
 const WRONG_KEY        = 'Cquiz_wrong_bank';
 const SHAPE_WRONG_KEY  = 'Cquiz_shape_wrong_bank';
@@ -3360,6 +3466,10 @@ function updateHomeStats() {
       <button onclick="showWrongBank('shape')" style="margin-left:6px;font-size:0.75rem;padding:3px 10px;border-radius:8px;border:1.5px solid rgba(5,150,105,0.4);background:rgba(5,150,105,0.08);color:#059669;cursor:pointer;font-weight:600;">字形</button>` : ''}
     </span>
   </div>` : '';
+  const learnStatsHtml = `<div class="wb-home-row">
+    <span class="wb-home-label">學習統計</span>
+    <button onclick="showLearnStats()" style="font-size:0.75rem;padding:3px 10px;border-radius:8px;border:1.5px solid rgba(79,70,229,0.4);background:rgba(79,70,229,0.08);color:#7c3aed;cursor:pointer;font-weight:600;">查看</button>
+  </div>`;
   el.innerHTML = `<hr class="stat-divider">
     <div class="stats-grid">
       <div class="stat-box"><div class="stat-num">${hist.length}</div><div class="stat-lbl">測驗次數</div></div>
@@ -3368,6 +3478,7 @@ function updateHomeStats() {
     </div>
     <div style="font-size:0.78rem;color:#9ca3af;margin-bottom:4px;">上次測驗：${lastDate}</div>
     ${wrongBtnHtml}
+    ${learnStatsHtml}
     ${bankInfo}`;
 }
 
@@ -3772,6 +3883,184 @@ function scrollToResult(idx) {
     if (btn) btn.textContent = '▴ 只看錯題';
   }
   cards[idx].scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+// ============================================================
+// LEARNING STATS
+// ============================================================
+
+// Parse date string from toLocaleString('zh-TW') into YYYYMMDD
+function parseDateToYMD(dateStr) {
+  // Handles "2026/3/30 上午10:30:45" or "2026年3月30日 上午10:30:45"
+  const m1 = dateStr.match(/(\d{4})\/(\d{1,2})\/(\d{1,2})/);
+  if (m1) return `${m1[1]}${String(m1[2]).padStart(2,'0')}${String(m1[3]).padStart(2,'0')}`;
+  const m2 = dateStr.match(/(\d{4})年(\d{1,2})月(\d{1,2})日/);
+  if (m2) return `${m2[1]}${String(m2[2]).padStart(2,'0')}${String(m2[3]).padStart(2,'0')}`;
+  return null;
+}
+
+function getWeeklyProgress() {
+  const logs = getTestLog();
+  const counts = {};
+  const days = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const key = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+    days.push(key);
+    counts[key] = 0;
+  }
+  for (const session of logs) {
+    const key = parseDateToYMD(session.date || '');
+    if (key && counts.hasOwnProperty(key)) counts[key]++;
+  }
+  return { days, counts };
+}
+
+function getLearningData() {
+  const logs = getTestLog();
+  // Per-question most-recent result (logs are stored newest-first)
+  const audioSeen = {};
+  const shapeSeen = {};
+  for (const session of logs) {
+    for (const e of (session.entries || [])) {
+      if (e.qType === 'shape1' || e.qType === 'shape2') {
+        const key = `${e.sentence}::${e.targetChar}`;
+        if (!shapeSeen[key]) {
+          shapeSeen[key] = {
+            isCorrect: !!(e.isCorrect && !e.isSkipped),
+            sentence: e.sentence, targetChar: e.targetChar,
+            meaning: e.meaning || '',
+          };
+        }
+      } else {
+        const key = `${e.sentence}::${e.targetChar}::${e.correctPinyin||''}`;
+        if (!audioSeen[key]) {
+          audioSeen[key] = {
+            isCorrect: !!(e.isCorrect && !e.isSkipped),
+            sentence: e.sentence, targetChar: e.targetChar,
+            correctPinyin: e.correctPinyin || '', meaning: e.meaning || '',
+          };
+        }
+      }
+    }
+  }
+  const audioMastered = [], audioUnsure = [];
+  for (const info of Object.values(audioSeen)) {
+    (info.isCorrect ? audioMastered : audioUnsure).push(info);
+  }
+  const audioSeenKeys = new Set(Object.keys(audioSeen));
+  const audioUnseen = audioItems.filter(a =>
+    !audioSeenKeys.has(`${a.sentence}::${a.target_char}::${a.correct_pinyin}`)
+  );
+
+  const shapeMastered = [], shapeUnsure = [];
+  for (const info of Object.values(shapeSeen)) {
+    (info.isCorrect ? shapeMastered : shapeUnsure).push(info);
+  }
+  const shapeSeenKeys = new Set(Object.keys(shapeSeen));
+  const shapeUnseen = shapeItems.filter(s =>
+    !shapeSeenKeys.has(`${s.sentence}::${s.target_char}`)
+  );
+
+  return { audioMastered, audioUnsure, audioUnseen, shapeMastered, shapeUnsure, shapeUnseen };
+}
+
+let _lsOpenKey = null;
+
+function showLearnStats() {
+  const { days, counts } = getWeeklyProgress();
+  const data = getLearningData();
+
+  // --- 7-day bar ---
+  const weekDayNames = ['日','一','二','三','四','五','六'];
+  const todayKey = todayStr();
+  document.getElementById('ls-week-bar').innerHTML = days.map((d, idx) => {
+    const dateObj = new Date();
+    dateObj.setDate(dateObj.getDate() - (6 - idx));
+    const wdLabel = idx === 6 ? '今' : weekDayNames[dateObj.getDay()];
+    const cnt = counts[d] || 0;
+    const isToday = d === todayKey;
+    return `<div class="ls-day-col">
+      <div class="ls-day-circle${isToday ? ' ls-day-today' : ''}">${cnt}</div>
+      <div class="ls-day-label">${wdLabel}</div>
+    </div>`;
+  }).join('');
+
+  // --- Audio & shape category buttons ---
+  function catsHtml(type, mastered, unsure, unseen) {
+    return `
+      <button class="ls-cat-btn ls-cat-mastered" id="ls-btn-${type}-mastered"
+        onclick="toggleLsDetail('${type}','mastered')">
+        <div class="ls-cat-num">${mastered.length}</div>
+        <div class="ls-cat-lbl">已學會</div>
+      </button>
+      <button class="ls-cat-btn ls-cat-unsure" id="ls-btn-${type}-unsure"
+        onclick="toggleLsDetail('${type}','unsure')">
+        <div class="ls-cat-num">${unsure.length}</div>
+        <div class="ls-cat-lbl">還不熟</div>
+      </button>
+      <div class="ls-cat-btn ls-cat-unseen" style="cursor:default;">
+        <div class="ls-cat-num">${unseen.length}</div>
+        <div class="ls-cat-lbl">未考過</div>
+      </div>`;
+  }
+  document.getElementById('ls-audio-cats').innerHTML =
+    catsHtml('audio', data.audioMastered, data.audioUnsure, data.audioUnseen);
+  document.getElementById('ls-shape-cats').innerHTML =
+    catsHtml('shape', data.shapeMastered, data.shapeUnsure, data.shapeUnseen);
+
+  // reset detail panels
+  _lsOpenKey = null;
+  window._lsData = data;
+  document.getElementById('ls-audio-detail').style.display = 'none';
+  document.getElementById('ls-shape-detail').style.display = 'none';
+
+  showScreen('learn-stats-screen');
+  window.scrollTo(0, 0);
+}
+
+function toggleLsDetail(type, cat) {
+  const key = `${type}-${cat}`;
+  const detailEl = document.getElementById(`ls-${type}-detail`);
+  // toggle off if same button pressed
+  if (_lsOpenKey === key) {
+    _lsOpenKey = null;
+    detailEl.style.display = 'none';
+    document.querySelectorAll(`#ls-${type}-cats .ls-cat-btn`).forEach(b => b.classList.remove('active'));
+    return;
+  }
+  _lsOpenKey = key;
+  document.querySelectorAll(`#ls-${type}-cats .ls-cat-btn`).forEach(b => b.classList.remove('active'));
+  const activeBtn = document.getElementById(`ls-btn-${type}-${cat}`);
+  if (activeBtn) activeBtn.classList.add('active');
+
+  const data = window._lsData;
+  const items = type === 'audio'
+    ? (cat === 'mastered' ? data.audioMastered : data.audioUnsure)
+    : (cat === 'mastered' ? data.shapeMastered : data.shapeUnsure);
+
+  if (!items.length) {
+    detailEl.innerHTML = `<div class="ls-detail-panel" style="color:#9ca3af;font-size:0.85rem;text-align:center;">（無資料）</div>`;
+  } else if (type === 'audio') {
+    detailEl.innerHTML = `<div class="ls-detail-panel">
+      ${items.map(it => `<div class="ls-detail-item">
+        <span class="ls-detail-char">${escHtml(it.targetChar)}</span>
+        <span class="ls-detail-pinyin">${escHtml(it.correctPinyin)}</span>
+        <span class="ls-detail-sentence">${escHtml(it.sentence)}</span>
+        ${it.meaning ? `<span style="font-size:0.7rem;color:#78350f;background:#fef3c7;padding:1px 6px;border-radius:5px;">${escHtml(it.meaning)}</span>` : ''}
+      </div>`).join('')}
+    </div>`;
+  } else {
+    detailEl.innerHTML = `<div class="ls-detail-panel">
+      ${items.map(it => `<div class="ls-detail-item">
+        <span class="ls-detail-char">${escHtml(it.targetChar)}</span>
+        <span class="ls-detail-sentence">${escHtml(it.sentence)}</span>
+        ${it.meaning ? `<span style="font-size:0.7rem;color:#78350f;background:#fef3c7;padding:1px 6px;border-radius:5px;">${escHtml(it.meaning)}</span>` : ''}
+      </div>`).join('')}
+    </div>`;
+  }
+  detailEl.style.display = 'block';
 }
 
 // ============================================================
