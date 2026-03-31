@@ -724,7 +724,7 @@
     }
     /* category buttons */
     .ls-cats {
-      display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 6px;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 6px;
     }
     .ls-cat-btn {
       border: none; border-radius: 12px; padding: 12px 6px;
@@ -735,6 +735,8 @@
     .ls-cat-mastered:hover { background: #a7f3d0; }
     .ls-cat-unsure   { background: #fef3c7; color: #d97706; }
     .ls-cat-unsure:hover { background: #fde68a; }
+    .ls-cat-improving { background: #dbeafe; color: #1d4ed8; }
+    .ls-cat-improving:hover { background: #bfdbfe; }
     .ls-cat-unseen   { background: #f3f4f6; color: #6b7280; cursor: default; }
     .ls-cat-num { font-size: 1.4rem; font-weight: 800; line-height: 1.1; }
     .ls-cat-lbl { font-size: 0.72rem; font-weight: 600; margin-top: 3px; }
@@ -770,7 +772,7 @@
       </div>
       <h1>國語測驗</h1>
       <p>國中國語字音字形練習系統</p>
-      <p style="font-size:0.72rem;opacity:0.5;margin-top:2px;letter-spacing:0.04em;">v20260331_1811_2</p>
+      <p style="font-size:0.72rem;opacity:0.5;margin-top:2px;letter-spacing:0.04em;">v20260331_1815_3</p>
     </div>
     <div id="resume-card" class="resume-card" style="display:none">
       <div class="resume-info">
@@ -2519,7 +2521,7 @@ const CSV_DATA = `id|sentence|target_char|correct_pinyin|wrong_pinyin|correct_ch
 // CONSTANTS
 // ============================================================
 const QUIZ_SIZE = 20;
-const APP_VERSION      = 'v20260331_1811_2';
+const APP_VERSION      = 'v20260331_1815_3';
 const RECORDS_KEY      = 'Cquiz_records';
 const _OLD_HIST_KEY    = 'Cquiz_history';   // migration only
 const _OLD_LOG_KEY     = 'Cquiz_test_log';  // migration only
@@ -3981,10 +3983,21 @@ function getWeeklyProgress() {
 
 function getLearningData() {
   const logs = getRecords();
-  // Per-question most-recent result (logs are stored newest-first)
+
+  // Cutoff key for last 10 days (YYYYMMDD)
+  const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 9);
+  const cutoffKey = `${cutoff.getFullYear()}${String(cutoff.getMonth()+1).padStart(2,'0')}${String(cutoff.getDate()).padStart(2,'0')}`;
+
+  // Per-question most-recent result (logs are newest-first)
   const audioSeen = {};
   const shapeSeen = {};
+  // Per-question correct/wrong counts within last 10 days
+  const audioCounts = {};
+  const shapeCounts = {};
+
   for (const session of logs) {
+    const sessionDate = parseDateToYMD(session.date || '');
+    const inWindow = sessionDate && sessionDate >= cutoffKey;
     for (const e of (session.entries || [])) {
       if (e.qType === 'shape1' || e.qType === 'shape2') {
         const key = `${e.sentence}::${e.targetChar}`;
@@ -3995,6 +4008,10 @@ function getLearningData() {
             meaning: e.meaning || '',
           };
         }
+        if (inWindow && !e.isSkipped) {
+          if (!shapeCounts[key]) shapeCounts[key] = { correct: 0, wrong: 0 };
+          if (e.isCorrect) shapeCounts[key].correct++; else shapeCounts[key].wrong++;
+        }
       } else {
         const key = `${e.sentence}::${e.targetChar}::${e.correctPinyin||''}`;
         if (!audioSeen[key]) {
@@ -4004,28 +4021,38 @@ function getLearningData() {
             correctPinyin: e.correctPinyin || '', meaning: e.meaning || '',
           };
         }
+        if (inWindow && !e.isSkipped) {
+          if (!audioCounts[key]) audioCounts[key] = { correct: 0, wrong: 0 };
+          if (e.isCorrect) audioCounts[key].correct++; else audioCounts[key].wrong++;
+        }
       }
     }
   }
-  const audioMastered = [], audioUnsure = [];
-  for (const info of Object.values(audioSeen)) {
+
+  const audioMastered = [], audioUnsure = [], audioImproving = [];
+  for (const [key, info] of Object.entries(audioSeen)) {
     (info.isCorrect ? audioMastered : audioUnsure).push(info);
+    const c = audioCounts[key];
+    if (info.isCorrect && c && c.correct > c.wrong) audioImproving.push(info);
   }
   const audioSeenKeys = new Set(Object.keys(audioSeen));
   const audioUnseen = audioItems.filter(a =>
     !audioSeenKeys.has(`${a.sentence}::${a.target_char}::${a.correct_pinyin}`)
   );
 
-  const shapeMastered = [], shapeUnsure = [];
-  for (const info of Object.values(shapeSeen)) {
+  const shapeMastered = [], shapeUnsure = [], shapeImproving = [];
+  for (const [key, info] of Object.entries(shapeSeen)) {
     (info.isCorrect ? shapeMastered : shapeUnsure).push(info);
+    const c = shapeCounts[key];
+    if (info.isCorrect && c && c.correct > c.wrong) shapeImproving.push(info);
   }
   const shapeSeenKeys = new Set(Object.keys(shapeSeen));
   const shapeUnseen = shapeItems.filter(s =>
     !shapeSeenKeys.has(`${s.sentence}::${s.target_char}`)
   );
 
-  return { audioMastered, audioUnsure, audioUnseen, shapeMastered, shapeUnsure, shapeUnseen };
+  return { audioMastered, audioUnsure, audioImproving, audioUnseen,
+           shapeMastered, shapeUnsure, shapeImproving, shapeUnseen };
 }
 
 let _lsOpenKey = null;
@@ -4050,12 +4077,17 @@ function showLearnStats() {
   }).join('');
 
   // --- Audio & shape category buttons ---
-  function catsHtml(type, mastered, unsure, unseen) {
+  function catsHtml(type, mastered, improving, unsure, unseen) {
     return `
       <button class="ls-cat-btn ls-cat-mastered" id="ls-btn-${type}-mastered"
         onclick="toggleLsDetail('${type}','mastered')">
         <div class="ls-cat-num">${mastered.length}</div>
         <div class="ls-cat-lbl">已學會</div>
+      </button>
+      <button class="ls-cat-btn ls-cat-improving" id="ls-btn-${type}-improving"
+        onclick="toggleLsDetail('${type}','improving')">
+        <div class="ls-cat-num">${improving.length}</div>
+        <div class="ls-cat-lbl">進步中</div>
       </button>
       <button class="ls-cat-btn ls-cat-unsure" id="ls-btn-${type}-unsure"
         onclick="toggleLsDetail('${type}','unsure')">
@@ -4068,9 +4100,9 @@ function showLearnStats() {
       </div>`;
   }
   document.getElementById('ls-audio-cats').innerHTML =
-    catsHtml('audio', data.audioMastered, data.audioUnsure, data.audioUnseen);
+    catsHtml('audio', data.audioMastered, data.audioImproving, data.audioUnsure, data.audioUnseen);
   document.getElementById('ls-shape-cats').innerHTML =
-    catsHtml('shape', data.shapeMastered, data.shapeUnsure, data.shapeUnseen);
+    catsHtml('shape', data.shapeMastered, data.shapeImproving, data.shapeUnsure, data.shapeUnseen);
 
   // reset detail panels
   _lsOpenKey = null;
@@ -4098,9 +4130,9 @@ function toggleLsDetail(type, cat) {
   if (activeBtn) activeBtn.classList.add('active');
 
   const data = window._lsData;
-  const items = type === 'audio'
-    ? (cat === 'mastered' ? data.audioMastered : data.audioUnsure)
-    : (cat === 'mastered' ? data.shapeMastered : data.shapeUnsure);
+  const map = { mastered: 'Mastered', improving: 'Improving', unsure: 'Unsure' };
+  const key2 = map[cat];
+  const items = key2 ? (type === 'audio' ? data[`audio${key2}`] : data[`shape${key2}`]) : null;
 
   if (!items.length) {
     detailEl.innerHTML = `<div class="ls-detail-panel" style="color:#9ca3af;font-size:0.85rem;text-align:center;">（無資料）</div>`;
