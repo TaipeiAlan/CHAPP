@@ -780,7 +780,7 @@
       </div>
       <h1>國語測驗</h1>
       <p>國中國語字音字形練習系統</p>
-      <p style="font-size:0.72rem;opacity:0.5;margin-top:2px;letter-spacing:0.04em;">v20260331_1835_5</p>
+      <p style="font-size:0.72rem;opacity:0.5;margin-top:2px;letter-spacing:0.04em;">v20260331_1841_6</p>
     </div>
     <div id="resume-card" class="resume-card" style="display:none">
       <div class="resume-info">
@@ -2537,7 +2537,7 @@ const CSV_DATA = `id|sentence|target_char|correct_pinyin|wrong_pinyin|correct_ch
 // CONSTANTS
 // ============================================================
 const QUIZ_SIZE = 20;
-const APP_VERSION      = 'v20260331_1835_5';
+const APP_VERSION      = 'v20260331_1841_6';
 const RECORDS_KEY      = 'Cquiz_records';
 const _OLD_HIST_KEY    = 'Cquiz_history';   // migration only
 const _OLD_LOG_KEY     = 'Cquiz_test_log';  // migration only
@@ -2769,7 +2769,7 @@ function formatSentence(sentence, targetChar, forResult) {
 }
 
 function escHtml(s) {
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return (s == null ? '' : String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
 // ============================================================
@@ -3583,6 +3583,14 @@ function showRecords(filter) {
       const rowCls  = e.isSkipped ? 'log-row-skip' : e.isCorrect ? '' : 'log-row-wrong';
       const resCls  = e.isSkipped ? 'log-skip-lbl' : e.isCorrect ? 'log-ok' : 'log-err';
       const resText = e.isSkipped ? '略' : e.isCorrect ? '✓' : '✗';
+      if (e.qType === 'idiom') {
+        return `<tr class="${rowCls}">
+          <td colspan="2">${escHtml(e.sentence)}</td>
+          <td colspan="2" style="font-size:0.75rem;color:#78350f;">${escHtml(e.correctAnswer||'')}</td>
+          <td class="${resCls}">${resText}</td>
+          <td style="font-size:0.75rem;color:#dc2626;">${e.userAnswer && !e.isCorrect ? escHtml(e.userAnswer) : ''}</td>
+        </tr>`;
+      }
       if (e.qType === 'shape1' || e.qType === 'shape2') {
         const correctDisp = e.qType === 'shape2'
           ? escHtml(e.correctChar || '')
