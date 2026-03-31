@@ -368,6 +368,13 @@
     }
 
     /* ====== SHAPE QUIZ ====== */
+    .btn-idiom-start {
+      padding: 13px 28px; border-radius: 12px; border: none;
+      font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s;
+      background: linear-gradient(135deg, #d97706, #b45309);
+      color: white; box-shadow: 0 4px 14px rgba(180,83,9,0.4); width: 100%;
+    }
+    .btn-idiom-start:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(180,83,9,0.5); }
     .btn-shape-start {
       padding: 13px 28px; border-radius: 12px; border: none;
       font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s;
@@ -384,8 +391,9 @@
       font-size: 0.65rem; font-weight: 700; padding: 2px 8px; border-radius: 10px;
       white-space: nowrap; flex-shrink: 0;
     }
-    .q-type-badge.badge-audio { background: #ede9fe; color: #7c3aed; }
-    .q-type-badge.badge-shape { background: #d1fae5; color: #059669; }
+    .q-type-badge.badge-audio  { background: #ede9fe; color: #7c3aed; }
+    .q-type-badge.badge-shape  { background: #d1fae5; color: #059669; }
+    .q-type-badge.badge-idiom  { background: #fef3c7; color: #b45309; }
 
     /* Shape1 options (full sentences) */
     .opt-text-sentence { font-size: 0.95rem; letter-spacing: 0.02em; }
@@ -772,7 +780,7 @@
       </div>
       <h1>國語測驗</h1>
       <p>國中國語字音字形練習系統</p>
-      <p style="font-size:0.72rem;opacity:0.5;margin-top:2px;letter-spacing:0.04em;">v20260331_1815_3</p>
+      <p style="font-size:0.72rem;opacity:0.5;margin-top:2px;letter-spacing:0.04em;">v20260331_1826_4</p>
     </div>
     <div id="resume-card" class="resume-card" style="display:none">
       <div class="resume-info">
@@ -794,6 +802,7 @@
       <div class="home-actions-dual">
         <button class="btn btn-primary" onclick="startQuiz('audio')">🎵 開始字音測驗</button>
         <button class="btn-shape-start" onclick="startQuiz('shape')">📝 開始字形測驗</button>
+        <button class="btn-idiom-start" onclick="startQuiz('idiom')">📖 開始成語測驗</button>
       </div>
       <div id="home-stats"></div>
     </div>
@@ -860,6 +869,7 @@
         <button class="hist-tab active" id="hist-tab-all" onclick="showRecords('all')">全部</button>
         <button class="hist-tab" id="hist-tab-audio" onclick="showRecords('audio')">字音</button>
         <button class="hist-tab" id="hist-tab-shape" onclick="showRecords('shape')">字形</button>
+        <button class="hist-tab" id="hist-tab-idiom" onclick="showRecords('idiom')">成語</button>
       </div>
       <div id="history-list"></div>
     </div>
@@ -2521,7 +2531,7 @@ const CSV_DATA = `id|sentence|target_char|correct_pinyin|wrong_pinyin|correct_ch
 // CONSTANTS
 // ============================================================
 const QUIZ_SIZE = 20;
-const APP_VERSION      = 'v20260331_1815_3';
+const APP_VERSION      = 'v20260331_1826_4';
 const RECORDS_KEY      = 'Cquiz_records';
 const _OLD_HIST_KEY    = 'Cquiz_history';   // migration only
 const _OLD_LOG_KEY     = 'Cquiz_test_log';  // migration only
@@ -2575,9 +2585,10 @@ function shuffle(arr) {
 // ============================================================
 let audioItems = [];
 let shapeItems = [];
+let idiomItems = [];
 let allPinyinPool = new Set();
 let charsByPinyin = {}; // correct_pinyin → [target_char, ...]
-let quizMode = 'audio'; // 'audio' | 'shape'
+let quizMode = 'audio'; // 'audio' | 'shape' | 'idiom'
 let histFilter = 'all'; // 'all' | 'audio' | 'shape'
 let wbFilter   = 'audio'; // 'audio' | 'shape'
 
@@ -2606,6 +2617,7 @@ function initData() {
   const all = parseCSV(CSV_DATA);
   audioItems = all.filter(r => r.type && r.type.includes('音') && r.correct_pinyin && r.sentence && r.target_char);
   shapeItems = all.filter(r => r.type && r.type.includes('形') && r.wrong_char && r.sentence && r.target_char);
+  idiomItems = all.filter(r => r.type && r.type.includes('成') && r['成語簡義'] && r.sentence);
   all.forEach(r => {
     if (r.correct_pinyin) allPinyinPool.add(r.correct_pinyin);
     if (r.correct_pinyin && r.target_char) {
@@ -2717,6 +2729,27 @@ function buildQuestion(item, idx) {
     correctAnswer: item.correct_pinyin,
     meaning: item.meaning || '',
     options,
+  };
+}
+
+function buildIdiomQuestion(item, idx) {
+  const correct = item['成語簡義'];
+  const wrongRaw = (item['成語常見誤義'] || '').split('+').map(s => s.trim()).filter(Boolean);
+  // Fill to 3 wrong options from other idiom items' 成語簡義
+  const pool = shuffle(idiomItems.filter(i => i.sentence !== item.sentence && i['成語簡義'] !== correct));
+  const wrongOpts = [...wrongRaw];
+  for (const other of pool) {
+    if (wrongOpts.length >= 3) break;
+    const m = other['成語簡義'];
+    if (!wrongOpts.includes(m)) wrongOpts.push(m);
+  }
+  return {
+    idx,
+    qType: 'idiom',
+    sentence: item.sentence,
+    correctAnswer: correct,
+    meaning: correct,
+    options: shuffle([correct, ...wrongOpts.slice(0, 3)]),
   };
 }
 
@@ -2843,7 +2876,10 @@ function startQuiz(mode) {
   clearQuizSession();
   userAnswers = {};
 
-  if (quizMode === 'shape') {
+  if (quizMode === 'idiom') {
+    // 成語測驗：隨機抽取 20 題
+    currentQuiz = shuffle(idiomItems).slice(0, QUIZ_SIZE).map((item, i) => buildIdiomQuestion(item, i));
+  } else if (quizMode === 'shape') {
     // 字形測驗：隨機抽取 20 題字形題，題目與選項不重複
     const selected = shuffle(shapeItems).slice(0, QUIZ_SIZE);
     const usedSentences = new Set();
@@ -2878,7 +2914,7 @@ function startQuiz(mode) {
 
   // Update nav title
   const navTitle = document.getElementById('quiz-nav-title');
-  if (navTitle) navTitle.textContent = quizMode === 'shape' ? '字形測驗' : '字音測驗';
+  if (navTitle) navTitle.textContent = quizMode === 'shape' ? '字形測驗' : quizMode === 'idiom' ? '成語測驗' : '字音測驗';
 
   renderQuiz();
   showScreen('quiz-screen');
@@ -2896,7 +2932,35 @@ function renderQuiz() {
 function renderQuizCard(q) {
   if (q.qType === 'shape1') return renderShape1Card(q);
   if (q.qType === 'shape2') return renderShape2Card(q);
+  if (q.qType === 'idiom')  return renderIdiomCard(q);
   return renderAudioCard(q);
+}
+
+function renderIdiomCard(q) {
+  return `
+    <div class="q-card" id="qcard-${q.idx}">
+      <div class="q-header">
+        <div class="q-header-left">
+          <span class="q-num">第 ${q.idx + 1} 題</span>
+          <span class="q-type-badge badge-idiom">成語</span>
+          <span class="q-sentence" style="font-weight:800;">${escHtml(q.sentence)}</span>
+        </div>
+      </div>
+      <div class="q-ask-row">
+        <span class="q-ask">以下哪個選項是這個成語的正確意思？</span>
+        <button class="btn-skip" id="skip-btn-${q.idx}" onclick="skipAnswer(${q.idx})">不確定</button>
+      </div>
+      <div class="options" id="opts-${q.idx}">
+        ${q.options.map((opt, oi) => `
+          <div class="opt-label" id="opt-${q.idx}-${oi}"
+               onclick="selectAnswer(${q.idx}, ${JSON.stringify(opt)}, ${oi})">
+            <div class="opt-radio" id="radio-${q.idx}-${oi}"></div>
+            <span class="opt-key">${OPTION_KEYS[oi]}</span>
+            <span class="opt-text">${escHtml(opt)}</span>
+          </div>
+        `).join('')}
+      </div>
+    </div>`;
 }
 
 function renderAudioCard(q) {
@@ -3168,7 +3232,39 @@ function showResults(record) {
 function buildResultCard(q, i) {
   if (q.qType === 'shape1') return buildShape1ResultCard(q, i);
   if (q.qType === 'shape2') return buildShape2ResultCard(q, i);
+  if (q.qType === 'idiom')  return buildIdiomResultCard(q, i);
   return buildAudioResultCard(q, i);
+}
+
+function buildIdiomResultCard(q, i) {
+  const isCorrect = q.isCorrect;
+  const isSkipped = !isCorrect && q.userAnswer === '';
+  const optionsHtml = q.options.map((opt, oi) => {
+    const isSelected   = opt === q.userAnswer;
+    const isCorrectOpt = opt === q.correctAnswer;
+    let cls = '', indicator = '', tag = '';
+    if (isSelected && isCorrect)                             { cls = 'res-correct'; indicator = '✓'; }
+    else if (isSelected && !isCorrect)                       { cls = 'res-wrong';   tag = '<span class="opt-wrong-tag">錯誤選擇</span>'; }
+    else if (!isSelected && isCorrectOpt && !isCorrect)      { cls = 'res-show';    tag = '<span class="opt-correct-tag">正確答案</span>'; }
+    else                                                     { cls = 'res-dim'; }
+    return `<div class="opt-label ${cls}">
+      <div class="opt-radio ${cls}">${indicator}</div>
+      <span class="opt-key">${OPTION_KEYS[oi]}</span>
+      <span class="opt-text">${escHtml(opt)}</span>${tag}</div>`;
+  }).join('');
+  const skipNoteHtml = isSkipped ? `<div class="res-skip-note">不確定（未作答）</div>` : '';
+  return `
+    <div class="res-card" data-correct="${isCorrect?'1':'0'}" style="${isCorrect?'display:none':''}">
+      <div class="res-badge ${isCorrect?'correct':isSkipped?'skipped':'wrong'}">${isCorrect?'✓':isSkipped?'？':'✗'}</div>
+      <div class="q-num" style="margin-bottom:8px;">第 ${i+1} 題 <span class="q-type-badge badge-idiom" style="font-size:0.65rem;vertical-align:middle;">成語</span></div>
+      <div class="q-sentence" style="font-size:1.5rem;font-weight:800;margin-bottom:10px;">
+        ${escHtml(q.sentence)}
+        <a class="btn-google" href="https://www.google.com/search?q=${encodeURIComponent(q.sentence)}" target="_blank" rel="noopener">G</a>
+      </div>
+      <div class="q-ask" style="margin-bottom:10px;">以下哪個選項是這個成語的正確意思？</div>
+      ${skipNoteHtml}
+      <div class="options">${optionsHtml}</div>
+    </div>`;
 }
 
 function buildAudioResultCard(q, i) {
@@ -3318,6 +3414,16 @@ function saveRecord(record) {
           userAnswer:    q.userAnswer || '',
         };
       }
+      if (q.qType === 'idiom') {
+        return {
+          qType:         'idiom',
+          sentence:      q.sentence,
+          correctAnswer: q.correctAnswer,
+          isCorrect:     q.isCorrect,
+          isSkipped:     q.userAnswer === '',
+          userAnswer:    (!q.isCorrect && q.userAnswer) ? q.userAnswer : '',
+        };
+      }
       return {
         qType:         'audio',
         sentence:      q.sentence,
@@ -3399,7 +3505,7 @@ function showHistory(filter) { showRecords(filter); }
 
 function showRecords(filter) {
   if (filter !== undefined) histFilter = filter;
-  ['all','audio','shape'].forEach(f => {
+  ['all','audio','shape','idiom'].forEach(f => {
     const tab = document.getElementById(`hist-tab-${f}`);
     if (tab) tab.classList.toggle('active', f === histFilter);
   });
@@ -3418,6 +3524,8 @@ function showRecords(filter) {
     const rType    = rec.quizType || 'audio';
     const typeBadge = rType === 'shape'
       ? '<span class="q-type-badge badge-shape" style="font-size:0.65rem;margin-left:6px;">字形</span>'
+      : rType === 'idiom'
+      ? '<span class="q-type-badge badge-idiom" style="font-size:0.65rem;margin-left:6px;">成語</span>'
       : '<span class="q-type-badge badge-audio" style="font-size:0.65rem;margin-left:6px;">字音</span>';
 
     const entries = rec.entries || [];
@@ -3425,7 +3533,14 @@ function showRecords(filter) {
     const skipped = entries.filter(d => d.isSkipped).length;
 
     let wrongItemsHtml = '';
-    if (rType === 'shape') {
+    if (rType === 'idiom') {
+      wrongItemsHtml = wrongs.map(d => `
+        <div class="hw-item">
+          <span class="hw-sentence">${escHtml(d.sentence)}</span>
+          <span class="hw-correct" style="color:#b45309;">${escHtml(d.correctAnswer||'')}</span>
+          ${d.userAnswer ? `<span class="hw-wrong">${escHtml(d.userAnswer)}</span>` : ''}
+        </div>`).join('');
+    } else if (rType === 'shape') {
       wrongItemsHtml = wrongs.map(d => {
         if (d.qType === 'shape2') {
           return `<div class="hw-item">
@@ -3583,7 +3698,7 @@ function updateHomeStats() {
   const hist = getRecords();
   const el = document.getElementById('home-stats');
   if (!el) return;
-  const bankInfo = `<div style="font-size:0.78rem;color:#9ca3af;margin-top:6px;">題庫：字音 ${audioItems.length} 題　字形 ${shapeItems.length} 題</div>`;
+  const bankInfo = `<div style="font-size:0.78rem;color:#9ca3af;margin-top:6px;">題庫：字音 ${audioItems.length} 題　字形 ${shapeItems.length} 題　成語 ${idiomItems.length} 題</div>`;
   if (!hist.length) {
     el.innerHTML = `<hr class="stat-divider"><div style="color:#9ca3af;font-size:0.85rem;padding:4px 0 8px;">尚無作答記錄</div>${bankInfo}`;
     const homeWB0 = document.getElementById('home-week-bar');
@@ -3652,7 +3767,7 @@ function getWrongBank() {
 }
 
 function saveWrongBank(details) {
-  // Split by type
+  // Split by type (idiom skipped — no idiom wrong bank)
   const audioDetails = details.filter(q => !q.qType || q.qType === 'audio');
   const shapeDetails = details.filter(q => q.qType === 'shape1' || q.qType === 'shape2');
   if (audioDetails.length > 0) saveAudioWrongBank(audioDetails);
@@ -3881,7 +3996,7 @@ function resumeQuiz() {
     userAnswers  = saved.userAnswers;
     quizMode     = saved.quizMode || 'audio';
     const navTitle = document.getElementById('quiz-nav-title');
-    if (navTitle) navTitle.textContent = quizMode === 'shape' ? '字形測驗' : '字音測驗';
+    if (navTitle) navTitle.textContent = quizMode === 'shape' ? '字形測驗' : quizMode === 'idiom' ? '成語測驗' : '字音測驗';
     renderQuiz();
     showScreen('quiz-screen');
     window.scrollTo(0, 0);
