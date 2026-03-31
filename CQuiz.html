@@ -705,6 +705,8 @@
       top: 19px; left: 19px; right: 19px; height: 2px;
       background: #e0e7ff; z-index: 0;
     }
+    #home-week-bar .ls-week-bar::before { background: rgba(255,255,255,0.25); }
+    #home-week-bar .ls-day-label { color: rgba(255,255,255,0.65); }
     .ls-day-col {
       display: flex; flex-direction: column; align-items: center; gap: 6px;
       flex: 1; position: relative; z-index: 1;
@@ -763,11 +765,12 @@
   <div id="home-screen" class="screen active">
     <div class="home-header">
       <div class="home-top-btns">
+        <button class="btn-sm" onclick="showLearnStats()">學習統計</button>
         <button class="btn-sm" onclick="showHistory()">考試記錄</button>
       </div>
       <h1>國語測驗</h1>
       <p>國中國語字音字形練習系統</p>
-      <p style="font-size:0.72rem;opacity:0.5;margin-top:2px;letter-spacing:0.04em;">v20260330_1751_3</p>
+      <p style="font-size:0.72rem;opacity:0.5;margin-top:2px;letter-spacing:0.04em;">v20260331_1805_1</p>
     </div>
     <div id="resume-card" class="resume-card" style="display:none">
       <div class="resume-info">
@@ -779,6 +782,7 @@
         <button class="btn-resume btn-resume-disc" onclick="discardResume()">放棄</button>
       </div>
     </div>
+    <div id="home-week-bar" style="display:none;"></div>
     <div class="card home-card">
       <div class="home-icon">🎯</div>
       <h2 class="home-title">國語測驗</h2>
@@ -2515,7 +2519,7 @@ const CSV_DATA = `id|sentence|target_char|correct_pinyin|wrong_pinyin|correct_ch
 // CONSTANTS
 // ============================================================
 const QUIZ_SIZE = 20;
-const APP_VERSION      = 'v20260330_1751_3';
+const APP_VERSION      = 'v20260331_1805_1';
 const RECORDS_KEY      = 'Cquiz_records';
 const _OLD_HIST_KEY    = 'Cquiz_history';   // migration only
 const _OLD_LOG_KEY     = 'Cquiz_test_log';  // migration only
@@ -3580,6 +3584,8 @@ function updateHomeStats() {
   const bankInfo = `<div style="font-size:0.78rem;color:#9ca3af;margin-top:6px;">題庫：字音 ${audioItems.length} 題　字形 ${shapeItems.length} 題</div>`;
   if (!hist.length) {
     el.innerHTML = `<hr class="stat-divider"><div style="color:#9ca3af;font-size:0.85rem;padding:4px 0 8px;">尚無作答記錄</div>${bankInfo}`;
+    const homeWB0 = document.getElementById('home-week-bar');
+    if (homeWB0) homeWB0.style.display = 'none';
     return;
   }
   const avgScore = (hist.reduce((s,r) => s + r.score, 0) / hist.length).toFixed(1);
@@ -3598,10 +3604,6 @@ function updateHomeStats() {
       <button onclick="showWrongBank('shape')" style="margin-left:6px;font-size:0.75rem;padding:3px 10px;border-radius:8px;border:1.5px solid rgba(5,150,105,0.4);background:rgba(5,150,105,0.08);color:#059669;cursor:pointer;font-weight:600;">字形</button>` : ''}
     </span>
   </div>` : '';
-  const learnStatsHtml = `<div class="wb-home-row">
-    <span class="wb-home-label">學習統計</span>
-    <button onclick="showLearnStats()" style="font-size:0.75rem;padding:3px 10px;border-radius:8px;border:1.5px solid rgba(79,70,229,0.4);background:rgba(79,70,229,0.08);color:#7c3aed;cursor:pointer;font-weight:600;">查看</button>
-  </div>`;
   el.innerHTML = `<hr class="stat-divider">
     <div class="stats-grid">
       <div class="stat-box"><div class="stat-num">${hist.length}</div><div class="stat-lbl">測驗次數</div></div>
@@ -3610,8 +3612,28 @@ function updateHomeStats() {
     </div>
     <div style="font-size:0.78rem;color:#9ca3af;margin-bottom:4px;">上次測驗：${lastDate}</div>
     ${wrongBtnHtml}
-    ${learnStatsHtml}
     ${bankInfo}`;
+  // Render home week bar
+  const homeWB = document.getElementById('home-week-bar');
+  if (homeWB) {
+    const { days, counts } = getWeeklyProgress();
+    const weekDayNames = ['日','一','二','三','四','五','六'];
+    const todayKey = todayStr();
+    const cols = days.map((d, idx) => {
+      const dateObj = new Date(); dateObj.setDate(dateObj.getDate() - (6 - idx));
+      const lbl = idx === 6 ? '今' : weekDayNames[dateObj.getDay()];
+      const cnt = counts[d] || 0;
+      const isToday = d === todayKey;
+      return `<div class="ls-day-col">
+        <div class="ls-day-circle${isToday ? ' ls-day-today' : ''}">${cnt}</div>
+        <div class="ls-day-label">${lbl}</div>
+      </div>`;
+    }).join('');
+    homeWB.innerHTML = `<div style="background:rgba(255,255,255,0.12);border-radius:16px;padding:14px 18px;margin-bottom:12px;">
+      <div class="ls-week-bar">${cols}</div>
+    </div>`;
+    homeWB.style.display = 'block';
+  }
 }
 
 
