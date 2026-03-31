@@ -368,6 +368,13 @@
     }
 
     /* ====== SHAPE QUIZ ====== */
+    .btn-idiom-start {
+      padding: 13px 28px; border-radius: 12px; border: none;
+      font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s;
+      background: linear-gradient(135deg, #d97706, #b45309);
+      color: white; box-shadow: 0 4px 14px rgba(180,83,9,0.4); width: 100%;
+    }
+    .btn-idiom-start:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(180,83,9,0.5); }
     .btn-shape-start {
       padding: 13px 28px; border-radius: 12px; border: none;
       font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s;
@@ -384,8 +391,9 @@
       font-size: 0.65rem; font-weight: 700; padding: 2px 8px; border-radius: 10px;
       white-space: nowrap; flex-shrink: 0;
     }
-    .q-type-badge.badge-audio { background: #ede9fe; color: #7c3aed; }
-    .q-type-badge.badge-shape { background: #d1fae5; color: #059669; }
+    .q-type-badge.badge-audio  { background: #ede9fe; color: #7c3aed; }
+    .q-type-badge.badge-shape  { background: #d1fae5; color: #059669; }
+    .q-type-badge.badge-idiom  { background: #fef3c7; color: #b45309; }
 
     /* Shape1 options (full sentences) */
     .opt-text-sentence { font-size: 0.95rem; letter-spacing: 0.02em; }
@@ -705,6 +713,8 @@
       top: 19px; left: 19px; right: 19px; height: 2px;
       background: #e0e7ff; z-index: 0;
     }
+    #home-week-bar .ls-week-bar::before { background: rgba(255,255,255,0.25); }
+    #home-week-bar .ls-day-label { color: rgba(255,255,255,0.65); }
     .ls-day-col {
       display: flex; flex-direction: column; align-items: center; gap: 6px;
       flex: 1; position: relative; z-index: 1;
@@ -722,7 +732,7 @@
     }
     /* category buttons */
     .ls-cats {
-      display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 6px;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 6px;
     }
     .ls-cat-btn {
       border: none; border-radius: 12px; padding: 12px 6px;
@@ -733,6 +743,8 @@
     .ls-cat-mastered:hover { background: #a7f3d0; }
     .ls-cat-unsure   { background: #fef3c7; color: #d97706; }
     .ls-cat-unsure:hover { background: #fde68a; }
+    .ls-cat-improving { background: #dbeafe; color: #1d4ed8; }
+    .ls-cat-improving:hover { background: #bfdbfe; }
     .ls-cat-unseen   { background: #f3f4f6; color: #6b7280; cursor: default; }
     .ls-cat-num { font-size: 1.4rem; font-weight: 800; line-height: 1.1; }
     .ls-cat-lbl { font-size: 0.72rem; font-weight: 600; margin-top: 3px; }
@@ -763,11 +775,12 @@
   <div id="home-screen" class="screen active">
     <div class="home-header">
       <div class="home-top-btns">
+        <button class="btn-sm" onclick="showLearnStats()">學習統計</button>
         <button class="btn-sm" onclick="showHistory()">考試記錄</button>
       </div>
       <h1>國語測驗</h1>
       <p>國中國語字音字形練習系統</p>
-      <p style="font-size:0.72rem;opacity:0.5;margin-top:2px;letter-spacing:0.04em;">v20260330_1751_3</p>
+      <p style="font-size:0.72rem;opacity:0.5;margin-top:2px;letter-spacing:0.04em;">v20260331_1841_6</p>
     </div>
     <div id="resume-card" class="resume-card" style="display:none">
       <div class="resume-info">
@@ -779,6 +792,7 @@
         <button class="btn-resume btn-resume-disc" onclick="discardResume()">放棄</button>
       </div>
     </div>
+    <div id="home-week-bar" style="display:none;"></div>
     <div class="card home-card">
       <div class="home-icon">🎯</div>
       <h2 class="home-title">國語測驗</h2>
@@ -788,6 +802,7 @@
       <div class="home-actions-dual">
         <button class="btn btn-primary" onclick="startQuiz('audio')">🎵 開始字音測驗</button>
         <button class="btn-shape-start" onclick="startQuiz('shape')">📝 開始字形測驗</button>
+        <button class="btn-idiom-start" onclick="startQuiz('idiom')">📖 開始成語測驗</button>
       </div>
       <div id="home-stats"></div>
     </div>
@@ -854,6 +869,7 @@
         <button class="hist-tab active" id="hist-tab-all" onclick="showRecords('all')">全部</button>
         <button class="hist-tab" id="hist-tab-audio" onclick="showRecords('audio')">字音</button>
         <button class="hist-tab" id="hist-tab-shape" onclick="showRecords('shape')">字形</button>
+        <button class="hist-tab" id="hist-tab-idiom" onclick="showRecords('idiom')">成語</button>
       </div>
       <div id="history-list"></div>
     </div>
@@ -913,6 +929,12 @@
       <div class="ls-section-title">字形題 — 學習狀況</div>
       <div id="ls-shape-cats" class="ls-cats"></div>
       <div id="ls-shape-detail" style="display:none;"></div>
+    </div>
+    <!-- Idiom stats -->
+    <div class="ls-section">
+      <div class="ls-section-title">成語題 — 學習狀況</div>
+      <div id="ls-idiom-cats" class="ls-cats"></div>
+      <div id="ls-idiom-detail" style="display:none;"></div>
     </div>
     <!-- Data retention info -->
     <div class="ls-section">
@@ -2515,7 +2537,7 @@ const CSV_DATA = `id|sentence|target_char|correct_pinyin|wrong_pinyin|correct_ch
 // CONSTANTS
 // ============================================================
 const QUIZ_SIZE = 20;
-const APP_VERSION      = 'v20260330_1751_3';
+const APP_VERSION      = 'v20260331_1841_6';
 const RECORDS_KEY      = 'Cquiz_records';
 const _OLD_HIST_KEY    = 'Cquiz_history';   // migration only
 const _OLD_LOG_KEY     = 'Cquiz_test_log';  // migration only
@@ -2569,9 +2591,10 @@ function shuffle(arr) {
 // ============================================================
 let audioItems = [];
 let shapeItems = [];
+let idiomItems = [];
 let allPinyinPool = new Set();
 let charsByPinyin = {}; // correct_pinyin → [target_char, ...]
-let quizMode = 'audio'; // 'audio' | 'shape'
+let quizMode = 'audio'; // 'audio' | 'shape' | 'idiom'
 let histFilter = 'all'; // 'all' | 'audio' | 'shape'
 let wbFilter   = 'audio'; // 'audio' | 'shape'
 
@@ -2600,6 +2623,7 @@ function initData() {
   const all = parseCSV(CSV_DATA);
   audioItems = all.filter(r => r.type && r.type.includes('音') && r.correct_pinyin && r.sentence && r.target_char);
   shapeItems = all.filter(r => r.type && r.type.includes('形') && r.wrong_char && r.sentence && r.target_char);
+  idiomItems = all.filter(r => r.type && r.type.includes('成') && r['成語簡義'] && r.sentence);
   all.forEach(r => {
     if (r.correct_pinyin) allPinyinPool.add(r.correct_pinyin);
     if (r.correct_pinyin && r.target_char) {
@@ -2714,6 +2738,27 @@ function buildQuestion(item, idx) {
   };
 }
 
+function buildIdiomQuestion(item, idx) {
+  const correct = item['成語簡義'];
+  const wrongRaw = (item['成語常見誤義'] || '').split('+').map(s => s.trim()).filter(Boolean);
+  // Fill to 3 wrong options from other idiom items' 成語簡義
+  const pool = shuffle(idiomItems.filter(i => i.sentence !== item.sentence && i['成語簡義'] !== correct));
+  const wrongOpts = [...wrongRaw];
+  for (const other of pool) {
+    if (wrongOpts.length >= 3) break;
+    const m = other['成語簡義'];
+    if (!wrongOpts.includes(m)) wrongOpts.push(m);
+  }
+  return {
+    idx,
+    qType: 'idiom',
+    sentence: item.sentence,
+    correctAnswer: correct,
+    meaning: correct,
+    options: shuffle([correct, ...wrongOpts.slice(0, 3)]),
+  };
+}
+
 function formatSentence(sentence, targetChar, forResult) {
   const idx = sentence.indexOf(targetChar);
   if (idx === -1) return `<strong>${escHtml(sentence)}</strong>`;
@@ -2724,7 +2769,7 @@ function formatSentence(sentence, targetChar, forResult) {
 }
 
 function escHtml(s) {
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return (s == null ? '' : String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
 // ============================================================
@@ -2837,7 +2882,10 @@ function startQuiz(mode) {
   clearQuizSession();
   userAnswers = {};
 
-  if (quizMode === 'shape') {
+  if (quizMode === 'idiom') {
+    // 成語測驗：隨機抽取 20 題
+    currentQuiz = shuffle(idiomItems).slice(0, QUIZ_SIZE).map((item, i) => buildIdiomQuestion(item, i));
+  } else if (quizMode === 'shape') {
     // 字形測驗：隨機抽取 20 題字形題，題目與選項不重複
     const selected = shuffle(shapeItems).slice(0, QUIZ_SIZE);
     const usedSentences = new Set();
@@ -2872,7 +2920,7 @@ function startQuiz(mode) {
 
   // Update nav title
   const navTitle = document.getElementById('quiz-nav-title');
-  if (navTitle) navTitle.textContent = quizMode === 'shape' ? '字形測驗' : '字音測驗';
+  if (navTitle) navTitle.textContent = quizMode === 'shape' ? '字形測驗' : quizMode === 'idiom' ? '成語測驗' : '字音測驗';
 
   renderQuiz();
   showScreen('quiz-screen');
@@ -2890,7 +2938,35 @@ function renderQuiz() {
 function renderQuizCard(q) {
   if (q.qType === 'shape1') return renderShape1Card(q);
   if (q.qType === 'shape2') return renderShape2Card(q);
+  if (q.qType === 'idiom')  return renderIdiomCard(q);
   return renderAudioCard(q);
+}
+
+function renderIdiomCard(q) {
+  return `
+    <div class="q-card" id="qcard-${q.idx}">
+      <div class="q-header">
+        <div class="q-header-left">
+          <span class="q-num">第 ${q.idx + 1} 題</span>
+          <span class="q-type-badge badge-idiom">成語</span>
+          <span class="q-sentence" style="font-weight:800;">${escHtml(q.sentence)}</span>
+        </div>
+      </div>
+      <div class="q-ask-row">
+        <span class="q-ask">以下哪個選項是這個成語的正確意思？</span>
+        <button class="btn-skip" id="skip-btn-${q.idx}" onclick="skipAnswer(${q.idx})">不確定</button>
+      </div>
+      <div class="options" id="opts-${q.idx}">
+        ${q.options.map((opt, oi) => `
+          <div class="opt-label" id="opt-${q.idx}-${oi}"
+               onclick="selectAnswer(${q.idx}, '${opt.replace(/'/g,"\\'")}', ${oi})">
+            <div class="opt-radio" id="radio-${q.idx}-${oi}"></div>
+            <span class="opt-key">${OPTION_KEYS[oi]}</span>
+            <span class="opt-text">${escHtml(opt)}</span>
+          </div>
+        `).join('')}
+      </div>
+    </div>`;
 }
 
 function renderAudioCard(q) {
@@ -3162,7 +3238,39 @@ function showResults(record) {
 function buildResultCard(q, i) {
   if (q.qType === 'shape1') return buildShape1ResultCard(q, i);
   if (q.qType === 'shape2') return buildShape2ResultCard(q, i);
+  if (q.qType === 'idiom')  return buildIdiomResultCard(q, i);
   return buildAudioResultCard(q, i);
+}
+
+function buildIdiomResultCard(q, i) {
+  const isCorrect = q.isCorrect;
+  const isSkipped = !isCorrect && q.userAnswer === '';
+  const optionsHtml = q.options.map((opt, oi) => {
+    const isSelected   = opt === q.userAnswer;
+    const isCorrectOpt = opt === q.correctAnswer;
+    let cls = '', indicator = '', tag = '';
+    if (isSelected && isCorrect)                             { cls = 'res-correct'; indicator = '✓'; }
+    else if (isSelected && !isCorrect)                       { cls = 'res-wrong';   tag = '<span class="opt-wrong-tag">錯誤選擇</span>'; }
+    else if (!isSelected && isCorrectOpt && !isCorrect)      { cls = 'res-show';    tag = '<span class="opt-correct-tag">正確答案</span>'; }
+    else                                                     { cls = 'res-dim'; }
+    return `<div class="opt-label ${cls}">
+      <div class="opt-radio ${cls}">${indicator}</div>
+      <span class="opt-key">${OPTION_KEYS[oi]}</span>
+      <span class="opt-text">${escHtml(opt)}</span>${tag}</div>`;
+  }).join('');
+  const skipNoteHtml = isSkipped ? `<div class="res-skip-note">不確定（未作答）</div>` : '';
+  return `
+    <div class="res-card" data-correct="${isCorrect?'1':'0'}" style="${isCorrect?'display:none':''}">
+      <div class="res-badge ${isCorrect?'correct':isSkipped?'skipped':'wrong'}">${isCorrect?'✓':isSkipped?'？':'✗'}</div>
+      <div class="q-num" style="margin-bottom:8px;">第 ${i+1} 題 <span class="q-type-badge badge-idiom" style="font-size:0.65rem;vertical-align:middle;">成語</span></div>
+      <div class="q-sentence" style="font-size:1.5rem;font-weight:800;margin-bottom:10px;">
+        ${escHtml(q.sentence)}
+        <a class="btn-google" href="https://www.google.com/search?q=${encodeURIComponent(q.sentence)}" target="_blank" rel="noopener">G</a>
+      </div>
+      <div class="q-ask" style="margin-bottom:10px;">以下哪個選項是這個成語的正確意思？</div>
+      ${skipNoteHtml}
+      <div class="options">${optionsHtml}</div>
+    </div>`;
 }
 
 function buildAudioResultCard(q, i) {
@@ -3312,6 +3420,16 @@ function saveRecord(record) {
           userAnswer:    q.userAnswer || '',
         };
       }
+      if (q.qType === 'idiom') {
+        return {
+          qType:         'idiom',
+          sentence:      q.sentence,
+          correctAnswer: q.correctAnswer,
+          isCorrect:     q.isCorrect,
+          isSkipped:     q.userAnswer === '',
+          userAnswer:    (!q.isCorrect && q.userAnswer) ? q.userAnswer : '',
+        };
+      }
       return {
         qType:         'audio',
         sentence:      q.sentence,
@@ -3393,7 +3511,7 @@ function showHistory(filter) { showRecords(filter); }
 
 function showRecords(filter) {
   if (filter !== undefined) histFilter = filter;
-  ['all','audio','shape'].forEach(f => {
+  ['all','audio','shape','idiom'].forEach(f => {
     const tab = document.getElementById(`hist-tab-${f}`);
     if (tab) tab.classList.toggle('active', f === histFilter);
   });
@@ -3412,6 +3530,8 @@ function showRecords(filter) {
     const rType    = rec.quizType || 'audio';
     const typeBadge = rType === 'shape'
       ? '<span class="q-type-badge badge-shape" style="font-size:0.65rem;margin-left:6px;">字形</span>'
+      : rType === 'idiom'
+      ? '<span class="q-type-badge badge-idiom" style="font-size:0.65rem;margin-left:6px;">成語</span>'
       : '<span class="q-type-badge badge-audio" style="font-size:0.65rem;margin-left:6px;">字音</span>';
 
     const entries = rec.entries || [];
@@ -3419,7 +3539,14 @@ function showRecords(filter) {
     const skipped = entries.filter(d => d.isSkipped).length;
 
     let wrongItemsHtml = '';
-    if (rType === 'shape') {
+    if (rType === 'idiom') {
+      wrongItemsHtml = wrongs.map(d => `
+        <div class="hw-item">
+          <span class="hw-sentence">${escHtml(d.sentence)}</span>
+          <span class="hw-correct" style="color:#b45309;">${escHtml(d.correctAnswer||'')}</span>
+          ${d.userAnswer ? `<span class="hw-wrong">${escHtml(d.userAnswer)}</span>` : ''}
+        </div>`).join('');
+    } else if (rType === 'shape') {
       wrongItemsHtml = wrongs.map(d => {
         if (d.qType === 'shape2') {
           return `<div class="hw-item">
@@ -3456,6 +3583,14 @@ function showRecords(filter) {
       const rowCls  = e.isSkipped ? 'log-row-skip' : e.isCorrect ? '' : 'log-row-wrong';
       const resCls  = e.isSkipped ? 'log-skip-lbl' : e.isCorrect ? 'log-ok' : 'log-err';
       const resText = e.isSkipped ? '略' : e.isCorrect ? '✓' : '✗';
+      if (e.qType === 'idiom') {
+        return `<tr class="${rowCls}">
+          <td colspan="2">${escHtml(e.sentence)}</td>
+          <td colspan="2" style="font-size:0.75rem;color:#78350f;">${escHtml(e.correctAnswer||'')}</td>
+          <td class="${resCls}">${resText}</td>
+          <td style="font-size:0.75rem;color:#dc2626;">${e.userAnswer && !e.isCorrect ? escHtml(e.userAnswer) : ''}</td>
+        </tr>`;
+      }
       if (e.qType === 'shape1' || e.qType === 'shape2') {
         const correctDisp = e.qType === 'shape2'
           ? escHtml(e.correctChar || '')
@@ -3577,9 +3712,11 @@ function updateHomeStats() {
   const hist = getRecords();
   const el = document.getElementById('home-stats');
   if (!el) return;
-  const bankInfo = `<div style="font-size:0.78rem;color:#9ca3af;margin-top:6px;">題庫：字音 ${audioItems.length} 題　字形 ${shapeItems.length} 題</div>`;
+  const bankInfo = `<div style="font-size:0.78rem;color:#9ca3af;margin-top:6px;">題庫：字音 ${audioItems.length} 題　字形 ${shapeItems.length} 題　成語 ${idiomItems.length} 題</div>`;
   if (!hist.length) {
     el.innerHTML = `<hr class="stat-divider"><div style="color:#9ca3af;font-size:0.85rem;padding:4px 0 8px;">尚無作答記錄</div>${bankInfo}`;
+    const homeWB0 = document.getElementById('home-week-bar');
+    if (homeWB0) homeWB0.style.display = 'none';
     return;
   }
   const avgScore = (hist.reduce((s,r) => s + r.score, 0) / hist.length).toFixed(1);
@@ -3598,10 +3735,6 @@ function updateHomeStats() {
       <button onclick="showWrongBank('shape')" style="margin-left:6px;font-size:0.75rem;padding:3px 10px;border-radius:8px;border:1.5px solid rgba(5,150,105,0.4);background:rgba(5,150,105,0.08);color:#059669;cursor:pointer;font-weight:600;">字形</button>` : ''}
     </span>
   </div>` : '';
-  const learnStatsHtml = `<div class="wb-home-row">
-    <span class="wb-home-label">學習統計</span>
-    <button onclick="showLearnStats()" style="font-size:0.75rem;padding:3px 10px;border-radius:8px;border:1.5px solid rgba(79,70,229,0.4);background:rgba(79,70,229,0.08);color:#7c3aed;cursor:pointer;font-weight:600;">查看</button>
-  </div>`;
   el.innerHTML = `<hr class="stat-divider">
     <div class="stats-grid">
       <div class="stat-box"><div class="stat-num">${hist.length}</div><div class="stat-lbl">測驗次數</div></div>
@@ -3610,8 +3743,33 @@ function updateHomeStats() {
     </div>
     <div style="font-size:0.78rem;color:#9ca3af;margin-bottom:4px;">上次測驗：${lastDate}</div>
     ${wrongBtnHtml}
-    ${learnStatsHtml}
     ${bankInfo}`;
+  // Render home week bar
+  const homeWB = document.getElementById('home-week-bar');
+  if (homeWB) {
+    const { days, counts } = getWeeklyProgress();
+    const weekDayNames = ['日','一','二','三','四','五','六'];
+    const todayKey = todayStr();
+    const cols = days.map((d, idx) => {
+      const dateObj = new Date(); dateObj.setDate(dateObj.getDate() - (6 - idx));
+      const lbl = idx === 6 ? '今' : weekDayNames[dateObj.getDay()];
+      const cnt = counts[d] || 0;
+      const isToday = d === todayKey;
+      return `<div class="ls-day-col">
+        <div class="ls-day-circle${isToday ? ' ls-day-today' : ''}">${cnt}</div>
+        <div class="ls-day-label">${lbl}</div>
+      </div>`;
+    }).join('');
+    const streak = calcStreak();
+    homeWB.innerHTML = `<div style="background:rgba(255,255,255,0.12);border-radius:16px;padding:14px 18px;margin-bottom:12px;display:flex;align-items:center;gap:12px;">
+      <div class="ls-week-bar" style="flex:1;">${cols}</div>
+      <div style="flex-shrink:0;text-align:center;padding-left:4px;border-left:1px solid rgba(255,255,255,0.2);">
+        <div style="font-size:1.55rem;font-weight:800;color:white;line-height:1.1;">${streak}</div>
+        <div style="font-size:0.62rem;color:rgba(255,255,255,0.6);margin-top:2px;white-space:nowrap;">連續天</div>
+      </div>
+    </div>`;
+    homeWB.style.display = 'block';
+  }
 }
 
 
@@ -3623,7 +3781,7 @@ function getWrongBank() {
 }
 
 function saveWrongBank(details) {
-  // Split by type
+  // Split by type (idiom skipped — no idiom wrong bank)
   const audioDetails = details.filter(q => !q.qType || q.qType === 'audio');
   const shapeDetails = details.filter(q => q.qType === 'shape1' || q.qType === 'shape2');
   if (audioDetails.length > 0) saveAudioWrongBank(audioDetails);
@@ -3852,7 +4010,7 @@ function resumeQuiz() {
     userAnswers  = saved.userAnswers;
     quizMode     = saved.quizMode || 'audio';
     const navTitle = document.getElementById('quiz-nav-title');
-    if (navTitle) navTitle.textContent = quizMode === 'shape' ? '字形測驗' : '字音測驗';
+    if (navTitle) navTitle.textContent = quizMode === 'shape' ? '字形測驗' : quizMode === 'idiom' ? '成語測驗' : '字音測驗';
     renderQuiz();
     showScreen('quiz-screen');
     window.scrollTo(0, 0);
@@ -3911,6 +4069,29 @@ function parseDateToYMD(dateStr) {
   return null;
 }
 
+function calcStreak() {
+  const records = getRecords();
+  const daySet = new Set();
+  for (const r of records) {
+    const key = parseDateToYMD(r.date || '');
+    if (key) daySet.add(key);
+  }
+  const todayKey = todayStr();
+  const yest = new Date(); yest.setDate(yest.getDate() - 1);
+  const yesterdayKey = `${yest.getFullYear()}${String(yest.getMonth()+1).padStart(2,'0')}${String(yest.getDate()).padStart(2,'0')}`;
+  // streak breaks if neither today nor yesterday has activity
+  if (!daySet.has(todayKey) && !daySet.has(yesterdayKey)) return 0;
+  const startOffset = daySet.has(todayKey) ? 0 : 1;
+  let streak = 0;
+  for (let i = startOffset; i < 3650; i++) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    const key = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+    if (daySet.has(key)) streak++;
+    else break;
+  }
+  return streak;
+}
+
 function getWeeklyProgress() {
   const logs = getRecords();
   const counts = {};
@@ -3931,12 +4112,38 @@ function getWeeklyProgress() {
 
 function getLearningData() {
   const logs = getRecords();
-  // Per-question most-recent result (logs are stored newest-first)
+
+  // Cutoff key for last 10 days (YYYYMMDD)
+  const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 9);
+  const cutoffKey = `${cutoff.getFullYear()}${String(cutoff.getMonth()+1).padStart(2,'0')}${String(cutoff.getDate()).padStart(2,'0')}`;
+
+  // Per-question most-recent result (logs are newest-first)
   const audioSeen = {};
   const shapeSeen = {};
+  const idiomSeen = {};
+  // Per-question correct/wrong counts within last 10 days
+  const audioCounts = {};
+  const shapeCounts = {};
+  const idiomCounts = {};
+
   for (const session of logs) {
+    const sessionDate = parseDateToYMD(session.date || '');
+    const inWindow = sessionDate && sessionDate >= cutoffKey;
     for (const e of (session.entries || [])) {
-      if (e.qType === 'shape1' || e.qType === 'shape2') {
+      if (e.qType === 'idiom') {
+        const key = e.sentence;
+        if (!idiomSeen[key]) {
+          idiomSeen[key] = {
+            isCorrect: !!(e.isCorrect && !e.isSkipped),
+            sentence: e.sentence,
+            correctAnswer: e.correctAnswer || '',
+          };
+        }
+        if (inWindow && !e.isSkipped) {
+          if (!idiomCounts[key]) idiomCounts[key] = { correct: 0, wrong: 0 };
+          if (e.isCorrect) idiomCounts[key].correct++; else idiomCounts[key].wrong++;
+        }
+      } else if (e.qType === 'shape1' || e.qType === 'shape2') {
         const key = `${e.sentence}::${e.targetChar}`;
         if (!shapeSeen[key]) {
           shapeSeen[key] = {
@@ -3944,6 +4151,10 @@ function getLearningData() {
             sentence: e.sentence, targetChar: e.targetChar,
             meaning: e.meaning || '',
           };
+        }
+        if (inWindow && !e.isSkipped) {
+          if (!shapeCounts[key]) shapeCounts[key] = { correct: 0, wrong: 0 };
+          if (e.isCorrect) shapeCounts[key].correct++; else shapeCounts[key].wrong++;
         }
       } else {
         const key = `${e.sentence}::${e.targetChar}::${e.correctPinyin||''}`;
@@ -3954,28 +4165,48 @@ function getLearningData() {
             correctPinyin: e.correctPinyin || '', meaning: e.meaning || '',
           };
         }
+        if (inWindow && !e.isSkipped) {
+          if (!audioCounts[key]) audioCounts[key] = { correct: 0, wrong: 0 };
+          if (e.isCorrect) audioCounts[key].correct++; else audioCounts[key].wrong++;
+        }
       }
     }
   }
-  const audioMastered = [], audioUnsure = [];
-  for (const info of Object.values(audioSeen)) {
+
+  const audioMastered = [], audioUnsure = [], audioImproving = [];
+  for (const [key, info] of Object.entries(audioSeen)) {
     (info.isCorrect ? audioMastered : audioUnsure).push(info);
+    const c = audioCounts[key];
+    if (info.isCorrect && c && c.correct > c.wrong) audioImproving.push(info);
   }
   const audioSeenKeys = new Set(Object.keys(audioSeen));
   const audioUnseen = audioItems.filter(a =>
     !audioSeenKeys.has(`${a.sentence}::${a.target_char}::${a.correct_pinyin}`)
   );
 
-  const shapeMastered = [], shapeUnsure = [];
-  for (const info of Object.values(shapeSeen)) {
+  const shapeMastered = [], shapeUnsure = [], shapeImproving = [];
+  for (const [key, info] of Object.entries(shapeSeen)) {
     (info.isCorrect ? shapeMastered : shapeUnsure).push(info);
+    const c = shapeCounts[key];
+    if (info.isCorrect && c && c.correct > c.wrong) shapeImproving.push(info);
   }
   const shapeSeenKeys = new Set(Object.keys(shapeSeen));
   const shapeUnseen = shapeItems.filter(s =>
     !shapeSeenKeys.has(`${s.sentence}::${s.target_char}`)
   );
 
-  return { audioMastered, audioUnsure, audioUnseen, shapeMastered, shapeUnsure, shapeUnseen };
+  const idiomMastered = [], idiomUnsure = [], idiomImproving = [];
+  for (const [key, info] of Object.entries(idiomSeen)) {
+    (info.isCorrect ? idiomMastered : idiomUnsure).push(info);
+    const c = idiomCounts[key];
+    if (info.isCorrect && c && c.correct > c.wrong) idiomImproving.push(info);
+  }
+  const idiomSeenKeys = new Set(Object.keys(idiomSeen));
+  const idiomUnseen = idiomItems.filter(a => !idiomSeenKeys.has(a.sentence));
+
+  return { audioMastered, audioUnsure, audioImproving, audioUnseen,
+           shapeMastered, shapeUnsure, shapeImproving, shapeUnseen,
+           idiomMastered, idiomUnsure, idiomImproving, idiomUnseen };
 }
 
 let _lsOpenKey = null;
@@ -4000,12 +4231,17 @@ function showLearnStats() {
   }).join('');
 
   // --- Audio & shape category buttons ---
-  function catsHtml(type, mastered, unsure, unseen) {
+  function catsHtml(type, mastered, improving, unsure, unseen) {
     return `
       <button class="ls-cat-btn ls-cat-mastered" id="ls-btn-${type}-mastered"
         onclick="toggleLsDetail('${type}','mastered')">
         <div class="ls-cat-num">${mastered.length}</div>
         <div class="ls-cat-lbl">已學會</div>
+      </button>
+      <button class="ls-cat-btn ls-cat-improving" id="ls-btn-${type}-improving"
+        onclick="toggleLsDetail('${type}','improving')">
+        <div class="ls-cat-num">${improving.length}</div>
+        <div class="ls-cat-lbl">進步中</div>
       </button>
       <button class="ls-cat-btn ls-cat-unsure" id="ls-btn-${type}-unsure"
         onclick="toggleLsDetail('${type}','unsure')">
@@ -4018,15 +4254,18 @@ function showLearnStats() {
       </div>`;
   }
   document.getElementById('ls-audio-cats').innerHTML =
-    catsHtml('audio', data.audioMastered, data.audioUnsure, data.audioUnseen);
+    catsHtml('audio', data.audioMastered, data.audioImproving, data.audioUnsure, data.audioUnseen);
   document.getElementById('ls-shape-cats').innerHTML =
-    catsHtml('shape', data.shapeMastered, data.shapeUnsure, data.shapeUnseen);
+    catsHtml('shape', data.shapeMastered, data.shapeImproving, data.shapeUnsure, data.shapeUnseen);
+  document.getElementById('ls-idiom-cats').innerHTML =
+    catsHtml('idiom', data.idiomMastered, data.idiomImproving, data.idiomUnsure, data.idiomUnseen);
 
   // reset detail panels
   _lsOpenKey = null;
   window._lsData = data;
   document.getElementById('ls-audio-detail').style.display = 'none';
   document.getElementById('ls-shape-detail').style.display = 'none';
+  document.getElementById('ls-idiom-detail').style.display = 'none';
 
   showScreen('learn-stats-screen');
   window.scrollTo(0, 0);
@@ -4048,11 +4287,14 @@ function toggleLsDetail(type, cat) {
   if (activeBtn) activeBtn.classList.add('active');
 
   const data = window._lsData;
-  const items = type === 'audio'
-    ? (cat === 'mastered' ? data.audioMastered : data.audioUnsure)
-    : (cat === 'mastered' ? data.shapeMastered : data.shapeUnsure);
+  const map = { mastered: 'Mastered', improving: 'Improving', unsure: 'Unsure' };
+  const key2 = map[cat];
+  let items;
+  if (type === 'audio') items = key2 ? data[`audio${key2}`] : null;
+  else if (type === 'shape') items = key2 ? data[`shape${key2}`] : null;
+  else items = key2 ? data[`idiom${key2}`] : null;
 
-  if (!items.length) {
+  if (!items || !items.length) {
     detailEl.innerHTML = `<div class="ls-detail-panel" style="color:#9ca3af;font-size:0.85rem;text-align:center;">（無資料）</div>`;
   } else if (type === 'audio') {
     detailEl.innerHTML = `<div class="ls-detail-panel">
@@ -4063,12 +4305,19 @@ function toggleLsDetail(type, cat) {
         ${it.meaning ? `<span style="font-size:0.7rem;color:#78350f;background:#fef3c7;padding:1px 6px;border-radius:5px;">${escHtml(it.meaning)}</span>` : ''}
       </div>`).join('')}
     </div>`;
-  } else {
+  } else if (type === 'shape') {
     detailEl.innerHTML = `<div class="ls-detail-panel">
       ${items.map(it => `<div class="ls-detail-item">
         <span class="ls-detail-char">${escHtml(it.targetChar)}</span>
         <span class="ls-detail-sentence">${escHtml(it.sentence)}</span>
         ${it.meaning ? `<span style="font-size:0.7rem;color:#78350f;background:#fef3c7;padding:1px 6px;border-radius:5px;">${escHtml(it.meaning)}</span>` : ''}
+      </div>`).join('')}
+    </div>`;
+  } else {
+    detailEl.innerHTML = `<div class="ls-detail-panel">
+      ${items.map(it => `<div class="ls-detail-item">
+        <span class="ls-detail-char">${escHtml(it.sentence)}</span>
+        <span style="font-size:0.7rem;color:#78350f;background:#fef3c7;padding:1px 6px;border-radius:5px;">${escHtml(it.correctAnswer)}</span>
       </div>`).join('')}
     </div>`;
   }
