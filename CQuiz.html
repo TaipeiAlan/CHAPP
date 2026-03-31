@@ -770,7 +770,7 @@
       </div>
       <h1>國語測驗</h1>
       <p>國中國語字音字形練習系統</p>
-      <p style="font-size:0.72rem;opacity:0.5;margin-top:2px;letter-spacing:0.04em;">v20260331_1805_1</p>
+      <p style="font-size:0.72rem;opacity:0.5;margin-top:2px;letter-spacing:0.04em;">v20260331_1811_2</p>
     </div>
     <div id="resume-card" class="resume-card" style="display:none">
       <div class="resume-info">
@@ -2519,7 +2519,7 @@ const CSV_DATA = `id|sentence|target_char|correct_pinyin|wrong_pinyin|correct_ch
 // CONSTANTS
 // ============================================================
 const QUIZ_SIZE = 20;
-const APP_VERSION      = 'v20260331_1805_1';
+const APP_VERSION      = 'v20260331_1811_2';
 const RECORDS_KEY      = 'Cquiz_records';
 const _OLD_HIST_KEY    = 'Cquiz_history';   // migration only
 const _OLD_LOG_KEY     = 'Cquiz_test_log';  // migration only
@@ -3629,8 +3629,13 @@ function updateHomeStats() {
         <div class="ls-day-label">${lbl}</div>
       </div>`;
     }).join('');
-    homeWB.innerHTML = `<div style="background:rgba(255,255,255,0.12);border-radius:16px;padding:14px 18px;margin-bottom:12px;">
-      <div class="ls-week-bar">${cols}</div>
+    const streak = calcStreak();
+    homeWB.innerHTML = `<div style="background:rgba(255,255,255,0.12);border-radius:16px;padding:14px 18px;margin-bottom:12px;display:flex;align-items:center;gap:12px;">
+      <div class="ls-week-bar" style="flex:1;">${cols}</div>
+      <div style="flex-shrink:0;text-align:center;padding-left:4px;border-left:1px solid rgba(255,255,255,0.2);">
+        <div style="font-size:1.55rem;font-weight:800;color:white;line-height:1.1;">${streak}</div>
+        <div style="font-size:0.62rem;color:rgba(255,255,255,0.6);margin-top:2px;white-space:nowrap;">連續天</div>
+      </div>
     </div>`;
     homeWB.style.display = 'block';
   }
@@ -3931,6 +3936,29 @@ function parseDateToYMD(dateStr) {
   const m2 = dateStr.match(/(\d{4})年(\d{1,2})月(\d{1,2})日/);
   if (m2) return `${m2[1]}${String(m2[2]).padStart(2,'0')}${String(m2[3]).padStart(2,'0')}`;
   return null;
+}
+
+function calcStreak() {
+  const records = getRecords();
+  const daySet = new Set();
+  for (const r of records) {
+    const key = parseDateToYMD(r.date || '');
+    if (key) daySet.add(key);
+  }
+  const todayKey = todayStr();
+  const yest = new Date(); yest.setDate(yest.getDate() - 1);
+  const yesterdayKey = `${yest.getFullYear()}${String(yest.getMonth()+1).padStart(2,'0')}${String(yest.getDate()).padStart(2,'0')}`;
+  // streak breaks if neither today nor yesterday has activity
+  if (!daySet.has(todayKey) && !daySet.has(yesterdayKey)) return 0;
+  const startOffset = daySet.has(todayKey) ? 0 : 1;
+  let streak = 0;
+  for (let i = startOffset; i < 3650; i++) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    const key = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+    if (daySet.has(key)) streak++;
+    else break;
+  }
+  return streak;
 }
 
 function getWeeklyProgress() {
