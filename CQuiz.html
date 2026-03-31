@@ -780,7 +780,7 @@
       </div>
       <h1>國語測驗</h1>
       <p>國中國語字音字形練習系統</p>
-      <p style="font-size:0.72rem;opacity:0.5;margin-top:2px;letter-spacing:0.04em;">v20260331_1826_4</p>
+      <p style="font-size:0.72rem;opacity:0.5;margin-top:2px;letter-spacing:0.04em;">v20260331_1835_5</p>
     </div>
     <div id="resume-card" class="resume-card" style="display:none">
       <div class="resume-info">
@@ -929,6 +929,12 @@
       <div class="ls-section-title">字形題 — 學習狀況</div>
       <div id="ls-shape-cats" class="ls-cats"></div>
       <div id="ls-shape-detail" style="display:none;"></div>
+    </div>
+    <!-- Idiom stats -->
+    <div class="ls-section">
+      <div class="ls-section-title">成語題 — 學習狀況</div>
+      <div id="ls-idiom-cats" class="ls-cats"></div>
+      <div id="ls-idiom-detail" style="display:none;"></div>
     </div>
     <!-- Data retention info -->
     <div class="ls-section">
@@ -2531,7 +2537,7 @@ const CSV_DATA = `id|sentence|target_char|correct_pinyin|wrong_pinyin|correct_ch
 // CONSTANTS
 // ============================================================
 const QUIZ_SIZE = 20;
-const APP_VERSION      = 'v20260331_1826_4';
+const APP_VERSION      = 'v20260331_1835_5';
 const RECORDS_KEY      = 'Cquiz_records';
 const _OLD_HIST_KEY    = 'Cquiz_history';   // migration only
 const _OLD_LOG_KEY     = 'Cquiz_test_log';  // migration only
@@ -2953,7 +2959,7 @@ function renderIdiomCard(q) {
       <div class="options" id="opts-${q.idx}">
         ${q.options.map((opt, oi) => `
           <div class="opt-label" id="opt-${q.idx}-${oi}"
-               onclick="selectAnswer(${q.idx}, ${JSON.stringify(opt)}, ${oi})">
+               onclick="selectAnswer(${q.idx}, '${opt.replace(/'/g,"\\'")}', ${oi})">
             <div class="opt-radio" id="radio-${q.idx}-${oi}"></div>
             <span class="opt-key">${OPTION_KEYS[oi]}</span>
             <span class="opt-text">${escHtml(opt)}</span>
@@ -4106,15 +4112,30 @@ function getLearningData() {
   // Per-question most-recent result (logs are newest-first)
   const audioSeen = {};
   const shapeSeen = {};
+  const idiomSeen = {};
   // Per-question correct/wrong counts within last 10 days
   const audioCounts = {};
   const shapeCounts = {};
+  const idiomCounts = {};
 
   for (const session of logs) {
     const sessionDate = parseDateToYMD(session.date || '');
     const inWindow = sessionDate && sessionDate >= cutoffKey;
     for (const e of (session.entries || [])) {
-      if (e.qType === 'shape1' || e.qType === 'shape2') {
+      if (e.qType === 'idiom') {
+        const key = e.sentence;
+        if (!idiomSeen[key]) {
+          idiomSeen[key] = {
+            isCorrect: !!(e.isCorrect && !e.isSkipped),
+            sentence: e.sentence,
+            correctAnswer: e.correctAnswer || '',
+          };
+        }
+        if (inWindow && !e.isSkipped) {
+          if (!idiomCounts[key]) idiomCounts[key] = { correct: 0, wrong: 0 };
+          if (e.isCorrect) idiomCounts[key].correct++; else idiomCounts[key].wrong++;
+        }
+      } else if (e.qType === 'shape1' || e.qType === 'shape2') {
         const key = `${e.sentence}::${e.targetChar}`;
         if (!shapeSeen[key]) {
           shapeSeen[key] = {
@@ -4166,8 +4187,18 @@ function getLearningData() {
     !shapeSeenKeys.has(`${s.sentence}::${s.target_char}`)
   );
 
+  const idiomMastered = [], idiomUnsure = [], idiomImproving = [];
+  for (const [key, info] of Object.entries(idiomSeen)) {
+    (info.isCorrect ? idiomMastered : idiomUnsure).push(info);
+    const c = idiomCounts[key];
+    if (info.isCorrect && c && c.correct > c.wrong) idiomImproving.push(info);
+  }
+  const idiomSeenKeys = new Set(Object.keys(idiomSeen));
+  const idiomUnseen = idiomItems.filter(a => !idiomSeenKeys.has(a.sentence));
+
   return { audioMastered, audioUnsure, audioImproving, audioUnseen,
-           shapeMastered, shapeUnsure, shapeImproving, shapeUnseen };
+           shapeMastered, shapeUnsure, shapeImproving, shapeUnseen,
+           idiomMastered, idiomUnsure, idiomImproving, idiomUnseen };
 }
 
 let _lsOpenKey = null;
@@ -4218,12 +4249,15 @@ function showLearnStats() {
     catsHtml('audio', data.audioMastered, data.audioImproving, data.audioUnsure, data.audioUnseen);
   document.getElementById('ls-shape-cats').innerHTML =
     catsHtml('shape', data.shapeMastered, data.shapeImproving, data.shapeUnsure, data.shapeUnseen);
+  document.getElementById('ls-idiom-cats').innerHTML =
+    catsHtml('idiom', data.idiomMastered, data.idiomImproving, data.idiomUnsure, data.idiomUnseen);
 
   // reset detail panels
   _lsOpenKey = null;
   window._lsData = data;
   document.getElementById('ls-audio-detail').style.display = 'none';
   document.getElementById('ls-shape-detail').style.display = 'none';
+  document.getElementById('ls-idiom-detail').style.display = 'none';
 
   showScreen('learn-stats-screen');
   window.scrollTo(0, 0);
@@ -4247,9 +4281,12 @@ function toggleLsDetail(type, cat) {
   const data = window._lsData;
   const map = { mastered: 'Mastered', improving: 'Improving', unsure: 'Unsure' };
   const key2 = map[cat];
-  const items = key2 ? (type === 'audio' ? data[`audio${key2}`] : data[`shape${key2}`]) : null;
+  let items;
+  if (type === 'audio') items = key2 ? data[`audio${key2}`] : null;
+  else if (type === 'shape') items = key2 ? data[`shape${key2}`] : null;
+  else items = key2 ? data[`idiom${key2}`] : null;
 
-  if (!items.length) {
+  if (!items || !items.length) {
     detailEl.innerHTML = `<div class="ls-detail-panel" style="color:#9ca3af;font-size:0.85rem;text-align:center;">（無資料）</div>`;
   } else if (type === 'audio') {
     detailEl.innerHTML = `<div class="ls-detail-panel">
@@ -4260,12 +4297,19 @@ function toggleLsDetail(type, cat) {
         ${it.meaning ? `<span style="font-size:0.7rem;color:#78350f;background:#fef3c7;padding:1px 6px;border-radius:5px;">${escHtml(it.meaning)}</span>` : ''}
       </div>`).join('')}
     </div>`;
-  } else {
+  } else if (type === 'shape') {
     detailEl.innerHTML = `<div class="ls-detail-panel">
       ${items.map(it => `<div class="ls-detail-item">
         <span class="ls-detail-char">${escHtml(it.targetChar)}</span>
         <span class="ls-detail-sentence">${escHtml(it.sentence)}</span>
         ${it.meaning ? `<span style="font-size:0.7rem;color:#78350f;background:#fef3c7;padding:1px 6px;border-radius:5px;">${escHtml(it.meaning)}</span>` : ''}
+      </div>`).join('')}
+    </div>`;
+  } else {
+    detailEl.innerHTML = `<div class="ls-detail-panel">
+      ${items.map(it => `<div class="ls-detail-item">
+        <span class="ls-detail-char">${escHtml(it.sentence)}</span>
+        <span style="font-size:0.7rem;color:#78350f;background:#fef3c7;padding:1px 6px;border-radius:5px;">${escHtml(it.correctAnswer)}</span>
       </div>`).join('')}
     </div>`;
   }
