@@ -386,10 +386,12 @@
     .home-actions-dual { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
     .home-actions-dual .btn { width: 100%; }
     .home-actions-dual .btn-shape-start { width: 100%; }
-    .test-mode-row { margin-top: 16px; padding-top: 12px; border-top: 1px solid #f3f4f6; text-align: center; }
+    .test-mode-row { margin-top: 16px; padding-top: 12px; border-top: 1px solid #f3f4f6; display: flex; align-items: center; justify-content: space-between; }
     .test-mode-label { display: inline-flex; align-items: center; gap: 7px; cursor: pointer; font-size: 0.82rem; color: #9ca3af; user-select: none; }
     .test-mode-label input[type="checkbox"] { width: 15px; height: 15px; accent-color: #7c3aed; cursor: pointer; }
     .test-mode-label span { letter-spacing: 0.02em; }
+    .github-link { color: #9ca3af; opacity: 0.6; display: flex; align-items: center; transition: opacity 0.2s; }
+    .github-link:hover { opacity: 1; }
 
     .q-type-badge {
       font-size: 0.65rem; font-weight: 700; padding: 2px 8px; border-radius: 10px;
@@ -783,7 +785,7 @@
         <button class="btn-sm" onclick="showHistory()">考試記錄</button>
       </div>
       <h1>國語測驗</h1>
-      <p style="font-size:0.72rem;opacity:0.5;margin-top:2px;letter-spacing:0.04em;">v20260401_1016_1</p>
+      <p style="font-size:0.72rem;opacity:0.5;margin-top:2px;letter-spacing:0.04em;">v20260401_1028_2</p>
     </div>
     <div id="resume-card" class="resume-card" style="display:none">
       <div class="resume-info">
@@ -803,7 +805,7 @@
         隨機抽取 20 題，選完後批改，結果自動儲存
       </p>
       <div class="home-actions-dual">
-        <button class="btn btn-primary" onclick="startQuiz('audio')">🔊 字音測驗</button>
+        <button class="btn btn-primary" onclick="startQuiz('audio')">ㄅ 字音測驗</button>
         <button class="btn-shape-start" onclick="startQuiz('shape')">✏️ 字形測驗</button>
         <button class="btn-idiom-start" onclick="startQuiz('idiom')">📚 成語測驗</button>
       </div>
@@ -811,8 +813,11 @@
       <div class="test-mode-row">
         <label class="test-mode-label">
           <input type="checkbox" id="test-mode-cb">
-          <span>測試（只考5題）</span>
+          <span>測試模式</span>
         </label>
+        <a href="https://github.com/TaipeiAlan/CHAPP" target="_blank" rel="noopener" class="github-link" title="GitHub">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+        </a>
       </div>
     </div>
   </div>
@@ -876,9 +881,9 @@
     <div class="card" style="padding:0; overflow:hidden;">
       <div class="hist-filter-tabs">
         <button class="hist-tab active" id="hist-tab-all" onclick="showRecords('all')">全部</button>
-        <button class="hist-tab" id="hist-tab-audio" onclick="showRecords('audio')">字音</button>
-        <button class="hist-tab" id="hist-tab-shape" onclick="showRecords('shape')">字形</button>
-        <button class="hist-tab" id="hist-tab-idiom" onclick="showRecords('idiom')">成語</button>
+        <button class="hist-tab" id="hist-tab-audio" onclick="showRecords('audio')">ㄅ 字音</button>
+        <button class="hist-tab" id="hist-tab-shape" onclick="showRecords('shape')">✏️ 字形</button>
+        <button class="hist-tab" id="hist-tab-idiom" onclick="showRecords('idiom')">📚 成語</button>
       </div>
       <div id="history-list"></div>
     </div>
@@ -897,8 +902,8 @@
     </div>
     <div style="background:white;border-radius:20px 20px 0 0;margin-bottom:0;box-shadow:0 2px 12px rgba(0,0,0,0.08);">
       <div class="wb-tabs">
-        <button class="wb-tab active" id="wb-tab-audio" onclick="showWrongBank('audio')">字音錯題</button>
-        <button class="wb-tab" id="wb-tab-shape" onclick="showWrongBank('shape')">字形錯題</button>
+        <button class="wb-tab active" id="wb-tab-audio" onclick="showWrongBank('audio')">ㄅ 字音錯題</button>
+        <button class="wb-tab" id="wb-tab-shape" onclick="showWrongBank('shape')">✏️ 字形錯題</button>
       </div>
     </div>
     <div id="wb-stats-bar" class="wb-stats-bar" style="display:none;border-radius:0 0 16px 16px;margin-top:0;">
@@ -929,19 +934,19 @@
     </div>
     <!-- Audio stats -->
     <div class="ls-section">
-      <div class="ls-section-title">字音題 — 學習狀況</div>
+      <div class="ls-section-title">ㄅ 字音題 — 學習狀況</div>
       <div id="ls-audio-cats" class="ls-cats"></div>
       <div id="ls-audio-detail" style="display:none;"></div>
     </div>
     <!-- Shape stats -->
     <div class="ls-section">
-      <div class="ls-section-title">字形題 — 學習狀況</div>
+      <div class="ls-section-title">✏️ 字形題 — 學習狀況</div>
       <div id="ls-shape-cats" class="ls-cats"></div>
       <div id="ls-shape-detail" style="display:none;"></div>
     </div>
     <!-- Idiom stats -->
     <div class="ls-section">
-      <div class="ls-section-title">成語題 — 學習狀況</div>
+      <div class="ls-section-title">📚 成語題 — 學習狀況</div>
       <div id="ls-idiom-cats" class="ls-cats"></div>
       <div id="ls-idiom-detail" style="display:none;"></div>
     </div>
@@ -2546,7 +2551,7 @@ const CSV_DATA = `id|sentence|target_char|correct_pinyin|wrong_pinyin|correct_ch
 // CONSTANTS
 // ============================================================
 const QUIZ_SIZE = 20;
-const APP_VERSION      = 'v20260401_1016_1';
+const APP_VERSION      = 'v20260401_1028_2';
 const RECORDS_KEY      = 'Cquiz_records';
 const _OLD_HIST_KEY    = 'Cquiz_history';   // migration only
 const _OLD_LOG_KEY     = 'Cquiz_test_log';  // migration only
@@ -3710,7 +3715,7 @@ function showScreen(id) {
   if (fg) fg.style.display = (id === 'quiz-screen')    ? 'flex' : 'none';
   if (ft) ft.style.display = (id === 'results-screen') ? 'flex' : 'none';
 }
-function showHome() { window.removeEventListener('beforeunload', _quizBeforeUnload); showScreen('home-screen'); updateHomeStats(); checkResumeSession(); }
+function showHome() { window.removeEventListener('beforeunload', _quizBeforeUnload); const testCb = document.getElementById('test-mode-cb'); if (testCb) testCb.checked = false; showScreen('home-screen'); updateHomeStats(); checkResumeSession(); }
 function _quizBeforeUnload(e) {
   if (Object.keys(userAnswers).length > 0) {
     e.preventDefault();
