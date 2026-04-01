@@ -386,6 +386,10 @@
     .home-actions-dual { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
     .home-actions-dual .btn { width: 100%; }
     .home-actions-dual .btn-shape-start { width: 100%; }
+    .test-mode-row { margin-top: 16px; padding-top: 12px; border-top: 1px solid #f3f4f6; text-align: center; }
+    .test-mode-label { display: inline-flex; align-items: center; gap: 7px; cursor: pointer; font-size: 0.82rem; color: #9ca3af; user-select: none; }
+    .test-mode-label input[type="checkbox"] { width: 15px; height: 15px; accent-color: #7c3aed; cursor: pointer; }
+    .test-mode-label span { letter-spacing: 0.02em; }
 
     .q-type-badge {
       font-size: 0.65rem; font-weight: 700; padding: 2px 8px; border-radius: 10px;
@@ -779,8 +783,7 @@
         <button class="btn-sm" onclick="showHistory()">考試記錄</button>
       </div>
       <h1>國語測驗</h1>
-      <p>國中國語字音字形練習系統</p>
-      <p style="font-size:0.72rem;opacity:0.5;margin-top:2px;letter-spacing:0.04em;">v20260331_1841_6</p>
+      <p style="font-size:0.72rem;opacity:0.5;margin-top:2px;letter-spacing:0.04em;">v20260401_1016_1</p>
     </div>
     <div id="resume-card" class="resume-card" style="display:none">
       <div class="resume-info">
@@ -800,11 +803,17 @@
         隨機抽取 20 題，選完後批改，結果自動儲存
       </p>
       <div class="home-actions-dual">
-        <button class="btn btn-primary" onclick="startQuiz('audio')">🎵 開始字音測驗</button>
-        <button class="btn-shape-start" onclick="startQuiz('shape')">📝 開始字形測驗</button>
-        <button class="btn-idiom-start" onclick="startQuiz('idiom')">📖 開始成語測驗</button>
+        <button class="btn btn-primary" onclick="startQuiz('audio')">🔊 字音測驗</button>
+        <button class="btn-shape-start" onclick="startQuiz('shape')">✏️ 字形測驗</button>
+        <button class="btn-idiom-start" onclick="startQuiz('idiom')">📚 成語測驗</button>
       </div>
       <div id="home-stats"></div>
+      <div class="test-mode-row">
+        <label class="test-mode-label">
+          <input type="checkbox" id="test-mode-cb">
+          <span>測試（只考5題）</span>
+        </label>
+      </div>
     </div>
   </div>
 
@@ -2537,7 +2546,7 @@ const CSV_DATA = `id|sentence|target_char|correct_pinyin|wrong_pinyin|correct_ch
 // CONSTANTS
 // ============================================================
 const QUIZ_SIZE = 20;
-const APP_VERSION      = 'v20260331_1841_6';
+const APP_VERSION      = 'v20260401_1016_1';
 const RECORDS_KEY      = 'Cquiz_records';
 const _OLD_HIST_KEY    = 'Cquiz_history';   // migration only
 const _OLD_LOG_KEY     = 'Cquiz_test_log';  // migration only
@@ -2918,6 +2927,11 @@ function startQuiz(mode) {
     currentQuiz = selected.map((item, i) => buildQuestion(item, i));
   }
 
+  // Test mode: limit to 5 questions
+  if (document.getElementById('test-mode-cb')?.checked) {
+    currentQuiz = currentQuiz.slice(0, 5);
+  }
+
   // Update nav title
   const navTitle = document.getElementById('quiz-nav-title');
   if (navTitle) navTitle.textContent = quizMode === 'shape' ? '字形測驗' : quizMode === 'idiom' ? '成語測驗' : '字音測驗';
@@ -3230,6 +3244,10 @@ function showResults(record) {
 
   const container = document.getElementById('results-container');
   container.innerHTML = record.details.map((q, i) => buildResultCard(q, i)).join('');
+
+  // Reset test mode checkbox after quiz completion
+  const testCb = document.getElementById('test-mode-cb');
+  if (testCb) testCb.checked = false;
 
   showScreen('results-screen');
   window.scrollTo(0, 0);
