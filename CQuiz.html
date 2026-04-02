@@ -340,6 +340,13 @@
       border-radius: 10px; font-size: 0.85rem; color: #78350f; line-height: 1.5;
       border-left: 3px solid #f59e0b;
     }
+    .idiom-pinyin-hint {
+      display: inline-flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
+      margin: 4px 0 8px; font-size: 0.82rem; color: #6d28d9;
+    }
+    .idiom-pinyin-hint ruby { font-size: 1rem; font-weight: 700; }
+    .idiom-pinyin-hint rt { font-size: 0.65rem; color: #7c3aed; letter-spacing: 0.04em; }
+    .idiom-pinyin-wrong { font-size: 0.75rem; color: #dc2626; background: #fef2f2; padding: 1px 7px; border-radius: 8px; }
 
     /* ====== HISTORY SCREEN ====== */
     .history-empty { padding: 52px; text-align: center; color: #9ca3af; font-size: 0.95rem; }
@@ -823,7 +830,7 @@
           <span>測試模式</span>
         </label>
         <span style="display:inline-flex;align-items:center;gap:6px;">
-        <span style="font-size:0.72rem;opacity:0.5;letter-spacing:0.04em;">v20260402_1138_2</span>
+        <span style="font-size:0.72rem;opacity:0.5;letter-spacing:0.04em;">v20260402_1349_3</span>
         <a href="https://github.com/TaipeiAlan/CHAPP" target="_blank" rel="noopener" class="github-link" title="GitHub">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
         </a>
@@ -2562,7 +2569,7 @@ const CSV_DATA = `id|sentence|target_char|correct_pinyin|wrong_pinyin|correct_ch
 // CONSTANTS
 // ============================================================
 const QUIZ_SIZE = 20;
-const APP_VERSION      = 'v20260402_1138_2';
+const APP_VERSION      = 'v20260402_1349_3';
 const RECORDS_KEY      = 'Cquiz_records';
 const _OLD_HIST_KEY    = 'Cquiz_history';   // migration only
 const _OLD_LOG_KEY     = 'Cquiz_test_log';  // migration only
@@ -2781,6 +2788,9 @@ function buildIdiomQuestion(item, idx) {
     correctAnswer: correct,
     meaning: correct,
     options: shuffle([correct, ...wrongOpts.slice(0, 3)]),
+    targetChar:    item.target_char    || '',
+    correctPinyin: item.correct_pinyin || '',
+    wrongPinyin:   item.wrong_pinyin   || '',
   };
 }
 
@@ -3299,14 +3309,20 @@ function buildIdiomResultCard(q, i) {
       <span class="opt-text">${escHtml(opt)}</span>${tag}</div>`;
   }).join('');
   const skipNoteHtml = isSkipped ? `<div class="res-skip-note">不確定（未作答）</div>` : '';
+  const pinyinHtml = (q.targetChar && q.correctPinyin)
+    ? `<div class="idiom-pinyin-hint">
+        <ruby>${escHtml(q.targetChar)}<rt>${escHtml(q.correctPinyin)}</rt></ruby>
+        ${q.wrongPinyin ? `<span class="idiom-pinyin-wrong">常誤：${escHtml(q.wrongPinyin)}</span>` : ''}
+      </div>` : '';
   return `
     <div class="res-card" data-correct="${isCorrect?'1':'0'}" style="${isCorrect?'display:none':''}">
       <div class="res-badge ${isCorrect?'correct':isSkipped?'skipped':'wrong'}">${isCorrect?'✓':isSkipped?'？':'✗'}</div>
       <div class="q-num" style="margin-bottom:8px;">第 ${i+1} 題 <span class="q-type-badge badge-idiom" style="font-size:0.65rem;vertical-align:middle;">成語</span></div>
-      <div class="q-sentence" style="font-size:1.5rem;font-weight:800;margin-bottom:10px;">
+      <div class="q-sentence" style="font-size:1.5rem;font-weight:800;margin-bottom:4px;">
         ${escHtml(q.sentence)}
         <a class="btn-google" href="https://www.google.com/search?q=${encodeURIComponent(q.sentence)}" target="_blank" rel="noopener">G</a>
       </div>
+      ${pinyinHtml}
       <div class="q-ask" style="margin-bottom:10px;">以下哪個選項是這個成語的正確意思？</div>
       ${skipNoteHtml}
       <div class="options">${optionsHtml}</div>
@@ -3468,6 +3484,9 @@ function saveRecord(record) {
           isCorrect:     q.isCorrect,
           isSkipped:     q.userAnswer === '',
           userAnswer:    (!q.isCorrect && q.userAnswer) ? q.userAnswer : '',
+          targetChar:    q.targetChar    || '',
+          correctPinyin: q.correctPinyin || '',
+          wrongPinyin:   q.wrongPinyin   || '',
         };
       }
       return {
@@ -3582,8 +3601,11 @@ function showRecords(filter) {
 
     function renderWrongEntry(d) {
       if (d.qType === 'idiom') {
+        const pinyinBadge = (d.targetChar && d.correctPinyin)
+          ? `<span style="font-size:0.72rem;color:#7c3aed;background:#ede9fe;padding:1px 6px;border-radius:7px;letter-spacing:0.04em;">${escHtml(d.targetChar)}：${escHtml(d.correctPinyin)}${d.wrongPinyin ? ` 常誤${escHtml(d.wrongPinyin)}` : ''}</span>` : '';
         return `<div class="hw-item">
           <span class="hw-sentence">${escHtml(d.sentence)}</span>
+          ${pinyinBadge}
           <span class="hw-correct" style="color:#b45309;">${escHtml(d.correctAnswer||'')}</span>
           ${d.userAnswer ? `<span class="hw-wrong">${escHtml(d.userAnswer)}</span>` : ''}
         </div>`;
@@ -3660,8 +3682,10 @@ function showRecords(filter) {
       const resCls  = e.isSkipped ? 'log-skip-lbl' : e.isCorrect ? 'log-ok' : 'log-err';
       const resText = e.isSkipped ? '略' : e.isCorrect ? '✓' : '✗';
       if (e.qType === 'idiom') {
+        const pinyinCell = (e.targetChar && e.correctPinyin)
+          ? `<span style="font-size:0.7rem;color:#7c3aed;margin-left:4px;">${escHtml(e.targetChar)}${escHtml(e.correctPinyin)}${e.wrongPinyin ? `／誤${escHtml(e.wrongPinyin)}` : ''}</span>` : '';
         return `<tr class="${rowCls}">
-          <td colspan="2">${escHtml(e.sentence)}</td>
+          <td colspan="2">${escHtml(e.sentence)}${pinyinCell}</td>
           <td colspan="2" style="font-size:0.75rem;color:#78350f;">${escHtml(e.correctAnswer||'')}</td>
           <td class="${resCls}">${resText}</td>
           <td style="font-size:0.75rem;color:#dc2626;">${e.userAnswer && !e.isCorrect ? escHtml(e.userAnswer) : ''}</td>
