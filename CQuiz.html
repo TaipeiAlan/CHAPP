@@ -162,13 +162,14 @@
 
     /* ====== HOME SCREEN ====== */
     .home-header {
-      display: flex; align-items: center; color: white; padding: 32px 0 24px;
+      position: relative; display: flex; align-items: center; justify-content: center;
+      color: white; padding: 16px 0 14px;
     }
-    .home-header h1 { font-size: 2.4rem; font-weight: 800; flex: 1; text-align: center; }
+    .home-header h1 { font-size: 2.4rem; font-weight: 800; }
     .home-header p { font-size: 0.95rem; opacity: 0.75; }
     .home-top-btns {
-      display: flex; gap: 6px; align-items: center;
-      flex-shrink: 0;
+      position: absolute; right: 0; top: 50%; transform: translateY(-50%);
+      display: flex; flex-direction: column; gap: 4px; align-items: flex-end;
     }
     .home-top-btns .btn-sm {
       padding: 5px 11px; border-radius: 10px; border: none;
@@ -196,12 +197,12 @@
     .progress-sticky {
       position: sticky; top: 0; z-index: 10;
       background: rgba(255,255,255,0.95); backdrop-filter: blur(8px);
-      border-radius: 14px; padding: 12px 18px;
-      margin-bottom: 16px;
+      border-radius: 14px; padding: 7px 14px;
+      margin-bottom: 12px;
       box-shadow: 0 4px 16px rgba(0,0,0,0.12);
-      display: flex; align-items: center; gap: 14px;
+      display: flex; align-items: center; gap: 10px;
     }
-    .progress-label { font-size: 0.85rem; font-weight: 600; color: #4b5563; white-space: nowrap; }
+    .progress-label { font-size: 0.78rem; font-weight: 600; color: #4b5563; white-space: nowrap; }
     .progress-bar-outer {
       flex: 1; height: 8px; background: #e5e7eb; border-radius: 4px; overflow: hidden;
     }
@@ -373,32 +374,19 @@
       .opt-text { font-size: 1rem; }
     }
 
-    /* ====== SHAPE QUIZ ====== */
-    .btn-idiom-start {
-      padding: 13px 28px; border-radius: 12px; border: none;
-      font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s;
-      background: linear-gradient(135deg, #d97706, #b45309);
-      color: white; box-shadow: 0 4px 14px rgba(180,83,9,0.4); width: 100%;
-    }
-    .btn-idiom-start:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(180,83,9,0.5); }
-    .btn-mixed-start {
-      padding: 13px 28px; border-radius: 12px; border: none;
+    /* ====== QUIZ START BUTTONS ====== */
+    .btn-quiz-start, .btn-idiom-start, .btn-mixed-start, .btn-shape-start {
+      padding: 13px 8px; border-radius: 12px; border: none;
       font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s;
       background: linear-gradient(135deg, #6366f1, #7c3aed);
-      color: white; box-shadow: 0 4px 14px rgba(99,102,241,0.4); width: 100%;
+      color: white; box-shadow: 0 4px 14px rgba(99,102,241,0.35); width: 100%;
     }
-    .btn-mixed-start:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(99,102,241,0.5); }
-    .btn-shape-start {
-      padding: 13px 28px; border-radius: 12px; border: none;
-      font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s;
-      letter-spacing: 0.02em;
-      background: linear-gradient(135deg, #059669, #0d9488);
-      color: white; box-shadow: 0 4px 14px rgba(5,150,105,0.4);
+    .btn-quiz-start:hover, .btn-idiom-start:hover, .btn-mixed-start:hover, .btn-shape-start:hover {
+      transform: translateY(-2px); box-shadow: 0 8px 20px rgba(99,102,241,0.5);
     }
-    .btn-shape-start:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(5,150,105,0.5); }
-    .home-actions-dual { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
-    .home-actions-dual .btn { width: 100%; }
-    .home-actions-dual .btn-shape-start { width: 100%; }
+    .home-actions-dual {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;
+    }
     .test-mode-row { margin-top: 16px; padding-top: 12px; border-top: 1px solid #f3f4f6; display: flex; align-items: center; justify-content: space-between; }
     .test-mode-label { display: inline-flex; align-items: center; gap: 7px; cursor: pointer; font-size: 0.82rem; color: #9ca3af; user-select: none; }
     .test-mode-label input[type="checkbox"] { width: 15px; height: 15px; accent-color: #7c3aed; cursor: pointer; }
@@ -794,7 +782,6 @@
   <!-- ===== HOME SCREEN ===== -->
   <div id="home-screen" class="screen active">
     <div class="home-header">
-      <span style="flex-shrink:0;width:0;flex:1;"></span>
       <h1>國語測驗</h1>
       <div class="home-top-btns">
         <button class="btn-sm" onclick="showLearnStats()">學習統計</button>
@@ -817,10 +804,10 @@
         隨機抽取 20 題，選完後批改，結果自動儲存
       </p>
       <div class="home-actions-dual">
-        <button class="btn btn-primary" onclick="startQuiz('audio')">ㄅ 字音測驗</button>
-        <button class="btn-shape-start" onclick="startQuiz('shape')">✏️ 字形測驗</button>
-        <button class="btn-idiom-start" onclick="startQuiz('idiom')">📚 成語測驗</button>
-        <button class="btn-mixed-start" onclick="startQuiz('mixed')">🎯 綜合測驗</button>
+        <button class="btn-quiz-start" onclick="startQuiz('audio')">ㄅ 字音測驗</button>
+        <button class="btn-quiz-start" onclick="startQuiz('shape')">✏️ 字形測驗</button>
+        <button class="btn-quiz-start" onclick="startQuiz('idiom')">📚 成語測驗</button>
+        <button class="btn-quiz-start" onclick="startQuiz('mixed')">🎯 綜合測驗</button>
       </div>
       <div id="home-stats"></div>
       <div class="test-mode-row">
@@ -829,7 +816,7 @@
           <span>測試模式</span>
         </label>
         <span style="display:inline-flex;align-items:center;gap:6px;">
-        <span style="font-size:0.72rem;opacity:0.5;letter-spacing:0.04em;">v20260402_1407_4</span>
+        <span style="font-size:0.72rem;opacity:0.5;letter-spacing:0.04em;">v20260402_1414_5</span>
         <a href="https://github.com/TaipeiAlan/CHAPP" target="_blank" rel="noopener" class="github-link" title="GitHub">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
         </a>
@@ -2568,7 +2555,7 @@ const CSV_DATA = `id|sentence|target_char|correct_pinyin|wrong_pinyin|correct_ch
 // CONSTANTS
 // ============================================================
 const QUIZ_SIZE = 20;
-const APP_VERSION      = 'v20260402_1407_4';
+const APP_VERSION      = 'v20260402_1414_5';
 const RECORDS_KEY      = 'Cquiz_records';
 const _OLD_HIST_KEY    = 'Cquiz_history';   // migration only
 const _OLD_LOG_KEY     = 'Cquiz_test_log';  // migration only
@@ -3829,7 +3816,7 @@ function updateHomeStats() {
   const wrongColHtml = (wbCount || swbCount) ? `
     <div style="display:flex;flex-direction:column;justify-content:center;gap:5px;padding-left:2px;">
       ${wbCount  ? `<button onclick="showWrongBank('audio')" style="font-size:0.72rem;padding:3px 8px;border-radius:8px;border:1.5px solid rgba(239,68,68,0.4);background:rgba(239,68,68,0.08);color:#f87171;cursor:pointer;font-weight:600;white-space:nowrap;">ㄅ ${wbCount}</button>` : ''}
-      ${swbCount ? `<button onclick="showWrongBank('shape')" style="font-size:0.72rem;padding:3px 8px;border-radius:8px;border:1.5px solid rgba(5,150,105,0.4);background:rgba(5,150,105,0.08);color:#059669;cursor:pointer;font-weight:600;white-space:nowrap;">✏️ ${swbCount}</button>` : ''}
+      ${swbCount ? `<button onclick="showWrongBank('shape')" style="font-size:0.72rem;padding:3px 8px;border-radius:8px;border:1.5px solid rgba(239,68,68,0.4);background:rgba(239,68,68,0.08);color:#f87171;cursor:pointer;font-weight:600;white-space:nowrap;">✏️ ${swbCount}</button>` : ''}
     </div>` : '';
   el.innerHTML = `<hr class="stat-divider">
     <div style="display:flex;align-items:stretch;gap:12px;margin-bottom:8px;">
