@@ -162,14 +162,14 @@
 
     /* ====== HOME SCREEN ====== */
     .home-header {
-      text-align: center; color: white; padding: 36px 0 28px;
-      position: relative;
+      position: relative; display: flex; align-items: center; justify-content: center;
+      color: white; padding: 16px 0 14px;
     }
-    .home-header h1 { font-size: 2.4rem; font-weight: 800; margin-bottom: 6px; }
+    .home-header h1 { font-size: 2.4rem; font-weight: 800; }
     .home-header p { font-size: 0.95rem; opacity: 0.75; }
     .home-top-btns {
-      position: absolute; top: 0; right: 0;
-      display: flex; gap: 6px; align-items: center;
+      position: absolute; right: 0; top: 50%; transform: translateY(-50%);
+      display: flex; flex-direction: column; gap: 4px; align-items: flex-end;
     }
     .home-top-btns .btn-sm {
       padding: 5px 11px; border-radius: 10px; border: none;
@@ -197,12 +197,12 @@
     .progress-sticky {
       position: sticky; top: 0; z-index: 10;
       background: rgba(255,255,255,0.95); backdrop-filter: blur(8px);
-      border-radius: 14px; padding: 12px 18px;
-      margin-bottom: 16px;
+      border-radius: 14px; padding: 7px 14px;
+      margin-bottom: 12px;
       box-shadow: 0 4px 16px rgba(0,0,0,0.12);
-      display: flex; align-items: center; gap: 14px;
+      display: flex; align-items: center; gap: 10px;
     }
-    .progress-label { font-size: 0.85rem; font-weight: 600; color: #4b5563; white-space: nowrap; }
+    .progress-label { font-size: 0.78rem; font-weight: 600; color: #4b5563; white-space: nowrap; }
     .progress-bar-outer {
       flex: 1; height: 8px; background: #e5e7eb; border-radius: 4px; overflow: hidden;
     }
@@ -219,6 +219,7 @@
       background: white; border-radius: 18px; padding: 22px 22px 18px;
       box-shadow: 0 2px 14px rgba(0,0,0,0.08); margin-bottom: 14px;
       transition: box-shadow 0.2s;
+      scroll-margin-top: 62px;
     }
     .q-card.answered { box-shadow: 0 2px 14px rgba(79,70,229,0.12); }
 
@@ -340,6 +341,13 @@
       border-radius: 10px; font-size: 0.85rem; color: #78350f; line-height: 1.5;
       border-left: 3px solid #f59e0b;
     }
+    .idiom-pinyin-hint {
+      display: inline-flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
+      margin: 4px 0 8px; font-size: 0.82rem; color: #6d28d9;
+    }
+    .idiom-pinyin-hint ruby { font-size: 1rem; font-weight: 700; }
+    .idiom-pinyin-hint rt { font-size: 0.65rem; color: #7c3aed; letter-spacing: 0.04em; }
+    .idiom-pinyin-wrong { font-size: 0.75rem; color: #dc2626; background: #fef2f2; padding: 1px 7px; border-radius: 8px; }
 
     /* ====== HISTORY SCREEN ====== */
     .history-empty { padding: 52px; text-align: center; color: #9ca3af; font-size: 0.95rem; }
@@ -367,25 +375,25 @@
       .opt-text { font-size: 1rem; }
     }
 
-    /* ====== SHAPE QUIZ ====== */
-    .btn-idiom-start {
-      padding: 13px 28px; border-radius: 12px; border: none;
+    /* ====== QUIZ START BUTTONS ====== */
+    .btn-quiz-start, .btn-idiom-start, .btn-mixed-start, .btn-shape-start {
+      padding: 13px 8px; border-radius: 12px; border: none;
       font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s;
-      background: linear-gradient(135deg, #d97706, #b45309);
-      color: white; box-shadow: 0 4px 14px rgba(180,83,9,0.4); width: 100%;
+      background: linear-gradient(135deg, #6366f1, #7c3aed);
+      color: white; box-shadow: 0 4px 14px rgba(99,102,241,0.35); width: 100%;
     }
-    .btn-idiom-start:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(180,83,9,0.5); }
-    .btn-shape-start {
-      padding: 13px 28px; border-radius: 12px; border: none;
-      font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s;
-      letter-spacing: 0.02em;
-      background: linear-gradient(135deg, #059669, #0d9488);
-      color: white; box-shadow: 0 4px 14px rgba(5,150,105,0.4);
+    .btn-quiz-start:hover, .btn-idiom-start:hover, .btn-mixed-start:hover, .btn-shape-start:hover {
+      transform: translateY(-2px); box-shadow: 0 8px 20px rgba(99,102,241,0.5);
     }
-    .btn-shape-start:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(5,150,105,0.5); }
-    .home-actions-dual { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
-    .home-actions-dual .btn { width: 100%; }
-    .home-actions-dual .btn-shape-start { width: 100%; }
+    .home-actions-dual {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;
+    }
+    .test-mode-row { margin-top: 16px; padding-top: 12px; border-top: 1px solid #f3f4f6; display: flex; align-items: center; justify-content: space-between; }
+    .test-mode-label { display: inline-flex; align-items: center; gap: 7px; cursor: pointer; font-size: 0.82rem; color: #9ca3af; user-select: none; }
+    .test-mode-label input[type="checkbox"] { width: 15px; height: 15px; accent-color: #7c3aed; cursor: pointer; }
+    .test-mode-label span { letter-spacing: 0.02em; }
+    .github-link { color: #9ca3af; opacity: 0.6; display: flex; align-items: center; transition: opacity 0.2s; }
+    .github-link:hover { opacity: 1; }
 
     .q-type-badge {
       font-size: 0.65rem; font-weight: 700; padding: 2px 8px; border-radius: 10px;
@@ -394,6 +402,7 @@
     .q-type-badge.badge-audio  { background: #ede9fe; color: #7c3aed; }
     .q-type-badge.badge-shape  { background: #d1fae5; color: #059669; }
     .q-type-badge.badge-idiom  { background: #fef3c7; color: #b45309; }
+    .q-type-badge.badge-mixed  { background: #e0e7ff; color: #4f46e5; }
 
     /* Shape1 options (full sentences) */
     .opt-text-sentence { font-size: 0.95rem; letter-spacing: 0.02em; }
@@ -774,13 +783,11 @@
   <!-- ===== HOME SCREEN ===== -->
   <div id="home-screen" class="screen active">
     <div class="home-header">
+      <h1>國語測驗</h1>
       <div class="home-top-btns">
         <button class="btn-sm" onclick="showLearnStats()">學習統計</button>
         <button class="btn-sm" onclick="showHistory()">考試記錄</button>
       </div>
-      <h1>國語測驗</h1>
-      <p>國中國語字音字形練習系統</p>
-      <p style="font-size:0.72rem;opacity:0.5;margin-top:2px;letter-spacing:0.04em;">v20260331_1841_6</p>
     </div>
     <div id="resume-card" class="resume-card" style="display:none">
       <div class="resume-info">
@@ -794,17 +801,28 @@
     </div>
     <div id="home-week-bar" style="display:none;"></div>
     <div class="card home-card">
-      <div class="home-icon">🎯</div>
-      <h2 class="home-title">國語測驗</h2>
       <p class="home-subtitle">
         隨機抽取 20 題，選完後批改，結果自動儲存
       </p>
       <div class="home-actions-dual">
-        <button class="btn btn-primary" onclick="startQuiz('audio')">🎵 開始字音測驗</button>
-        <button class="btn-shape-start" onclick="startQuiz('shape')">📝 開始字形測驗</button>
-        <button class="btn-idiom-start" onclick="startQuiz('idiom')">📖 開始成語測驗</button>
+        <button class="btn-quiz-start" onclick="startQuiz('audio')">ㄅ 字音測驗</button>
+        <button class="btn-quiz-start" onclick="startQuiz('shape')">✏️ 字形測驗</button>
+        <button class="btn-quiz-start" onclick="startQuiz('idiom')">📚 成語測驗</button>
+        <button class="btn-quiz-start" onclick="startQuiz('mixed')">🎯 綜合測驗</button>
       </div>
       <div id="home-stats"></div>
+      <div class="test-mode-row">
+        <label class="test-mode-label">
+          <input type="checkbox" id="test-mode-cb">
+          <span>測試模式</span>
+        </label>
+        <span style="display:inline-flex;align-items:center;gap:6px;">
+        <span style="font-size:0.72rem;opacity:0.5;letter-spacing:0.04em;">v20260402_1828_9</span>
+        <a href="https://github.com/TaipeiAlan/CHAPP" target="_blank" rel="noopener" class="github-link" title="GitHub">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+        </a>
+        </span>
+      </div>
     </div>
   </div>
 
@@ -867,9 +885,10 @@
     <div class="card" style="padding:0; overflow:hidden;">
       <div class="hist-filter-tabs">
         <button class="hist-tab active" id="hist-tab-all" onclick="showRecords('all')">全部</button>
-        <button class="hist-tab" id="hist-tab-audio" onclick="showRecords('audio')">字音</button>
-        <button class="hist-tab" id="hist-tab-shape" onclick="showRecords('shape')">字形</button>
-        <button class="hist-tab" id="hist-tab-idiom" onclick="showRecords('idiom')">成語</button>
+        <button class="hist-tab" id="hist-tab-audio" onclick="showRecords('audio')">ㄅ 字音</button>
+        <button class="hist-tab" id="hist-tab-shape" onclick="showRecords('shape')">✏️ 字形</button>
+        <button class="hist-tab" id="hist-tab-idiom" onclick="showRecords('idiom')">📚 成語</button>
+        <button class="hist-tab" id="hist-tab-mixed" onclick="showRecords('mixed')">🎯 綜合</button>
       </div>
       <div id="history-list"></div>
     </div>
@@ -888,8 +907,8 @@
     </div>
     <div style="background:white;border-radius:20px 20px 0 0;margin-bottom:0;box-shadow:0 2px 12px rgba(0,0,0,0.08);">
       <div class="wb-tabs">
-        <button class="wb-tab active" id="wb-tab-audio" onclick="showWrongBank('audio')">字音錯題</button>
-        <button class="wb-tab" id="wb-tab-shape" onclick="showWrongBank('shape')">字形錯題</button>
+        <button class="wb-tab active" id="wb-tab-audio" onclick="showWrongBank('audio')">ㄅ 字音錯題</button>
+        <button class="wb-tab" id="wb-tab-shape" onclick="showWrongBank('shape')">✏️ 字形錯題</button>
       </div>
     </div>
     <div id="wb-stats-bar" class="wb-stats-bar" style="display:none;border-radius:0 0 16px 16px;margin-top:0;">
@@ -920,19 +939,19 @@
     </div>
     <!-- Audio stats -->
     <div class="ls-section">
-      <div class="ls-section-title">字音題 — 學習狀況</div>
+      <div class="ls-section-title">ㄅ 字音題 — 學習狀況</div>
       <div id="ls-audio-cats" class="ls-cats"></div>
       <div id="ls-audio-detail" style="display:none;"></div>
     </div>
     <!-- Shape stats -->
     <div class="ls-section">
-      <div class="ls-section-title">字形題 — 學習狀況</div>
+      <div class="ls-section-title">✏️ 字形題 — 學習狀況</div>
       <div id="ls-shape-cats" class="ls-cats"></div>
       <div id="ls-shape-detail" style="display:none;"></div>
     </div>
     <!-- Idiom stats -->
     <div class="ls-section">
-      <div class="ls-section-title">成語題 — 學習狀況</div>
+      <div class="ls-section-title">📚 成語題 — 學習狀況</div>
       <div id="ls-idiom-cats" class="ls-cats"></div>
       <div id="ls-idiom-detail" style="display:none;"></div>
     </div>
@@ -2537,7 +2556,7 @@ const CSV_DATA = `id|sentence|target_char|correct_pinyin|wrong_pinyin|correct_ch
 // CONSTANTS
 // ============================================================
 const QUIZ_SIZE = 20;
-const APP_VERSION      = 'v20260331_1841_6';
+const APP_VERSION      = 'v20260402_1828_9';
 const RECORDS_KEY      = 'Cquiz_records';
 const _OLD_HIST_KEY    = 'Cquiz_history';   // migration only
 const _OLD_LOG_KEY     = 'Cquiz_test_log';  // migration only
@@ -2722,6 +2741,7 @@ let currentQuiz = [];
 let userAnswers = {};
 let showAllResults = false;
 let quizReadyTime = 0;  // 防止進入測驗瞬間的鬼點
+let _autoScrollTimer = null;
 
 function buildQuestion(item, idx) {
   const wrong = generateWrongAnswers(item.correct_pinyin, item.wrong_pinyin);
@@ -2756,6 +2776,9 @@ function buildIdiomQuestion(item, idx) {
     correctAnswer: correct,
     meaning: correct,
     options: shuffle([correct, ...wrongOpts.slice(0, 3)]),
+    targetChar:    item.target_char    || '',
+    correctPinyin: item.correct_pinyin || '',
+    wrongPinyin:   item.wrong_pinyin   || '',
   };
 }
 
@@ -2890,14 +2913,20 @@ function startQuiz(mode) {
     const selected = shuffle(shapeItems).slice(0, QUIZ_SIZE);
     const usedSentences = new Set();
     currentQuiz = selected.map((item, i) => buildShapeQuestion(item, i, usedSentences));
+  } else if (quizMode === 'mixed') {
+    // 綜合測驗：字音 7 題 + 字形 7 題 + 成語 6 題，混合出題
+    const audioSel = shuffle(audioItems).slice(0, 7).map((item, i) => buildQuestion(item, i));
+    const usedSentences = new Set();
+    const shapeSel = shuffle(shapeItems).slice(0, 7).map((item, i) => buildShapeQuestion(item, i, usedSentences));
+    const idiomSel = shuffle(idiomItems).slice(0, 6).map((item, i) => buildIdiomQuestion(item, i));
+    currentQuiz = shuffle([...audioSel, ...shapeSel, ...idiomSel]).map((q, i) => ({ ...q, num: i }));
   } else {
     // 字音測驗：原有邏輯（優先錯題 + 未考過題目）
     const hist = getRecords();
     const seenKeys = new Set();
     for (const rec of hist) {
-      if ((rec.quizType || 'audio') !== 'audio') continue;
       for (const d of (rec.entries || [])) {
-        seenKeys.add(d.sentence + '|' + d.targetChar);
+        if (!d.qType || d.qType === 'audio') seenKeys.add(d.sentence + '|' + d.targetChar);
       }
     }
     const wbSorted = Object.values(getWrongBank()).sort((a, b) => new Date(b.lastWrong) - new Date(a.lastWrong));
@@ -2918,9 +2947,14 @@ function startQuiz(mode) {
     currentQuiz = selected.map((item, i) => buildQuestion(item, i));
   }
 
+  // Test mode: limit to 5 questions
+  if (document.getElementById('test-mode-cb')?.checked) {
+    currentQuiz = currentQuiz.slice(0, 5);
+  }
+
   // Update nav title
   const navTitle = document.getElementById('quiz-nav-title');
-  if (navTitle) navTitle.textContent = quizMode === 'shape' ? '字形測驗' : quizMode === 'idiom' ? '成語測驗' : '字音測驗';
+  if (navTitle) navTitle.textContent = quizMode === 'shape' ? '字形測驗' : quizMode === 'idiom' ? '成語測驗' : quizMode === 'mixed' ? '綜合測驗' : '字音測驗';
 
   renderQuiz();
   showScreen('quiz-screen');
@@ -3053,6 +3087,53 @@ function renderShape2Card(q) {
     </div>`;
 }
 
+function _scrollToNext(qIdx) {
+  if (_autoScrollTimer) { clearTimeout(_autoScrollTimer); _autoScrollTimer = null; }
+  _autoScrollTimer = setTimeout(() => {
+    _autoScrollTimer = null;
+    const stickyEl = document.getElementById('progress-sticky');
+    const stickyH  = (stickyEl ? stickyEl.offsetHeight : 54) + 4;
+    const viewH    = window.innerHeight;
+
+    // ── 1. 上方有未作答且頂部被切掉 → 往上跳到最近那題 ──
+    for (let i = qIdx - 1; i >= 0; i--) {
+      const card = document.getElementById(`qcard-${i}`);
+      if (!card) continue;
+      if (userAnswers.hasOwnProperty(i)) continue; // 已作答/跳過
+      if (card.getBoundingClientRect().top < stickyH) {
+        const rect   = card.getBoundingClientRect();
+        const target = window.scrollY + rect.top - stickyH;
+        window.scrollTo({ top: Math.max(0, target), behavior: 'smooth' });
+        return;
+      }
+    }
+
+    // ── 2. 下一題不存在（最後一題）→ 不動 ──
+    const nextCard = document.getElementById(`qcard-${qIdx + 1}`);
+    if (!nextCard) return;
+
+    // ── 3. 下一題已完整顯示 → 不動 ──
+    const nextRect = nextCard.getBoundingClientRect();
+    if (nextRect.top >= stickyH && nextRect.bottom <= viewH) return;
+
+    // ── 4. 往下捲到「剛好足夠」顯示下一題 + 下下一題標題 ──
+    const PEEK = 48;
+    const afterCard = document.getElementById(`qcard-${qIdx + 2}`);
+    let target;
+    if (afterCard) {
+      const afterRect = afterCard.getBoundingClientRect();
+      target = window.scrollY + afterRect.top - (viewH - PEEK);
+      // 保護：nextCard 頂部不能跑到 sticky bar 後面
+      target = Math.min(target, window.scrollY + nextRect.top - stickyH);
+    } else {
+      target = window.scrollY + nextRect.top - stickyH;
+    }
+
+    if (target <= window.scrollY) return; // 結果仍往回 → 不動
+    window.scrollTo({ top: Math.max(0, target), behavior: 'smooth' });
+  }, 160);
+}
+
 function selectAnswer(qIdx, answer, optIdx) {
   if (Date.now() < quizReadyTime) return;  // 忽略進入後 400ms 內的鬼點
   const q = currentQuiz[qIdx];
@@ -3074,26 +3155,7 @@ function selectAnswer(qIdx, answer, optIdx) {
   if (card) { card.classList.remove('skipped'); card.classList.add('answered'); }
   saveQuizSession();
   updateProgress();
-  // Auto-scroll: 把答完的題目捲到畫面頂（大螢幕則置中）
-  const answeredCard = document.getElementById(`qcard-${qIdx}`);
-  if (answeredCard) {
-    setTimeout(() => {
-      const rect  = answeredCard.getBoundingClientRect();
-      const cardTop = rect.top + window.pageYOffset;
-      const cardH   = answeredCard.offsetHeight + 14; // 含 margin-bottom
-      const stickyH = 70; // 黏性進度條高度
-
-      if (window.innerHeight >= 5 * cardH) {
-        // 大螢幕：置中；若已在中線以上則不動
-        if (rect.top + rect.height / 2 <= window.innerHeight / 2) return;
-        const target = cardTop - (window.innerHeight - answeredCard.offsetHeight) / 2;
-        window.scrollTo({ top: Math.max(0, target), behavior: 'smooth' });
-      } else {
-        // 一般手機螢幕：把答完的題目頂部對齊黏性列下方
-        window.scrollTo({ top: Math.max(0, cardTop - stickyH), behavior: 'smooth' });
-      }
-    }, 160);
-  }
+  _scrollToNext(qIdx);
 }
 
 
@@ -3116,21 +3178,7 @@ function skipAnswer(qIdx) {
     document.getElementById(`skip-btn-${qIdx}`).classList.add('active');
     const card = document.getElementById(`qcard-${qIdx}`);
     if (card) { card.classList.remove('answered'); card.classList.add('skipped'); }
-    // Auto-scroll: same logic as selectAnswer
-    if (card) {
-      setTimeout(() => {
-        const rect  = card.getBoundingClientRect();
-        const cardTop = rect.top + window.pageYOffset;
-        const cardH   = card.offsetHeight + 14;
-        const stickyH = 70;
-        if (window.innerHeight >= 5 * cardH) {
-          if (rect.top + rect.height / 2 <= window.innerHeight / 2) return;
-          window.scrollTo({ top: Math.max(0, cardTop - (window.innerHeight - card.offsetHeight) / 2), behavior: 'smooth' });
-        } else {
-          window.scrollTo({ top: Math.max(0, cardTop - stickyH), behavior: 'smooth' });
-        }
-      }, 160);
-    }
+    _scrollToNext(qIdx);
   }
   saveQuizSession();
   updateProgress();
@@ -3227,9 +3275,14 @@ function showResults(record) {
   else if (pct >= 40)  msg = '📖 繼續努力，多加練習！';
   else                 msg = '💪 加油！多練習幾次吧！';
   document.getElementById('res-message').textContent = msg;
+  if (pct === 100) launchFireworks();
 
   const container = document.getElementById('results-container');
   container.innerHTML = record.details.map((q, i) => buildResultCard(q, i)).join('');
+
+  // Reset test mode checkbox after quiz completion
+  const testCb = document.getElementById('test-mode-cb');
+  if (testCb) testCb.checked = false;
 
   showScreen('results-screen');
   window.scrollTo(0, 0);
@@ -3259,14 +3312,20 @@ function buildIdiomResultCard(q, i) {
       <span class="opt-text">${escHtml(opt)}</span>${tag}</div>`;
   }).join('');
   const skipNoteHtml = isSkipped ? `<div class="res-skip-note">不確定（未作答）</div>` : '';
+  const pinyinHtml = (q.targetChar && q.correctPinyin)
+    ? `<div class="idiom-pinyin-hint">
+        <ruby>${escHtml(q.targetChar)}<rt>${escHtml(q.correctPinyin)}</rt></ruby>
+        ${q.wrongPinyin ? `<span class="idiom-pinyin-wrong">常誤：${escHtml(q.wrongPinyin)}</span>` : ''}
+      </div>` : '';
   return `
     <div class="res-card" data-correct="${isCorrect?'1':'0'}" style="${isCorrect?'display:none':''}">
       <div class="res-badge ${isCorrect?'correct':isSkipped?'skipped':'wrong'}">${isCorrect?'✓':isSkipped?'？':'✗'}</div>
       <div class="q-num" style="margin-bottom:8px;">第 ${i+1} 題 <span class="q-type-badge badge-idiom" style="font-size:0.65rem;vertical-align:middle;">成語</span></div>
-      <div class="q-sentence" style="font-size:1.5rem;font-weight:800;margin-bottom:10px;">
+      <div class="q-sentence" style="font-size:1.5rem;font-weight:800;margin-bottom:4px;">
         ${escHtml(q.sentence)}
         <a class="btn-google" href="https://www.google.com/search?q=${encodeURIComponent(q.sentence)}" target="_blank" rel="noopener">G</a>
       </div>
+      ${pinyinHtml}
       <div class="q-ask" style="margin-bottom:10px;">以下哪個選項是這個成語的正確意思？</div>
       ${skipNoteHtml}
       <div class="options">${optionsHtml}</div>
@@ -3428,6 +3487,9 @@ function saveRecord(record) {
           isCorrect:     q.isCorrect,
           isSkipped:     q.userAnswer === '',
           userAnswer:    (!q.isCorrect && q.userAnswer) ? q.userAnswer : '',
+          targetChar:    q.targetChar    || '',
+          correctPinyin: q.correctPinyin || '',
+          wrongPinyin:   q.wrongPinyin   || '',
         };
       }
       return {
@@ -3511,7 +3573,7 @@ function showHistory(filter) { showRecords(filter); }
 
 function showRecords(filter) {
   if (filter !== undefined) histFilter = filter;
-  ['all','audio','shape','idiom'].forEach(f => {
+  ['all','audio','shape','idiom','mixed'].forEach(f => {
     const tab = document.getElementById(`hist-tab-${f}`);
     if (tab) tab.classList.toggle('active', f === histFilter);
   });
@@ -3532,14 +3594,53 @@ function showRecords(filter) {
       ? '<span class="q-type-badge badge-shape" style="font-size:0.65rem;margin-left:6px;">字形</span>'
       : rType === 'idiom'
       ? '<span class="q-type-badge badge-idiom" style="font-size:0.65rem;margin-left:6px;">成語</span>'
+      : rType === 'mixed'
+      ? '<span class="q-type-badge badge-mixed" style="font-size:0.65rem;margin-left:6px;">綜合</span>'
       : '<span class="q-type-badge badge-audio" style="font-size:0.65rem;margin-left:6px;">字音</span>';
 
     const entries = rec.entries || [];
     const wrongs  = entries.filter(d => !d.isCorrect && !d.isSkipped);
     const skipped = entries.filter(d => d.isSkipped).length;
 
+    function renderWrongEntry(d) {
+      if (d.qType === 'idiom') {
+        const pinyinBadge = (d.targetChar && d.correctPinyin)
+          ? `<span style="font-size:0.72rem;color:#7c3aed;background:#ede9fe;padding:1px 6px;border-radius:7px;letter-spacing:0.04em;">${escHtml(d.targetChar)}：${escHtml(d.correctPinyin)}${d.wrongPinyin ? ` 常誤${escHtml(d.wrongPinyin)}` : ''}</span>` : '';
+        return `<div class="hw-item">
+          <span class="hw-sentence">${escHtml(d.sentence)}</span>
+          ${pinyinBadge}
+          <span class="hw-correct" style="color:#b45309;">${escHtml(d.correctAnswer||'')}</span>
+          ${d.userAnswer ? `<span class="hw-wrong">${escHtml(d.userAnswer)}</span>` : ''}
+        </div>`;
+      }
+      if (d.qType === 'shape1' || d.qType === 'shape2') {
+        if (d.qType === 'shape2') {
+          return `<div class="hw-item">
+            <span class="hw-sentence">${escHtml(d.sentence)}</span>
+            <span class="hw-char">「${escHtml(d.correctChar)}」</span>
+            <span class="hw-correct">${escHtml(d.correctAnswer)}</span>
+            ${d.userAnswer ? `<span class="hw-wrong">${escHtml(d.userAnswer)}</span>` : ''}
+          </div>`;
+        }
+        return `<div class="hw-item">
+          <span class="hw-sentence">${escHtml(d.sentence)}</span>
+          <span class="hw-char">「${escHtml(d.targetChar)}」</span>
+          <span class="hw-correct">→${escHtml(d.correctChar||d.targetChar)}</span>
+          ${d.wrongChar ? `<span class="hw-wrong">${escHtml(d.wrongChar)}</span>` : ''}
+        </div>`;
+      }
+      return `<div class="hw-item">
+        <span class="hw-sentence">${escHtml((d.sentence||'').replace(d.targetChar||'', ''))}</span>
+        <span class="hw-char">「${escHtml(d.targetChar||'')}」</span>
+        <span class="hw-correct">${escHtml(d.correctPinyin||'')}</span>
+        ${d.userAnswer ? `<span class="hw-wrong">${escHtml(d.userAnswer)}</span>` : ''}
+      </div>`;
+    }
+
     let wrongItemsHtml = '';
-    if (rType === 'idiom') {
+    if (rType === 'mixed') {
+      wrongItemsHtml = wrongs.map(d => renderWrongEntry(d)).join('');
+    } else if (rType === 'idiom') {
       wrongItemsHtml = wrongs.map(d => `
         <div class="hw-item">
           <span class="hw-sentence">${escHtml(d.sentence)}</span>
@@ -3584,8 +3685,10 @@ function showRecords(filter) {
       const resCls  = e.isSkipped ? 'log-skip-lbl' : e.isCorrect ? 'log-ok' : 'log-err';
       const resText = e.isSkipped ? '略' : e.isCorrect ? '✓' : '✗';
       if (e.qType === 'idiom') {
+        const pinyinCell = (e.targetChar && e.correctPinyin)
+          ? `<span style="font-size:0.7rem;color:#7c3aed;margin-left:4px;">${escHtml(e.targetChar)}${escHtml(e.correctPinyin)}${e.wrongPinyin ? `／誤${escHtml(e.wrongPinyin)}` : ''}</span>` : '';
         return `<tr class="${rowCls}">
-          <td colspan="2">${escHtml(e.sentence)}</td>
+          <td colspan="2">${escHtml(e.sentence)}${pinyinCell}</td>
           <td colspan="2" style="font-size:0.75rem;color:#78350f;">${escHtml(e.correctAnswer||'')}</td>
           <td class="${resCls}">${resText}</td>
           <td style="font-size:0.75rem;color:#dc2626;">${e.userAnswer && !e.isCorrect ? escHtml(e.userAnswer) : ''}</td>
@@ -3692,7 +3795,7 @@ function showScreen(id) {
   if (fg) fg.style.display = (id === 'quiz-screen')    ? 'flex' : 'none';
   if (ft) ft.style.display = (id === 'results-screen') ? 'flex' : 'none';
 }
-function showHome() { window.removeEventListener('beforeunload', _quizBeforeUnload); showScreen('home-screen'); updateHomeStats(); checkResumeSession(); }
+function showHome() { stopFireworks(); window.removeEventListener('beforeunload', _quizBeforeUnload); const testCb = document.getElementById('test-mode-cb'); if (testCb) testCb.checked = false; showScreen('home-screen'); updateHomeStats(); checkResumeSession(); }
 function _quizBeforeUnload(e) {
   if (Object.keys(userAnswers).length > 0) {
     e.preventDefault();
@@ -3712,9 +3815,9 @@ function updateHomeStats() {
   const hist = getRecords();
   const el = document.getElementById('home-stats');
   if (!el) return;
-  const bankInfo = `<div style="font-size:0.78rem;color:#9ca3af;margin-top:6px;">題庫：字音 ${audioItems.length} 題　字形 ${shapeItems.length} 題　成語 ${idiomItems.length} 題</div>`;
+  const bankInfoText = `字音 ${audioItems.length}／字形 ${shapeItems.length}／成語 ${idiomItems.length} 題`;
   if (!hist.length) {
-    el.innerHTML = `<hr class="stat-divider"><div style="color:#9ca3af;font-size:0.85rem;padding:4px 0 8px;">尚無作答記錄</div>${bankInfo}`;
+    el.innerHTML = `<hr class="stat-divider"><div style="color:#9ca3af;font-size:0.78rem;padding:4px 0 8px;">尚無作答記錄　${bankInfoText}</div>`;
     const homeWB0 = document.getElementById('home-week-bar');
     if (homeWB0) homeWB0.style.display = 'none';
     return;
@@ -3726,24 +3829,21 @@ function updateHomeStats() {
   const swb = getShapeWrongBank();
   const wbCount  = Object.keys(wb).length;
   const swbCount = Object.keys(swb).length;
-  const wrongBtnHtml = (wbCount || swbCount) ? `<div class="wb-home-row">
-    <span class="wb-home-label">錯題本</span>
-    <span>
-      ${wbCount ? `<span class="wb-home-count">${wbCount}</span><span style="font-size:0.78rem;color:#9ca3af;">字音</span>
-      <button onclick="showWrongBank('audio')" style="margin-left:6px;font-size:0.75rem;padding:3px 10px;border-radius:8px;border:1.5px solid rgba(239,68,68,0.4);background:rgba(239,68,68,0.08);color:#f87171;cursor:pointer;font-weight:600;">字音</button>` : ''}
-      ${swbCount ? `<span class="wb-home-count" style="margin-left:8px;">${swbCount}</span><span style="font-size:0.78rem;color:#9ca3af;">字形</span>
-      <button onclick="showWrongBank('shape')" style="margin-left:6px;font-size:0.75rem;padding:3px 10px;border-radius:8px;border:1.5px solid rgba(5,150,105,0.4);background:rgba(5,150,105,0.08);color:#059669;cursor:pointer;font-weight:600;">字形</button>` : ''}
-    </span>
-  </div>` : '';
+  const wrongColHtml = (wbCount || swbCount) ? `
+    <div style="display:flex;flex-direction:column;justify-content:center;gap:5px;padding-left:2px;">
+      ${wbCount  ? `<button onclick="showWrongBank('audio')" style="font-size:0.72rem;padding:3px 8px;border-radius:8px;border:1.5px solid rgba(239,68,68,0.4);background:rgba(239,68,68,0.08);color:#f87171;cursor:pointer;font-weight:600;white-space:nowrap;">ㄅ ${wbCount}</button>` : ''}
+      ${swbCount ? `<button onclick="showWrongBank('shape')" style="font-size:0.72rem;padding:3px 8px;border-radius:8px;border:1.5px solid rgba(239,68,68,0.4);background:rgba(239,68,68,0.08);color:#f87171;cursor:pointer;font-weight:600;white-space:nowrap;">✏️ ${swbCount}</button>` : ''}
+    </div>` : '';
   el.innerHTML = `<hr class="stat-divider">
-    <div class="stats-grid">
-      <div class="stat-box"><div class="stat-num">${hist.length}</div><div class="stat-lbl">測驗次數</div></div>
-      <div class="stat-box"><div class="stat-num">${avgScore}</div><div class="stat-lbl">平均分數</div></div>
-      <div class="stat-box"><div class="stat-num">${bestScore}</div><div class="stat-lbl">最高分數</div></div>
+    <div style="display:flex;align-items:stretch;gap:12px;margin-bottom:8px;">
+      <div class="stat-box" style="flex:1"><div class="stat-num">${hist.length}</div><div class="stat-lbl">測驗次數</div></div>
+      <div class="stat-box" style="flex:1"><div class="stat-num">${avgScore}</div><div class="stat-lbl">平均分數</div></div>
+      <div class="stat-box" style="flex:1"><div class="stat-num">${bestScore}</div><div class="stat-lbl">最高分數</div></div>
+      ${wrongColHtml}
     </div>
-    <div style="font-size:0.78rem;color:#9ca3af;margin-bottom:4px;">上次測驗：${lastDate}</div>
-    ${wrongBtnHtml}
-    ${bankInfo}`;
+    <div style="font-size:0.78rem;color:#9ca3af;margin-bottom:4px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:2px;">
+      <span>上次測驗：${lastDate}</span><span>${bankInfoText}</span>
+    </div>`;
   // Render home week bar
   const homeWB = document.getElementById('home-week-bar');
   if (homeWB) {
@@ -4010,7 +4110,7 @@ function resumeQuiz() {
     userAnswers  = saved.userAnswers;
     quizMode     = saved.quizMode || 'audio';
     const navTitle = document.getElementById('quiz-nav-title');
-    if (navTitle) navTitle.textContent = quizMode === 'shape' ? '字形測驗' : quizMode === 'idiom' ? '成語測驗' : '字音測驗';
+    if (navTitle) navTitle.textContent = quizMode === 'shape' ? '字形測驗' : quizMode === 'idiom' ? '成語測驗' : quizMode === 'mixed' ? '綜合測驗' : '字音測驗';
     renderQuiz();
     showScreen('quiz-screen');
     window.scrollTo(0, 0);
@@ -4322,6 +4422,68 @@ function toggleLsDetail(type, cat) {
     </div>`;
   }
   detailEl.style.display = 'block';
+}
+
+// ============================================================
+// FIREWORKS
+// ============================================================
+let _fwRaf = null;
+function launchFireworks() {
+  stopFireworks();
+  const canvas = document.createElement('canvas');
+  canvas.id = 'fireworks-canvas';
+  canvas.style.cssText = 'position:fixed;inset:0;z-index:8000;pointer-events:none;';
+  document.body.appendChild(canvas);
+  const ctx = canvas.getContext('2d');
+  let W = canvas.width = window.innerWidth;
+  let H = canvas.height = window.innerHeight;
+  const onResize = () => { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; };
+  window.addEventListener('resize', onResize);
+  const COLORS = ['#ff6b6b','#ffd93d','#6bcb77','#4d96ff','#ff922b','#cc5de8','#f06595','#ffffff'];
+  const particles = [];
+  class Particle {
+    constructor(x, y) {
+      this.x = x; this.y = y;
+      const angle = Math.random() * Math.PI * 2;
+      const speed = Math.random() * 6 + 2;
+      this.vx = Math.cos(angle) * speed;
+      this.vy = Math.sin(angle) * speed - 3;
+      this.alpha = 1;
+      this.color = COLORS[Math.floor(Math.random() * COLORS.length)];
+      this.size = Math.random() * 3.5 + 1.5;
+      this.decay = Math.random() * 0.008 + 0.012;
+    }
+    update() { this.x += this.vx; this.y += this.vy; this.vy += 0.12; this.vx *= 0.98; this.alpha -= this.decay; }
+    draw() {
+      ctx.save(); ctx.globalAlpha = Math.max(0, this.alpha);
+      ctx.fillStyle = this.color;
+      ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    }
+  }
+  function burst() {
+    const x = W * (0.1 + Math.random() * 0.8);
+    const y = H * (0.1 + Math.random() * 0.55);
+    for (let i = 0; i < 70; i++) particles.push(new Particle(x, y));
+  }
+  let lastBurst = 0;
+  const startTime = Date.now();
+  function animate(now) {
+    if (Date.now() - startTime > 60000) { stopFireworks(); window.removeEventListener('resize', onResize); return; }
+    ctx.clearRect(0, 0, W, H);
+    if (now - lastBurst > 700) { burst(); if (Math.random() < 0.5) burst(); lastBurst = now; }
+    for (let i = particles.length - 1; i >= 0; i--) {
+      particles[i].update(); particles[i].draw();
+      if (particles[i].alpha <= 0) particles.splice(i, 1);
+    }
+    _fwRaf = requestAnimationFrame(animate);
+  }
+  _fwRaf = requestAnimationFrame(animate);
+}
+function stopFireworks() {
+  if (_fwRaf) { cancelAnimationFrame(_fwRaf); _fwRaf = null; }
+  const c = document.getElementById('fireworks-canvas');
+  if (c) c.remove();
 }
 
 // ============================================================
