@@ -415,14 +415,19 @@
     }
     .sync-user-info strong { color: #818cf8; }
     .sync-field-label { font-size: 0.75rem; color: #94a3b8; margin-bottom: 4px; }
+    .sb-users-list { max-height: 280px; overflow-y: auto; margin-bottom: 12px; }
+    .sb-user-row { padding: 8px 10px; border-radius: 8px; margin-bottom: 6px; background: #0f172a; }
+    .sb-user-row.sb-user-me { background: #1e1b4b; border: 1px solid #4338ca; }
+    .sb-user-name { font-size: 0.88rem; font-weight: 600; color: #f1f5f9; }
+    .sb-user-stat { font-size: 0.75rem; color: #94a3b8; margin-top: 2px; }
     /* cloud icon button next to version */
     #sync-icon-btn {
       display: inline-flex; align-items: center; justify-content: center;
       background: none; border: none; padding: 0 0 0 4px;
-      cursor: pointer; opacity: 0.45; color: white;
-      vertical-align: middle; transition: opacity 0.2s;
+      cursor: pointer; opacity: 0.55; color: #64748b;
+      vertical-align: middle; transition: opacity 0.2s, color 0.2s;
     }
-    #sync-icon-btn:hover { opacity: 0.85; }
+    #sync-icon-btn:hover { opacity: 0.9; }
     #sync-icon-btn.ok   { opacity: 0.9; color: #4ade80; }
     #sync-icon-btn.err  { opacity: 0.9; color: #f87171; }
     #sync-icon-btn.busy { opacity: 0.9; color: #facc15; animation: pulse 0.8s infinite alternate; }
@@ -871,7 +876,7 @@
           <span>測試模式</span>
         </label>
         <span style="display:inline-flex;align-items:center;gap:6px;">
-        <span style="font-size:0.72rem;opacity:0.5;letter-spacing:0.04em;">v20260418_2345_2</span><button id="sync-icon-btn" title="雲端同步" onclick="onSyncClick()"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M19.35 10.04A7.49 7.49 0 0 0 12 4C9.11 4 6.6 5.64 5.35 8.04A5.994 5.994 0 0 0 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/></svg></button>
+        <span style="font-size:0.72rem;opacity:0.5;letter-spacing:0.04em;">v20260418_2358_3</span><button id="sync-icon-btn" title="雲端同步" onclick="onSyncClick()"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M19.35 10.04A7.49 7.49 0 0 0 12 4C9.11 4 6.6 5.64 5.35 8.04A5.994 5.994 0 0 0 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/></svg></button>
         <a href="https://github.com/TaipeiAlan/CHAPP" target="_blank" rel="noopener" class="github-link" title="GitHub">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
         </a>
@@ -2618,7 +2623,7 @@ const CSV_DATA = `id|sentence|target_char|correct_pinyin|wrong_pinyin|correct_ch
 // CONSTANTS
 // ============================================================
 const QUIZ_SIZE = 20;
-const APP_VERSION      = 'v20260418_2345_2';
+const APP_VERSION      = 'v20260418_2358_3';
 const RECORDS_KEY      = 'Cquiz_records';
 const _OLD_HIST_KEY    = 'Cquiz_history';   // migration only
 const _OLD_LOG_KEY     = 'Cquiz_test_log';  // migration only
@@ -4790,6 +4795,7 @@ function _renderSyncModalLoggedIn(username) {
     <div id="sb-login-status" class="sync-status-row"></div>
     <div class="sync-btn-row" style="flex-direction:column;gap:8px;">
       <button class="sync-btn sync-btn-primary"    onclick="doSyncNow()">立即同步</button>
+      <button class="sync-btn sync-btn-secondary"  onclick="doViewUsersStats()">查看所有使用者統計</button>
       <button class="sync-btn sync-btn-secondary"  onclick="_renderSyncModalSetup(true)">編輯設定</button>
       <button class="sync-btn sync-btn-danger"     onclick="doLogoutSync()">登出（保留本機資料）</button>
     </div>
@@ -4848,6 +4854,81 @@ function doLogoutSync() {
   localStorage.removeItem(SB_USERID_KEY);
   _sbDot('');
   closeSyncModal();
+}
+
+function doBackToLoggedIn() {
+  const u = getSbUsername();
+  if (u) _renderSyncModalLoggedIn(u); else _renderSyncModalSetup(false);
+}
+
+async function doViewUsersStats() {
+  const body = document.getElementById('sync-modal-body');
+  body.innerHTML = `<div class="sync-status-row">載入中…</div>`;
+  try {
+    const sb = getSbClient();
+    const myUid = getSbUserId();
+    const [{ data: users, error: ue }, { data: records, error: re }] = await Promise.all([
+      sb.from('users').select('id, username'),
+      sb.from('quiz_records').select('user_id, score, total, date'),
+    ]);
+    if (ue) throw ue;
+    if (re) throw re;
+
+    // Aggregate per user
+    const statsMap = {};
+    (records || []).forEach(r => {
+      if (!statsMap[r.user_id]) statsMap[r.user_id] = { count: 0, scoreSum: 0, totalSum: 0, latestDate: '' };
+      const s = statsMap[r.user_id];
+      s.count++;
+      s.scoreSum  += r.score || 0;
+      s.totalSum  += r.total || 20;
+      if (!s.latestDate || r.date > s.latestDate) s.latestDate = r.date;
+    });
+
+    const sorted = (users || []).sort((a, b) => {
+      if (a.id === myUid) return -1;
+      if (b.id === myUid) return 1;
+      return (statsMap[b.id]?.count || 0) - (statsMap[a.id]?.count || 0);
+    });
+
+    const rows = sorted.map(u => {
+      const s = statsMap[u.id];
+      const isMe = u.id === myUid;
+      const count  = s?.count || 0;
+      const avgPct = (s && s.totalSum > 0) ? Math.round(s.scoreSum / s.totalSum * 100) : 0;
+      const latest = s?.latestDate ? _relativeDate(s.latestDate) : '尚無記錄';
+      const medal  = isMe ? '★ ' : '';
+      const youTag = isMe ? ' <span style="font-size:0.7rem;opacity:0.55">(你)</span>' : '';
+      return `<div class="sb-user-row${isMe ? ' sb-user-me' : ''}">
+        <div class="sb-user-name">${medal}${u.username}${youTag}</div>
+        <div class="sb-user-stat">${count} 次 · 均分 ${avgPct}% · ${latest}</div>
+      </div>`;
+    }).join('');
+
+    body.innerHTML = `
+      <div class="sb-users-list">${rows || '<div class="sync-status-row">無使用者資料</div>'}</div>
+      <button class="sync-btn sync-btn-secondary" style="width:100%" onclick="doBackToLoggedIn()">← 返回</button>`;
+  } catch(e) {
+    body.innerHTML = `
+      <div class="sync-status-row err">錯誤：${e.message || e}</div>
+      <button class="sync-btn sync-btn-secondary" style="width:100%;margin-top:8px" onclick="doBackToLoggedIn()">← 返回</button>`;
+  }
+}
+
+function _relativeDate(dateStr) {
+  // zh-TW format: "2026/4/18 下午2:30:45"
+  try {
+    const [datePart] = dateStr.split(' ');
+    const [y, m, d] = datePart.split('/').map(Number);
+    const today = new Date();
+    const rec   = new Date(y, m - 1, d);
+    const diff  = Math.round((new Date(today.getFullYear(), today.getMonth(), today.getDate()) - rec) / 86400000);
+    if (diff === 0) return '今天';
+    if (diff === 1) return '昨天';
+    if (diff < 7)  return `${diff}天前`;
+    if (diff < 30) return `${Math.floor(diff / 7)}週前`;
+    return `${m}/${d}`;
+  } catch { return '最近'; }
 }
 
 // ── init icon state on load ──
