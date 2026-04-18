@@ -414,16 +414,19 @@
       margin-bottom: 14px; font-size: 0.88rem;
     }
     .sync-user-info strong { color: #818cf8; }
-    /* tiny cloud icon next to version */
-    #sync-dot {
-      display: inline-block; width: 8px; height: 8px; border-radius: 50%;
-      background: #94a3b8; vertical-align: middle; margin-left: 4px;
-      cursor: pointer;
+    .sync-field-label { font-size: 0.75rem; color: #94a3b8; margin-bottom: 4px; }
+    /* cloud icon button next to version */
+    #sync-icon-btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      background: none; border: none; padding: 0 0 0 4px;
+      cursor: pointer; opacity: 0.45; color: white;
+      vertical-align: middle; transition: opacity 0.2s;
     }
-    #sync-dot.ok  { background: #4ade80; }
-    #sync-dot.err { background: #f87171; }
-    #sync-dot.busy { background: #facc15; animation: pulse 0.8s infinite alternate; }
-    @keyframes pulse { from { opacity: 1; } to { opacity: 0.3; } }
+    #sync-icon-btn:hover { opacity: 0.85; }
+    #sync-icon-btn.ok   { opacity: 0.9; color: #4ade80; }
+    #sync-icon-btn.err  { opacity: 0.9; color: #f87171; }
+    #sync-icon-btn.busy { opacity: 0.9; color: #facc15; animation: pulse 0.8s infinite alternate; }
+    @keyframes pulse { from { opacity: 0.9; } to { opacity: 0.3; } }
 
     /* ====== QUIZ START BUTTONS ====== */
     .btn-quiz-start, .btn-idiom-start, .btn-mixed-start, .btn-shape-start {
@@ -838,7 +841,6 @@
       <div class="home-top-btns">
         <button class="btn-sm" onclick="showLearnStats()">學習統計</button>
         <button class="btn-sm" onclick="showHistory()">考試記錄</button>
-        <button class="btn-sm" id="btn-sync" onclick="onSyncClick()">☁ 雲端同步</button>
       </div>
     </div>
     <div id="resume-card" class="resume-card" style="display:none">
@@ -869,7 +871,7 @@
           <span>測試模式</span>
         </label>
         <span style="display:inline-flex;align-items:center;gap:6px;">
-        <span style="font-size:0.72rem;opacity:0.5;letter-spacing:0.04em;">v20260418_2313_1</span><span id="sync-dot" title="雲端同步狀態" onclick="onSyncClick()"></span>
+        <span style="font-size:0.72rem;opacity:0.5;letter-spacing:0.04em;">v20260418_2345_2</span><button id="sync-icon-btn" title="雲端同步" onclick="onSyncClick()"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M19.35 10.04A7.49 7.49 0 0 0 12 4C9.11 4 6.6 5.64 5.35 8.04A5.994 5.994 0 0 0 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/></svg></button>
         <a href="https://github.com/TaipeiAlan/CHAPP" target="_blank" rel="noopener" class="github-link" title="GitHub">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
         </a>
@@ -2616,7 +2618,7 @@ const CSV_DATA = `id|sentence|target_char|correct_pinyin|wrong_pinyin|correct_ch
 // CONSTANTS
 // ============================================================
 const QUIZ_SIZE = 20;
-const APP_VERSION      = 'v20260418_2313_1';
+const APP_VERSION      = 'v20260418_2345_2';
 const RECORDS_KEY      = 'Cquiz_records';
 const _OLD_HIST_KEY    = 'Cquiz_history';   // migration only
 const _OLD_LOG_KEY     = 'Cquiz_test_log';  // migration only
@@ -2625,22 +2627,27 @@ const SHAPE_WRONG_KEY  = 'Cquiz_shape_wrong_bank';
 const LOAD_DATE_KEY    = 'Cquiz_load_date';
 
 // ── Supabase ──
-// 填入你的 Supabase 專案 URL 和 anon key
-const SUPABASE_URL = 'YOUR_SUPABASE_URL';
-const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY';
+const SB_URL_KEY    = 'Cquiz_sb_url';
+const SB_KEY_KEY    = 'Cquiz_sb_key';
 const SB_USER_KEY   = 'Cquiz_sb_username';
 const SB_USERID_KEY = 'Cquiz_sb_user_id';
 
+function getSbUrl()      { return localStorage.getItem(SB_URL_KEY)    || ''; }
+function getSbApiKey()   { return localStorage.getItem(SB_KEY_KEY)    || ''; }
+function getSbUsername() { return localStorage.getItem(SB_USER_KEY)   || ''; }
+function getSbUserId()   { return localStorage.getItem(SB_USERID_KEY) || ''; }
+
 let _sbClient = null;
+let _sbClientUrl = '';
 function getSbClient() {
-  if (_sbClient) return _sbClient;
-  if (SUPABASE_URL === 'YOUR_SUPABASE_URL' || !window.supabase) return null;
-  _sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  const url = getSbUrl(), key = getSbApiKey();
+  if (!url || !key || !window.supabase) return null;
+  if (_sbClient && _sbClientUrl === url) return _sbClient;
+  _sbClient = window.supabase.createClient(url, key);
+  _sbClientUrl = url;
   return _sbClient;
 }
-function sbConfigured() { return SUPABASE_URL !== 'YOUR_SUPABASE_URL' && !!window.supabase; }
-function getSbUsername() { return localStorage.getItem(SB_USER_KEY) || ''; }
-function getSbUserId()   { return localStorage.getItem(SB_USERID_KEY) || ''; }
+function sbConfigured() { return !!(getSbUrl() && getSbApiKey() && window.supabase); }
 const OPTION_KEYS = ['A', 'B', 'C', 'D'];
 
 // ============================================================
@@ -4572,7 +4579,7 @@ function stopFireworks() {
 
 // ── helpers ──
 function _sbDot(state) {
-  const d = document.getElementById('sync-dot');
+  const d = document.getElementById('sync-icon-btn');
   if (d) { d.className = state || ''; }
 }
 
@@ -4744,76 +4751,78 @@ function closeSyncModal() {
 }
 
 function onSyncClick() {
-  if (!sbConfigured()) {
-    _renderSyncModal('<div class="sync-status-row err">尚未設定 Supabase URL / Key<br>請先在程式碼中填入設定值</div>', [
-      { label: '關閉', cls: 'sync-btn-secondary', fn: 'closeSyncModal()' },
-    ]);
-    document.getElementById('sync-modal').style.display = 'flex';
-    return;
-  }
   const username = getSbUsername();
-  if (!username) {
-    _renderSyncModalLogin();
+  if (!sbConfigured() || !username) {
+    _renderSyncModalSetup(false);
   } else {
     _renderSyncModalLoggedIn(username);
   }
   document.getElementById('sync-modal').style.display = 'flex';
 }
 
-function _renderSyncModal(bodyHtml, buttons) {
-  const btns = buttons.map(b =>
-    `<button class="sync-btn ${b.cls}" onclick="${b.fn}">${b.label}</button>`
-  ).join('');
-  document.getElementById('sync-modal-body').innerHTML = bodyHtml +
-    `<div class="sync-btn-row">${btns}</div>`;
-}
-
-function _renderSyncModalLogin() {
+function _renderSyncModalSetup(editMode) {
+  const url = getSbUrl(), key = getSbApiKey(), user = getSbUsername();
+  const cancelFn = editMode ? `onSyncClick()` : `closeSyncModal()`;
   document.getElementById('sync-modal-body').innerHTML = `
-    <div class="sync-status-row">輸入使用者名稱以啟用雲端同步</div>
-    <input id="sb-username-input" type="text" placeholder="使用者名稱" maxlength="30"
-      onkeydown="if(event.key==='Enter') doSyncLogin()">
+    <div class="sync-field-label">Supabase Project URL</div>
+    <input id="sb-url-input" type="text" placeholder="https://xxxx.supabase.co"
+      value="${url}" onkeydown="if(event.key==='Enter')document.getElementById('sb-key-input').focus()">
+    <div class="sync-field-label">Anon Key</div>
+    <input id="sb-key-input" type="password" placeholder="eyJh..."
+      value="${key}" onkeydown="if(event.key==='Enter')document.getElementById('sb-user-input').focus()">
+    <div class="sync-field-label">使用者名稱</div>
+    <input id="sb-user-input" type="text" placeholder="你的名字" maxlength="30"
+      value="${user}" onkeydown="if(event.key==='Enter')doSyncConnect()">
     <div id="sb-login-status" class="sync-status-row"></div>
     <div class="sync-btn-row">
-      <button class="sync-btn sync-btn-secondary" onclick="closeSyncModal()">取消</button>
-      <button class="sync-btn sync-btn-primary" onclick="doSyncLogin()">登入 / 註冊</button>
+      <button class="sync-btn sync-btn-secondary" onclick="${cancelFn}">取消</button>
+      <button class="sync-btn sync-btn-primary" onclick="doSyncConnect()">連線並同步</button>
     </div>`;
-  setTimeout(() => { const el = document.getElementById('sb-username-input'); if (el) el.focus(); }, 50);
+  setTimeout(() => {
+    const el = document.getElementById(!url ? 'sb-url-input' : !key ? 'sb-key-input' : 'sb-user-input');
+    if (el) el.focus();
+  }, 50);
 }
 
 function _renderSyncModalLoggedIn(username) {
   document.getElementById('sync-modal-body').innerHTML = `
-    <div class="sync-user-info">目前使用者：<strong>${username}</strong></div>
+    <div class="sync-user-info">使用者：<strong>${username}</strong></div>
     <div id="sb-login-status" class="sync-status-row"></div>
     <div class="sync-btn-row" style="flex-direction:column;gap:8px;">
-      <button class="sync-btn sync-btn-primary" onclick="doSyncNow()">立即同步</button>
-      <button class="sync-btn sync-btn-secondary" onclick="doSwitchUser()">切換使用者</button>
-      <button class="sync-btn sync-btn-danger" onclick="doLogoutSync()">登出（保留本機資料）</button>
+      <button class="sync-btn sync-btn-primary"    onclick="doSyncNow()">立即同步</button>
+      <button class="sync-btn sync-btn-secondary"  onclick="_renderSyncModalSetup(true)">編輯設定</button>
+      <button class="sync-btn sync-btn-danger"     onclick="doLogoutSync()">登出（保留本機資料）</button>
     </div>
     <div style="margin-top:8px;">
       <button class="sync-btn sync-btn-secondary" style="width:100%" onclick="closeSyncModal()">關閉</button>
     </div>`;
 }
 
-async function doSyncLogin() {
-  const input = document.getElementById('sb-username-input');
-  const status = document.getElementById('sb-login-status');
-  const username = (input?.value || '').trim();
-  if (!username) { if (status) { status.textContent = '請輸入使用者名稱'; status.className = 'sync-status-row err'; } return; }
-  if (status) { status.textContent = '連線中…'; status.className = 'sync-status-row'; }
+async function doSyncConnect() {
+  const url      = (document.getElementById('sb-url-input')?.value  || '').trim();
+  const key      = (document.getElementById('sb-key-input')?.value  || '').trim();
+  const username = (document.getElementById('sb-user-input')?.value || '').trim();
+  const status   = document.getElementById('sb-login-status');
+  if (!url)      { status.textContent = '請輸入 Supabase URL';  status.className = 'sync-status-row err'; return; }
+  if (!key)      { status.textContent = '請輸入 Anon Key';      status.className = 'sync-status-row err'; return; }
+  if (!username) { status.textContent = '請輸入使用者名稱';     status.className = 'sync-status-row err'; return; }
+  localStorage.setItem(SB_URL_KEY, url);
+  localStorage.setItem(SB_KEY_KEY, key);
+  _sbClient = null; // force re-init with new credentials
+  status.textContent = '連線中…'; status.className = 'sync-status-row';
   try {
     const uid = await sbGetOrCreateUser(username);
     localStorage.setItem(SB_USER_KEY, username);
-    if (status) { status.textContent = '同步中…'; }
+    status.textContent = '同步中…';
     _sbDot('busy');
     await sbSyncAll(uid);
     _sbDot('ok');
-    if (status) { status.textContent = '同步完成！'; status.className = 'sync-status-row ok'; }
+    status.textContent = '同步完成！'; status.className = 'sync-status-row ok';
     updateHomeStats();
     setTimeout(closeSyncModal, 1200);
   } catch(e) {
     _sbDot('err');
-    if (status) { status.textContent = '錯誤：' + (e.message || e); status.className = 'sync-status-row err'; }
+    status.textContent = '錯誤：' + (e.message || e); status.className = 'sync-status-row err';
   }
 }
 
@@ -4834,13 +4843,6 @@ async function doSyncNow() {
   }
 }
 
-function doSwitchUser() {
-  localStorage.removeItem(SB_USER_KEY);
-  localStorage.removeItem(SB_USERID_KEY);
-  _sbDot('');
-  _renderSyncModalLogin();
-}
-
 function doLogoutSync() {
   localStorage.removeItem(SB_USER_KEY);
   localStorage.removeItem(SB_USERID_KEY);
@@ -4848,10 +4850,9 @@ function doLogoutSync() {
   closeSyncModal();
 }
 
-// ── init sync dot on load ──
+// ── init icon state on load ──
 function initSyncDot() {
-  if (!sbConfigured()) return;
-  if (getSbUsername()) _sbDot('ok');
+  if (sbConfigured() && getSbUsername()) _sbDot('ok');
 }
 
 // ============================================================
