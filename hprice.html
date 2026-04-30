@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>房價資料查詢</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, -apple-system, sans-serif; background: #f0f2f5; color: #1a1a2e; min-height: 100vh; }
+
+    .header {
+      background: #1a237e;
+      color: white;
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .header h1 { font-size: 1.05rem; font-weight: 700; flex: 1; min-width: 120px; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 13px;
+      border: none;
+      border-radius: 5px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+      white-space: nowrap;
+    }
+    .btn-primary { background: #42a5f5; color: white; }
+    .btn-primary:hover { background: #1e88e5; }
+    .btn-ghost { background: rgba(255,255,255,0.15); color: white; }
+    .btn-ghost:hover { background: rgba(255,255,255,0.28); }
+    #csv-input { display: none; }
+
+    .status-bar {
+      padding: 7px 20px;
+      font-size: 0.82rem;
+      display: none;
+      border-bottom: 1px solid transparent;
+    }
+    .status-bar.success { background: #e8f5e9; color: #2e7d32; border-color: #c8e6c9; display: block; }
+    .status-bar.error   { background: #ffebee; color: #c62828; border-color: #ffcdd2; display: block; }
+    .status-bar.info    { background: #e3f2fd; color: #1565c0; border-color: #bbdefb; display: block; }
+
+    .stats-bar {
+      background: white;
+      padding: 10px 20px;
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+      border-bottom: 1px solid #e0e0e0;
+      font-size: 0.83rem;
+    }
+    .stat-item { display: flex; flex-direction: column; gap: 2px; }
+    .stat-label { color: #777; font-size: 0.73rem; text-transform: uppercase; letter-spacing: .03em; }
+    .stat-value { font-weight: 700; color: #1a237e; font-size: 0.95rem; }
+    .stat-source { margin-left: auto; }
+    .stat-source .stat-value { font-weight: 400; font-size: 0.78rem; color: #555; }
+
+    .filter-panel {
+      background: white;
+      padding: 10px 20px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    .fg { display: flex; flex-direction: column; gap: 3px; }
+    .fg label { font-size: 0.73rem; color: #555; font-weight: 600; text-transform: uppercase; letter-spacing: .03em; }
+    .fg select, .fg input[type="number"] {
+      padding: 5px 8px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 0.82rem;
+      min-width: 100px;
+      background: white;
+    }
+    .fg select:focus, .fg input[type="number"]:focus { outline: 2px solid #42a5f5; border-color: transparent; }
+    .price-row { display: flex; align-items: center; gap: 5px; }
+    .price-row input { width: 76px; min-width: unset; }
+    .filter-count { margin-left: auto; font-size: 0.82rem; color: #666; align-self: center; white-space: nowrap; }
+
+    .table-wrap { padding: 14px 20px; overflow-x: auto; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+    thead tr { background: #1a237e; color: white; }
+    thead th {
+      padding: 9px 11px;
+      text-align: left;
+      font-weight: 600;
+      white-space: nowrap;
+      cursor: pointer;
+      user-select: none;
+    }
+    thead th:hover { background: #283593; }
+    thead th.asc::after  { content: ' ▲'; font-size: 0.65rem; opacity: .85; }
+    thead th.desc::after { content: ' ▼'; font-size: 0.65rem; opacity: .85; }
+    tbody tr:nth-child(even) { background: #f7f8fc; }
+    tbody tr:hover { background: #e8eaf6; }
+    tbody td { padding: 7px 11px; border-bottom: 1px solid #eee; white-space: nowrap; }
+    td.addr { max-width: 180px; overflow: hidden; text-overflow: ellipsis; cursor: default; }
+    td.num { text-align: right; font-variant-numeric: tabular-nums; }
+    .ph { color: #b71c1c; font-weight: 700; }
+    .pm { color: #e65100; }
+    .pl { color: #1b5e20; }
+
+    .pagination {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 14px 20px;
+      flex-wrap: wrap;
+    }
+    .pagination button {
+      padding: 4px 10px;
+      border: 1px solid #ccc;
+      background: white;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.8rem;
+    }
+    .pagination button.cur { background: #1a237e; color: white; border-color: #1a237e; font-weight: 700; }
+    .pagination button:hover:not(.cur):not(:disabled) { background: #e8eaf6; }
+    .pagination button:disabled { opacity: .4; cursor: default; }
+    .pagination .pg-info { font-size: 0.78rem; color: #666; margin-left: 8px; }
+
+    .empty-state { text-align: center; padding: 60px 20px; color: #aaa; }
+    .empty-state .icon { font-size: 3rem; margin-bottom: 14px; }
+    .empty-state p { font-size: 0.88rem; }
+    .empty-state p + p { margin-top: 6px; font-size: 0.78rem; }
+
+    @media (max-width: 600px) {
+      .filter-panel { flex-direction: column; }
+      .fg select, .fg input[type="number"] { min-width: unset; width: 100%; }
+      .filter-count { margin-left: 0; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🏠 房價資料查詢</h1>
+  <button class="btn btn-primary" onclick="document.getElementById('csv-input').click()">📂 匯入 CSV</button>
+  <input type="file" id="csv-input" accept=".csv" onchange="handleFile(event)">
+  <button class="btn btn-ghost" id="clear-btn" style="display:none" onclick="clearCache()">🗑 清除快取</button>
+</div>
+
+<div id="status-bar" class="status-bar"></div>
+
+<div id="stats-bar" class="stats-bar" style="display:none">
+  <div class="stat-item"><span class="stat-label">筆數</span><span class="stat-value" id="s-count">-</span></div>
+  <div class="stat-item"><span class="stat-label">平均單價</span><span class="stat-value" id="s-avg">-</span></div>
+  <div class="stat-item"><span class="stat-label">單價範圍</span><span class="stat-value" id="s-range">-</span></div>
+  <div class="stat-item"><span class="stat-label">平均面積</span><span class="stat-value" id="s-area">-</span></div>
+  <div class="stat-item stat-source"><span class="stat-label">資料來源</span><span class="stat-value" id="s-src">-</span></div>
+</div>
+
+<div id="filter-panel" class="filter-panel" style="display:none">
+  <div class="fg">
+    <label>行政區</label>
+    <select id="f-dist" onchange="applyFilters()"><option value="">全部</option></select>
+  </div>
+  <div class="fg">
+    <label>型態</label>
+    <select id="f-type" onchange="applyFilters()"><option value="">全部</option></select>
+  </div>
+  <div class="fg">
+    <label>房數</label>
+    <select id="f-rooms" onchange="applyFilters()">
+      <option value="">全部</option>
+      <option value="1">1 房</option>
+      <option value="2">2 房</option>
+      <option value="3">3 房</option>
+      <option value="4">4 房以上</option>
+    </select>
+  </div>
+  <div class="fg">
+    <label>單價 (萬/坪)</label>
+    <div class="price-row">
+      <input type="number" id="f-pmin" placeholder="最低" min="0" oninput="applyFilters()">
+      <span>~</span>
+      <input type="number" id="f-pmax" placeholder="最高" min="0" oninput="applyFilters()">
+    </div>
+  </div>
+  <div class="fg">
+    <label>&nbsp;</label>
+    <button class="btn" style="background:#e8eaf6;color:#1a237e;" onclick="resetFilters()">重設篩選</button>
+  </div>
+  <div class="filter-count">顯示 <strong id="fc-show">0</strong> / <strong id="fc-total">0</strong> 筆</div>
+</div>
+
+<div class="table-wrap">
+  <div id="empty-state" class="empty-state">
+    <div class="icon">📊</div>
+    <p>請點選「匯入 CSV」載入房價資料</p>
+    <p>支援實價登錄 CSV 格式（含標題行，逗號分隔）</p>
+  </div>
+  <table id="data-tbl" style="display:none">
+    <thead>
+      <tr>
+        <th onclick="sortBy(0)">交易年月</th>
+        <th onclick="sortBy(1)">行政區</th>
+        <th onclick="sortBy(2)">地址</th>
+        <th onclick="sortBy(3)">型態</th>
+        <th onclick="sortBy(4)">格局</th>
+        <th onclick="sortBy(5)">樓層</th>
+        <th onclick="sortBy(6)">面積(坪)</th>
+        <th onclick="sortBy(7)">單價(萬/坪)</th>
+        <th onclick="sortBy(8)">總價(萬)</th>
+        <th onclick="sortBy(9)">屋齡</th>
+        <th onclick="sortBy(10)">車位</th>
+      </tr>
+    </thead>
+    <tbody id="tbl-body"></tbody>
+  </table>
+  <div id="pag" class="pagination" style="display:none"></div>
+</div>
+
+<script>
+const CACHE_KEY = 'hprice_cache';
+const PAGE = 50;
+
+// Column indices matching the CSV spec
+const C = {
+  TRADE_YM: 0, DISTRICT: 2, ADDR: 5,
+  TYPE: 7, ROOM: 8,
+  PRICE: 12,
+  FLOOR: 24, BUILD_SQM: 26, UNIT_PRICE: 27, PARKING: 28
+};
+
+let allRows = [];
+let filtered = [];
+let sortCol = -1;
+let sortAsc = true;
+let page = 1;
+let cacheInfo = null;
+
+// ── CSV parser (RFC 4180) ──────────────────────────────────────────────────
+function parseCSV(text) {
+  // Strip UTF-8 BOM
+  if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+
+  const rows = [];
+  let row = [], field = '', inQ = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (inQ) {
+      if (ch === '"' && text[i + 1] === '"') { field += '"'; i++; }
+      else if (ch === '"') inQ = false;
+      else field += ch;
+    } else {
+      if (ch === '"') { inQ = true; }
+      else if (ch === ',') { row.push(field.trim()); field = ''; }
+      else if (ch === '\n') {
+        row.push(field.trim());
+        if (row.some(f => f !== '')) rows.push(row);
+        row = []; field = '';
+      } else if (ch !== '\r') { field += ch; }
+    }
+  }
+  row.push(field.trim());
+  if (row.some(f => f !== '')) rows.push(row);
+  return rows;
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+function v(row, idx) {
+  const s = (row[idx] || '').trim();
+  return (s === '' || s === 'undefined') ? null : s;
+}
+function n(row, idx) {
+  const s = v(row, idx);
+  if (!s) return null;
+  const x = parseFloat(s);
+  return isNaN(x) ? null : x;
+}
+function esc(s) {
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function fmtDate(ts) {
+  const d = new Date(ts);
+  return `${d.getMonth()+1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+
+// ── Cache ──────────────────────────────────────────────────────────────────
+function loadCache() {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    if (!raw) return false;
+    const d = JSON.parse(raw);
+    if (!Array.isArray(d.rows) || d.rows.length === 0) return false;
+    allRows = d.rows;
+    cacheInfo = { filename: d.filename || '(未知)', loadedAt: d.loadedAt || 0 };
+    return true;
+  } catch { return false; }
+}
+
+function saveCache(rows, filename) {
+  localStorage.setItem(CACHE_KEY, JSON.stringify({
+    rows, filename, loadedAt: Date.now()
+  }));
+}
+
+// ── File import ────────────────────────────────────────────────────────────
+function handleFile(e) {
+  const file = e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = evt => {
+    try {
+      const parsed = parseCSV(evt.target.result);
+      if (parsed.length < 2) throw new Error('資料不足（需標題行 + 至少一筆資料）');
+      const hdrs = parsed[0];
+      if (hdrs.length < 20) throw new Error(`欄位數不足（${hdrs.length} 欄，需 20 欄以上）`);
+
+      const rows = parsed.slice(1);
+
+      // ✓ Parse succeeded — now update state and cache
+      allRows = rows;
+      cacheInfo = { filename: file.name, loadedAt: Date.now() };
+      saveCache(rows, file.name);
+
+      showStatus(`✓ 已載入「${file.name}」，共 ${rows.length} 筆資料`, 'success');
+      initUI();
+    } catch (err) {
+      // ✗ Do NOT touch cache
+      showStatus(`✗ 載入失敗：${err.message}（快取資料未變動）`, 'error');
+    }
+  };
+  reader.onerror = () => showStatus('✗ 檔案讀取失敗（快取資料未變動）', 'error');
+  reader.readAsText(file, 'UTF-8');
+}
+
+function clearCache() {
+  if (!confirm('確定要清除快取資料嗎？')) return;
+  localStorage.removeItem(CACHE_KEY);
+  allRows = []; filtered = []; cacheInfo = null;
+  document.getElementById('stats-bar').style.display    = 'none';
+  document.getElementById('filter-panel').style.display = 'none';
+  document.getElementById('data-tbl').style.display     = 'none';
+  document.getElementById('pag').style.display          = 'none';
+  document.getElementById('empty-state').style.display  = '';
+  document.getElementById('clear-btn').style.display    = 'none';
+  showStatus('快取已清除', 'info');
+}
+
+// ── Status bar ─────────────────────────────────────────────────────────────
+function showStatus(msg, type) {
+  const bar = document.getElementById('status-bar');
+  bar.textContent = msg;
+  bar.className = 'status-bar ' + type;
+  clearTimeout(bar._t);
+  bar._t = setTimeout(() => { bar.className = 'status-bar'; }, type === 'error' ? 8000 : 5000);
+}
+
+// ── Filters ────────────────────────────────────────────────────────────────
+function populateFilters() {
+  const dists  = [...new Set(allRows.map(r => v(r, C.DISTRICT)).filter(Boolean))].sort();
+  const types  = [...new Set(allRows.map(r => v(r, C.TYPE)).filter(Boolean))].sort();
+  const dSel = document.getElementById('f-dist');
+  const tSel = document.getElementById('f-type');
+  dSel.innerHTML = '<option value="">全部行政區</option>' + dists.map(d => `<option value="${esc(d)}">${esc(d)}</option>`).join('');
+  tSel.innerHTML = '<option value="">全部型態</option>'   + types.map(t => `<option value="${esc(t)}">${esc(t)}</option>`).join('');
+}
+
+function applyFilters() {
+  const dist  = document.getElementById('f-dist').value;
+  const type  = document.getElementById('f-type').value;
+  const rooms = document.getElementById('f-rooms').value;
+  const pMin  = parseFloat(document.getElementById('f-pmin').value) || null;
+  const pMax  = parseFloat(document.getElementById('f-pmax').value) || null;
+
+  filtered = allRows.filter(row => {
+    if (dist  && v(row, C.DISTRICT) !== dist) return false;
+    if (type  && v(row, C.TYPE)     !== type) return false;
+    if (rooms) {
+      const r = parseInt(v(row, C.ROOM)) || 0;
+      if (rooms === '4') { if (r < 4) return false; }
+      else if (r !== parseInt(rooms)) return false;
+    }
+    if (pMin !== null || pMax !== null) {
+      const up = n(row, C.UNIT_PRICE);
+      if (up === null) return false;
+      if (pMin !== null && up < pMin) return false;
+      if (pMax !== null && up > pMax) return false;
+    }
+    return true;
+  });
+
+  if (sortCol >= 0) {
+    filtered.sort((a, b) => {
+      const va = sortVal(a, sortCol), vb = sortVal(b, sortCol);
+      const cmp = typeof va === 'number' && typeof vb === 'number'
+        ? va - vb
+        : String(va).localeCompare(String(vb), 'zh-TW');
+      return sortAsc ? cmp : -cmp;
+    });
+  }
+
+  page = 1;
+  document.getElementById('fc-show').textContent  = filtered.length.toLocaleString();
+  document.getElementById('fc-total').textContent = allRows.length.toLocaleString();
+  renderStats();
+  renderTable();
+  renderPag();
+}
+
+function resetFilters() {
+  ['f-dist','f-type','f-rooms'].forEach(id => document.getElementById(id).value = '');
+  ['f-pmin','f-pmax'].forEach(id => document.getElementById(id).value = '');
+  applyFilters();
+}
+
+// ── Sort ───────────────────────────────────────────────────────────────────
+function sortVal(row, col) {
+  switch(col) {
+    case 0: return v(row, C.TRADE_YM) || '';
+    case 1: return v(row, C.DISTRICT) || '';
+    case 2: return v(row, C.ADDR)     || '';
+    case 3: return v(row, C.TYPE)     || '';
+    case 4: return parseInt(v(row, C.ROOM)) || 0;
+    case 5: return v(row, C.FLOOR)    || '';
+    case 6: return n(row, C.BUILD_SQM) || 0;
+    case 7: return n(row, C.UNIT_PRICE) || 0;
+    case 8: return n(row, C.PRICE)    || 0;
+    case 9: return parseFloat(v(row, 23)) || 0;  // 屋齡 at index 23
+    case 10: return v(row, C.PARKING) || '';
+    default: return '';
+  }
+}
+
+function sortBy(col) {
+  if (sortCol === col) sortAsc = !sortAsc; else { sortCol = col; sortAsc = true; }
+  document.querySelectorAll('thead th').forEach((th, i) => {
+    th.classList.remove('asc', 'desc');
+    if (i === col) th.classList.add(sortAsc ? 'asc' : 'desc');
+  });
+  applyFilters();
+}
+
+// ── Render stats ───────────────────────────────────────────────────────────
+function renderStats() {
+  const src = filtered.length > 0 ? filtered : allRows;
+  const ups   = src.map(r => n(r, C.UNIT_PRICE)).filter(x => x !== null && x > 0);
+  const areas = src.map(r => n(r, C.BUILD_SQM)).filter(x => x !== null && x > 0);
+
+  document.getElementById('s-count').textContent = src.length.toLocaleString() + ' 筆';
+
+  if (ups.length) {
+    const avg = ups.reduce((a,b)=>a+b,0) / ups.length;
+    const mn  = ups.reduce((a,b)=>Math.min(a,b), Infinity);
+    const mx  = ups.reduce((a,b)=>Math.max(a,b), -Infinity);
+    document.getElementById('s-avg').textContent   = avg.toFixed(1) + ' 萬/坪';
+    document.getElementById('s-range').textContent = `${mn.toFixed(0)} ~ ${mx.toFixed(0)} 萬/坪`;
+  } else {
+    document.getElementById('s-avg').textContent = document.getElementById('s-range').textContent = '-';
+  }
+
+  if (areas.length) {
+    const avgPing = areas.reduce((a,b)=>a+b,0) / areas.length * 0.3025;
+    document.getElementById('s-area').textContent = avgPing.toFixed(1) + ' 坪';
+  } else {
+    document.getElementById('s-area').textContent = '-';
+  }
+
+  if (cacheInfo) {
+    document.getElementById('s-src').textContent =
+      `${cacheInfo.filename} (${fmtDate(cacheInfo.loadedAt)})`;
+  }
+}
+
+// ── Render table ───────────────────────────────────────────────────────────
+function renderTable() {
+  const tbody = document.getElementById('tbl-body');
+  const start = (page - 1) * PAGE;
+  const pageRows = filtered.slice(start, start + PAGE);
+
+  if (!pageRows.length) {
+    tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:36px;color:#999">無符合條件的資料</td></tr>';
+    return;
+  }
+
+  // Quartile for colour coding
+  const ups = [...filtered.map(r => n(r, C.UNIT_PRICE)).filter(x => x !== null && x > 0)].sort((a,b)=>a-b);
+  const q25 = ups[Math.floor(ups.length * 0.25)] ?? 0;
+  const q75 = ups[Math.floor(ups.length * 0.75)] ?? Infinity;
+
+  tbody.innerHTML = pageRows.map(row => {
+    const tradeYm    = v(row, C.TRADE_YM)   || '-';
+    const district   = v(row, C.DISTRICT)   || '-';
+    const addr       = v(row, C.ADDR)       || '-';
+    const type       = v(row, C.TYPE)       || '-';
+    const room       = v(row, C.ROOM)       || '';
+    const hall       = v(row, 9)            || '';
+    const bath       = v(row, 10)           || '';
+    const layout     = [room, hall, bath].filter(Boolean).join('/') || '-';
+    const floor      = v(row, C.FLOOR)      || '-';
+    const sqm        = n(row, C.BUILD_SQM);
+    const ping       = sqm !== null ? (sqm * 0.3025).toFixed(1) : '-';
+    const up         = n(row, C.UNIT_PRICE);
+    const upStr      = up !== null ? up.toFixed(2) : '-';
+    const totalPrice = n(row, C.PRICE);
+    const totalWan   = totalPrice !== null ? Math.round(totalPrice / 10000).toLocaleString() : '-';
+    const age        = v(row, 23) || '-';
+    const parking    = v(row, C.PARKING) || '-';
+
+    const cls = up === null ? '' : up >= q75 ? 'ph' : up <= q25 ? 'pl' : 'pm';
+
+    return `<tr>
+      <td>${esc(tradeYm)}</td>
+      <td>${esc(district)}</td>
+      <td class="addr" title="${esc(addr)}">${esc(addr)}</td>
+      <td>${esc(type)}</td>
+      <td>${esc(layout)}</td>
+      <td>${esc(floor)}</td>
+      <td class="num">${ping}</td>
+      <td class="num ${cls}">${upStr}</td>
+      <td class="num">${totalWan}</td>
+      <td>${esc(age)}</td>
+      <td>${esc(parking)}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Pagination ─────────────────────────────────────────────────────────────
+function renderPag() {
+  const total = filtered.length;
+  const pages = Math.ceil(total / PAGE);
+  const pag = document.getElementById('pag');
+  if (pages <= 1) { pag.style.display = 'none'; return; }
+  pag.style.display = 'flex';
+
+  const range = new Set();
+  [1, pages].forEach(p => range.add(p));
+  for (let p = Math.max(1, page-2); p <= Math.min(pages, page+2); p++) range.add(p);
+  const sorted = [...range].sort((a,b)=>a-b);
+
+  let html = `<button ${page===1?'disabled':''} onclick="gotoPage(${page-1})">‹</button>`;
+  let prev = null;
+  for (const p of sorted) {
+    if (prev !== null && p - prev > 1) html += `<span style="padding:0 4px;color:#aaa">…</span>`;
+    html += `<button class="${p===page?'cur':''}" onclick="gotoPage(${p})">${p}</button>`;
+    prev = p;
+  }
+  html += `<button ${page===pages?'disabled':''} onclick="gotoPage(${page+1})">›</button>`;
+  html += `<span class="pg-info">${((page-1)*PAGE+1).toLocaleString()}–${Math.min(page*PAGE,total).toLocaleString()} / ${total.toLocaleString()}</span>`;
+  pag.innerHTML = html;
+}
+
+function gotoPage(p) {
+  const pages = Math.ceil(filtered.length / PAGE);
+  if (p < 1 || p > pages) return;
+  page = p;
+  renderTable();
+  renderPag();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────
+function initUI() {
+  document.getElementById('empty-state').style.display  = 'none';
+  document.getElementById('data-tbl').style.display     = '';
+  document.getElementById('stats-bar').style.display    = 'flex';
+  document.getElementById('filter-panel').style.display = 'flex';
+  document.getElementById('clear-btn').style.display    = '';
+  populateFilters();
+  applyFilters();
+}
+
+// Load from cache on startup
+if (loadCache()) {
+  initUI();
+  showStatus(`已從快取載入「${cacheInfo.filename}」，共 ${allRows.length} 筆資料`, 'info');
+}
+</script>
+</body>
+</html>
