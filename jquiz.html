@@ -297,7 +297,7 @@
       <div class="home-icon">あ</div>
       <h1>日文五十音測驗</h1>
       <div class="sub">ひらがな・カタカナ ⇄ ローマ字</div>
-      <div class="home-ver">v20260602_0830_1</div>
+      <div class="home-ver">v20260602_0900_2</div>
     </div>
 
     <div id="resume-banner"></div>
@@ -333,6 +333,14 @@
           <button class="seg-btn" data-val="10" onclick="onSegClick(event)">10</button>
           <button class="seg-btn" data-val="20" onclick="onSegClick(event)">20</button>
           <button class="seg-btn" data-val="all" onclick="onSegClick(event)">全部</button>
+        </div>
+      </div>
+      <div class="set-row">
+        <div class="set-label">選項</div>
+        <div class="seg-group" data-group="optCount">
+          <button class="seg-btn" data-val="4" onclick="onSegClick(event)">4</button>
+          <button class="seg-btn" data-val="6" onclick="onSegClick(event)">6</button>
+          <button class="seg-btn" data-val="8" onclick="onSegClick(event)">8</button>
         </div>
       </div>
 
@@ -421,7 +429,7 @@
    日文五十音測驗 — 資料與邏輯（純前端、零依賴）
    ============================================================ */
 
-const APP_VERSION = 'v20260602_0830_1';
+const APP_VERSION = 'v20260602_0900_2';
 
 /* ---------- localStorage keys（Jquiz_ 前綴，與 CQuiz 隔離）---------- */
 const RECORDS_KEY  = 'Jquiz_records';
@@ -485,7 +493,7 @@ function nowTaipei() {
 }
 
 /* ---------- 設定 ---------- */
-const DEFAULT_SETTINGS = { scriptMode: 'hk', level: 'basic', direction: 'both', count: 20 };
+const DEFAULT_SETTINGS = { scriptMode: 'hk', level: 'basic', direction: 'both', count: 20, optCount: 6 };
 let quizSettings = loadSettings();
 function loadSettings() {
   try {
@@ -500,6 +508,7 @@ function onSegClick(e) {
   const group = btn.parentElement.dataset.group;
   let val = btn.dataset.val;
   if (group === 'count') val = (val === 'all') ? 'all' : parseInt(val, 10);
+  else if (group === 'optCount') val = parseInt(val, 10);
   quizSettings[group] = val;
   saveSettings();
   refreshSegActive();
@@ -508,7 +517,7 @@ function refreshSegActive() {
   document.querySelectorAll('.seg-group').forEach(function(g){
     const group = g.dataset.group;
     g.querySelectorAll('.seg-btn').forEach(function(b){
-      const v = (group === 'count') ? String(quizSettings.count) : quizSettings[group];
+      const v = String(quizSettings[group]);
       b.classList.toggle('active', b.dataset.val === v);
     });
   });
@@ -528,6 +537,7 @@ let showAllResults = false;
 let lastRecord = null;
 let isWrongQuiz = false;
 let quizStartedAt = 0;
+let quizActive = false;   // 是否正在作答（用於上一頁/離開保護）
 
 function pickDir() {
   if (quizSettings.direction === 'both') return Math.random() < 0.5 ? 'k2r' : 'r2k';
@@ -537,20 +547,22 @@ function pickScript() {
   const s = getScripts();
   return s.length > 1 ? (Math.random() < 0.5 ? 'h' : 'k') : s[0];
 }
-function genOptionsK2R(item, pool) {
+function genOptionsK2R(item, pool, count) {
+  const need = (count || 4) - 1;
   const used = new Set([item.r]);
   const distract = [];
   const ordered = shuffle(pool.filter(p => p.row === item.row)).concat(
                   shuffle(pool.filter(p => p.col === item.col)),
                   shuffle(pool));
   for (const p of ordered) {
-    if (distract.length >= 3) break;
+    if (distract.length >= need) break;
     if (used.has(p.r)) continue;
     used.add(p.r); distract.push(p.r);
   }
   return shuffle([item.r].concat(distract));
 }
-function genOptionsR2K(item, script, pool) {
+function genOptionsR2K(item, script, pool, count) {
+  const need = (count || 4) - 1;
   const correctChar = item[script];
   const usedChar = new Set([correctChar]);
   const usedR = new Set([item.r]);   // 排除同羅馬音（如 じ/ぢ）避免雙正解
@@ -559,7 +571,7 @@ function genOptionsR2K(item, script, pool) {
                   shuffle(pool.filter(p => p.col === item.col)),
                   shuffle(pool));
   for (const p of ordered) {
-    if (distract.length >= 3) break;
+    if (distract.length >= need) break;
     if (usedR.has(p.r)) continue;
     const c = p[script];
     if (usedChar.has(c)) continue;
@@ -570,16 +582,17 @@ function genOptionsR2K(item, script, pool) {
 function makeQuestion(item, idx, pool, forced) {
   const dir = (forced && forced.dir) || pickDir();
   const script = (forced && forced.script) || pickScript();
+  const optCount = quizSettings.optCount || 6;
   let prompt, correctAnswer, options, optClass;
   if (dir === 'k2r') {
     prompt = item[script];
     correctAnswer = item.r;
-    options = genOptionsK2R(item, pool);
+    options = genOptionsK2R(item, pool, optCount);
     optClass = '';
   } else {
     prompt = item.r;
     correctAnswer = item[script];
-    options = genOptionsR2K(item, script, pool);
+    options = genOptionsR2K(item, script, pool, optCount);
     optClass = 'kana';
   }
   return { idx: idx, dir: dir, script: script, prompt: prompt, correctAnswer: correctAnswer,
@@ -613,7 +626,15 @@ function beginQuiz(title) {
   $('quiz-nav-title').textContent = title;
   renderQuiz();
   saveQuizSession();
+  enterQuizHistory();
   showScreen('quiz-screen');
+}
+// 進入測驗時推入一筆歷史並改寫網址（?mode=1 一般測驗 / ?mode=2 錯題練習），
+// 讓瀏覽器「上一頁」會回到本頁（jquiz）而非離站；離開仍會經 popstate 確認。
+function enterQuizHistory() {
+  quizActive = true;
+  const mode = isWrongQuiz ? 2 : 1;
+  try { history.pushState({ screen: 'quiz', mode: mode }, '', '?mode=' + mode); } catch (e) {}
 }
 
 /* ---------- 渲染 ---------- */
@@ -717,6 +738,9 @@ function submitQuiz() {
   saveWrongBank(entries);
   sessionStorage.removeItem(SESSION_KEY);
   lastRecord = record;
+  quizActive = false;
+  // 批改完成，清掉網址上的 ?mode 參數（避免上一頁又回到測驗）
+  try { history.replaceState({ screen: 'results' }, '', location.pathname); } catch (e) {}
   showResults(record);
 }
 
@@ -836,11 +860,11 @@ function resumeQuiz() {
   quizStartedAt = Date.now();
   $('quiz-nav-title').textContent = s.title || '測驗中';
   renderQuiz();
+  enterQuizHistory();
   showScreen('quiz-screen');
 }
-function confirmQuitQuiz() {
-  if (confirm('離開測驗？進度會保留，可從首頁繼續。')) showHome();
-}
+// 測驗中的「← 返回」走瀏覽器上一頁，交由 popstate 統一處理離開確認
+function confirmQuitQuiz() { history.back(); }
 
 /* ---------- 畫面切換 ---------- */
 function showScreen(id) {
@@ -849,6 +873,7 @@ function showScreen(id) {
   window.scrollTo(0, 0);
 }
 function showHome() {
+  quizActive = false;
   refreshSegActive();
   renderHomeStats();
   renderResumeBanner();
@@ -951,8 +976,33 @@ function clearWrongBank() {
   if (confirm('確定要清除整個錯題庫嗎？')) { localStorage.removeItem(WRONG_KEY); showWrongBank(); }
 }
 
+/* ---------- 上一頁 / 離開保護 ---------- */
+// 作答中按「上一頁」：攔截 popstate，確認後回到首頁；取消則重新推入測驗狀態留在原地。
+window.addEventListener('popstate', function(e) {
+  if (quizActive) {
+    if (confirm('離開測驗？進度會保留，可從首頁繼續。')) {
+      showHome();   // quizActive 在此被設為 false
+    } else {
+      const mode = isWrongQuiz ? 2 : 1;
+      try { history.pushState({ screen: 'quiz', mode: mode }, '', '?mode=' + mode); } catch (err) {}
+    }
+  } else {
+    // 非作答中（結果頁/其他）：回首頁
+    showHome();
+  }
+});
+// 作答中嘗試重新整理或關閉分頁時提示（進度已存於 session，可續答）
+window.addEventListener('beforeunload', function(e) {
+  if (quizActive) { e.preventDefault(); e.returnValue = ''; return ''; }
+});
+
 /* ---------- 啟動 ---------- */
 (function init() {
+  // 若以帶 ?mode 參數的網址直接載入（例如作答中重整），清掉參數並回到首頁，
+  // 由「續答」橫幅提供繼續入口（無法僅憑網址還原題目）。
+  if (location.search) {
+    try { history.replaceState({}, '', location.pathname); } catch (e) {}
+  }
   refreshSegActive();
   renderHomeStats();
   renderResumeBanner();

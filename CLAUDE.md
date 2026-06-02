@@ -50,8 +50,9 @@ CHAPP/
 - **假名資料**：內嵌 JS 陣列 `KANA`，每筆 `{ h:平假名, k:片假名, r:羅馬音, lv:層次, row:子音行, col:母音列 }`，由 `addRow()` 建立；層次 `lv` 為 `basic`(清音46) / `dakuon`(濁音半濁音25) / `yoon`(拗音33)。
 - **出題方向**：`k2r`（看假名選羅馬音）、`r2k`（看羅馬音選假名），`both` 時隨機混合。
 - **localStorage（`Jquiz_` 前綴，與 CQuiz 隔離）**：`Jquiz_records`（歷史，上限 50）、`Jquiz_wrong_bank`（錯題庫）、`Jquiz_settings`（使用者設定）；`Jquiz_session`（sessionStorage，續答）。
-- **設定**：`quizSettings = { scriptMode:'h'|'k'|'hk', level, direction, count }`。
+- **設定**：`quizSettings = { scriptMode:'h'|'k'|'hk', level, direction, count, optCount }`；`optCount`（4/6/8，預設 6）決定每題選項數。
 - 干擾選項優先取同 `row`/`col` 的假名；`r2k` 排除同羅馬音項目以避免雙正解（如 じ/ぢ、ず/づ）。
+- **上一頁/離開保護**：開始測驗時 `history.pushState` 並改寫網址為 `?mode=1`（一般）/`?mode=2`（錯題）；`popstate` 攔截「上一頁」做離開確認，`beforeunload` 提示重整/關閉；批改完成與帶參數載入時會清除網址參數。
 
 ## 關鍵常數與設定
 
