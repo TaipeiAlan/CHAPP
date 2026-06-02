@@ -116,6 +116,24 @@
     .btn-danger:hover { border-color: #fca5a5; color: #fca5a5; }
     .btn-warn { background: rgba(239,68,68,0.15); border: 2px solid rgba(239,68,68,0.5); color: #fca5a5; }
     .btn-warn:hover { background: rgba(239,68,68,0.25); }
+    .btn-vocab { background: linear-gradient(135deg, #d97706, #b45309); color: white; box-shadow: 0 4px 14px rgba(180,83,9,0.4); }
+    .btn-vocab:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(180,83,9,0.5); }
+    .home-bottom-btns { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+
+    /* DASHBOARD */
+    .dash-card { background: white; border-radius: 16px; padding: 18px 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); margin-bottom: 14px; }
+    .dash-title { font-size: 0.75rem; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 14px; }
+    .dash-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(72px,1fr)); gap: 10px; }
+    .dash-box { background: #f5f3ff; border-radius: 12px; padding: 12px 6px; text-align: center; }
+    .dash-num { font-size: 1.5rem; font-weight: 800; color: #4f46e5; line-height: 1.1; }
+    .dash-lbl { font-size: 0.72rem; color: #6b7280; margin-top: 3px; }
+    .dash-box.amber { background: #fffbeb; }
+    .dash-box.amber .dash-num { color: #b45309; }
+    .dash-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f3f4f6; font-size: 0.9rem; }
+    .dash-row:last-child { border-bottom: none; }
+    .dash-row .dash-k { color: #374151; }
+    .dash-row .dash-v { font-weight: 700; color: #4f46e5; }
+    .dash-note { font-size: 0.78rem; color: #9ca3af; line-height: 1.7; margin-top: 4px; }
 
     /* HOME */
     .home-header { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; padding: 18px 0 10px; }
@@ -181,6 +199,7 @@
     .badge-k2r { background: #ede9fe; color: #7c3aed; }
     .badge-r2k { background: #d1fae5; color: #059669; }
     .badge-script { background: #e0e7ff; color: #4f46e5; }
+    .badge-vocab { background: #fef3c7; color: #b45309; }
     .kana-prompt { text-align: center; font-weight: 800; color: #111827; margin: 8px 0 6px; line-height: 1.1; }
     .kana-prompt.big { font-size: 4rem; letter-spacing: 0.06em; }
     .kana-prompt.romaji { font-size: 3rem; letter-spacing: 0.08em; color: #1f2937; }
@@ -297,7 +316,7 @@
       <div class="home-icon">あ</div>
       <h1>日文五十音測驗</h1>
       <div class="sub">ひらがな・カタカナ ⇄ ローマ字</div>
-      <div class="home-ver">v20260602_0900_2</div>
+      <div class="home-ver">v20260602_1420_3</div>
     </div>
 
     <div id="resume-banner"></div>
@@ -346,7 +365,8 @@
 
       <hr class="set-divider">
       <div class="start-row">
-        <button class="btn btn-primary" onclick="startQuiz()">開始測驗 🎌</button>
+        <button class="btn btn-primary" onclick="startQuiz()">開始五十音測驗 🎌</button>
+        <button class="btn btn-vocab" onclick="startVocabQuiz()">常用單字測驗 📚</button>
       </div>
 
       <div class="wb-home-row">
@@ -360,9 +380,20 @@
       <div class="home-stats" id="home-stats"></div>
     </div>
 
-    <div style="text-align:center;">
-      <button class="btn btn-outline" onclick="showHistory()">📊 歷史紀錄</button>
+    <div class="home-bottom-btns">
+      <button class="btn btn-outline" onclick="showDashboard()">📊 題庫儀表板</button>
+      <button class="btn btn-outline" onclick="showHistory()">🕒 歷史紀錄</button>
     </div>
+  </div>
+
+  <!-- ===== DASHBOARD SCREEN ===== -->
+  <div id="dashboard-screen" class="screen">
+    <div class="nav">
+      <button class="nav-back" onclick="showHome()">← 首頁</button>
+      <span class="nav-title">題庫儀表板</span>
+      <span style="width:60px;"></span>
+    </div>
+    <div id="dashboard-content"></div>
   </div>
 
   <!-- ===== QUIZ SCREEN ===== -->
@@ -429,7 +460,7 @@
    日文五十音測驗 — 資料與邏輯（純前端、零依賴）
    ============================================================ */
 
-const APP_VERSION = 'v20260602_0900_2';
+const APP_VERSION = 'v20260602_1420_3';
 
 /* ---------- localStorage keys（Jquiz_ 前綴，與 CQuiz 隔離）---------- */
 const RECORDS_KEY  = 'Jquiz_records';
@@ -473,6 +504,59 @@ addRow('yoon','gy', [['ぎゃ','ギャ','gya','a'],['ぎゅ','ギュ','gyu','u']
 addRow('yoon','j',  [['じゃ','ジャ','ja','a'],['じゅ','ジュ','ju','u'],['じょ','ジョ','jo','o']]);
 addRow('yoon','by', [['びゃ','ビャ','bya','a'],['びゅ','ビュ','byu','u'],['びょ','ビョ','byo','o']]);
 addRow('yoon','py', [['ぴゃ','ピャ','pya','a'],['ぴゅ','ピュ','pyu','u'],['ぴょ','ピョ','pyo','o']]);
+
+/* ---------- 常用單字題庫 ---------- */
+// 每筆：{ w:假名單字, r:羅馬音, m:中文意思, cat:分類 }（全部以假名書寫，外來語用片假名）
+const VOCAB = [];
+function addVocab(cat, arr) {
+  arr.forEach(function(t){ VOCAB.push({ w:t[0], r:t[1], m:t[2], cat:cat }); });
+}
+addVocab('數字', [
+  ['いち','ichi','一'],['に','ni','二'],['さん','san','三'],['よん','yon','四'],['ご','go','五'],
+  ['ろく','roku','六'],['なな','nana','七'],['はち','hachi','八'],['きゅう','kyuu','九'],['じゅう','juu','十'],['ゼロ','zero','零']
+]);
+addVocab('顏色', [
+  ['あか','aka','紅色'],['あお','ao','藍色'],['しろ','shiro','白色'],['くろ','kuro','黑色'],['きいろ','kiiro','黃色'],
+  ['みどり','midori','綠色'],['ちゃいろ','chairo','棕色'],['むらさき','murasaki','紫色'],['ピンク','pinku','粉紅色'],['オレンジ','orenji','橘色']
+]);
+addVocab('家族', [
+  ['ちち','chichi','家父'],['はは','haha','家母'],['あに','ani','哥哥'],['あね','ane','姊姊'],['おとうと','otouto','弟弟'],
+  ['いもうと','imouto','妹妹'],['かぞく','kazoku','家人'],['おとうさん','otousan','爸爸'],['おかあさん','okaasan','媽媽'],['そふ','sofu','祖父'],['そぼ','sobo','祖母']
+]);
+addVocab('食物', [
+  ['ごはん','gohan','飯'],['パン','pan','麵包'],['にく','niku','肉'],['さかな','sakana','魚'],['たまご','tamago','蛋'],
+  ['やさい','yasai','蔬菜'],['くだもの','kudamono','水果'],['りんご','ringo','蘋果'],['みかん','mikan','橘子'],['すし','sushi','壽司'],
+  ['ラーメン','raamen','拉麵'],['おにぎり','onigiri','飯糰'],['たべもの','tabemono','食物']
+]);
+addVocab('飲料', [
+  ['みず','mizu','水'],['おちゃ','ocha','茶'],['コーヒー','koohii','咖啡'],['ぎゅうにゅう','gyuunyuu','牛奶'],
+  ['ジュース','juusu','果汁'],['ビール','biiru','啤酒'],['のみもの','nomimono','飲料']
+]);
+addVocab('動物', [
+  ['いぬ','inu','狗'],['ねこ','neko','貓'],['とり','tori','鳥'],['うま','uma','馬'],['うし','ushi','牛'],
+  ['ぶた','buta','豬'],['さる','saru','猴子'],['くま','kuma','熊'],['ぞう','zou','大象'],['うさぎ','usagi','兔子']
+]);
+addVocab('物品', [
+  ['ほん','hon','書'],['くるま','kuruma','車子'],['でんわ','denwa','電話'],['かばん','kaban','包包'],['とけい','tokei','時鐘'],
+  ['いす','isu','椅子'],['つくえ','tsukue','書桌'],['まど','mado','窗戶'],['ドア','doa','門'],['かさ','kasa','傘'],
+  ['くつ','kutsu','鞋子'],['ぼうし','boushi','帽子'],['めがね','megane','眼鏡'],['かみ','kami','紙'],['えんぴつ','enpitsu','鉛筆'],
+  ['テレビ','terebi','電視'],['パソコン','pasokon','電腦']
+]);
+addVocab('自然', [
+  ['そら','sora','天空'],['うみ','umi','海'],['やま','yama','山'],['かわ','kawa','河川'],['き','ki','樹'],
+  ['はな','hana','花'],['つき','tsuki','月亮'],['ほし','hoshi','星星'],['ゆき','yuki','雪'],['あめ','ame','雨'],['かぜ','kaze','風']
+]);
+addVocab('時間', [
+  ['あさ','asa','早上'],['ひる','hiru','中午'],['よる','yoru','晚上'],['きょう','kyou','今天'],
+  ['あした','ashita','明天'],['きのう','kinou','昨天'],['いま','ima','現在']
+]);
+addVocab('身體', [
+  ['め','me','眼睛'],['みみ','mimi','耳朵'],['くち','kuchi','嘴巴'],['て','te','手'],['あし','ashi','腳'],['あたま','atama','頭']
+]);
+addVocab('常用語', [
+  ['ありがとう','arigatou','謝謝'],['おはよう','ohayou','早安'],['さようなら','sayounara','再見'],
+  ['すみません','sumimasen','不好意思'],['はい','hai','是的'],['いいえ','iie','不是']
+]);
 
 /* ---------- 工具 ---------- */
 function shuffle(arr) {
@@ -595,17 +679,71 @@ function makeQuestion(item, idx, pool, forced) {
     options = genOptionsR2K(item, script, pool, optCount);
     optClass = 'kana';
   }
-  return { idx: idx, dir: dir, script: script, prompt: prompt, correctAnswer: correctAnswer,
+  return { idx: idx, qmode: 'kana', dir: dir, script: script, prompt: prompt, correctAnswer: correctAnswer,
            options: options, optClass: optClass, h: item.h, k: item.k, r: item.r, lv: item.lv };
+}
+
+// 取得目前設定下的出題方向清單
+function getDirections() {
+  return quizSettings.direction === 'both' ? ['k2r', 'r2k'] : [quizSettings.direction];
+}
+// 把每個假名依「腳本 × 方向」拆成獨立題目規格，使可出題數最多達基礎的 4 倍
+function buildKanaSpecs(pool) {
+  const scripts = getScripts();
+  const dirs = getDirections();
+  const specs = [];
+  pool.forEach(function(item){
+    scripts.forEach(function(sc){
+      dirs.forEach(function(d){ specs.push({ item: item, script: sc, dir: d }); });
+    });
+  });
+  return specs;
+}
+
+/* ---------- 單字出題 ---------- */
+const VOCAB_DIRS = ['w2r', 'w2m', 'm2w'];   // 假名→羅馬音 / 假名→中文 / 中文→假名
+function genVocabOptions(v, dir, count) {
+  const need = (count || 4) - 1;
+  const field = dir === 'w2r' ? 'r' : (dir === 'w2m' ? 'm' : 'w');
+  const correct = v[field];
+  const used = new Set([correct]);
+  const distract = [];
+  const ordered = shuffle(VOCAB.filter(p => p.cat === v.cat && p.w !== v.w)).concat(
+                  shuffle(VOCAB.filter(p => p.w !== v.w)));
+  for (const p of ordered) {
+    if (distract.length >= need) break;
+    if (used.has(p[field])) continue;
+    used.add(p[field]); distract.push(p[field]);
+  }
+  return shuffle([correct].concat(distract));
+}
+function makeVocabQuestion(v, idx, forcedDir) {
+  const dir = forcedDir || VOCAB_DIRS[Math.floor(Math.random() * VOCAB_DIRS.length)];
+  const optCount = quizSettings.optCount || 6;
+  let prompt, correctAnswer, optClass;
+  if (dir === 'w2r') { prompt = v.w; correctAnswer = v.r; optClass = ''; }
+  else if (dir === 'w2m') { prompt = v.w; correctAnswer = v.m; optClass = ''; }
+  else { prompt = v.m; correctAnswer = v.w; optClass = 'kana'; }
+  return { idx: idx, qmode: 'vocab', dir: dir, prompt: prompt, correctAnswer: correctAnswer,
+           options: genVocabOptions(v, dir, optCount), optClass: optClass,
+           w: v.w, r: v.r, m: v.m, cat: v.cat };
 }
 
 function startQuiz() {
   isWrongQuiz = false;
   const pool = getPool();
-  let n = quizSettings.count === 'all' ? pool.length : Math.min(quizSettings.count, pool.length);
-  const items = shuffle(pool).slice(0, n);
-  currentQuiz = items.map(function(it, i){ return makeQuestion(it, i, pool); });
+  const specs = buildKanaSpecs(pool);
+  let n = quizSettings.count === 'all' ? specs.length : Math.min(quizSettings.count, specs.length);
+  const chosen = shuffle(specs).slice(0, n);
+  currentQuiz = chosen.map(function(s, i){ return makeQuestion(s.item, i, pool, { dir: s.dir, script: s.script }); });
   beginQuiz('五十音測驗');
+}
+function startVocabQuiz() {
+  isWrongQuiz = false;
+  let n = quizSettings.count === 'all' ? VOCAB.length : Math.min(quizSettings.count, VOCAB.length);
+  const items = shuffle(VOCAB).slice(0, n);
+  currentQuiz = items.map(function(v, i){ return makeVocabQuestion(v, i); });
+  beginQuiz('常用單字測驗');
 }
 function startWrongQuiz() {
   const bank = getWrongBank();
@@ -614,6 +752,10 @@ function startWrongQuiz() {
   const pool = KANA; // 干擾選項可取全部假名
   currentQuiz = keys.map(function(key, i){
     const w = bank[key];
+    if (w.qmode === 'vocab') {
+      const v = VOCAB.find(function(x){ return x.w === w.w; }) || { w:w.w, r:w.r, m:w.m, cat:w.cat };
+      return makeVocabQuestion(v, i, w.dir);
+    }
     const item = KANA.find(function(k){ return k.h === w.h; }) || { h:w.h, k:w.k, r:w.r, lv:w.lv, row:w.row, col:w.col };
     return makeQuestion(item, i, pool, { dir: w.dir, script: w.script });
   });
@@ -648,14 +790,27 @@ function renderCard(q) {
   const ans = userAnswers[i];
   const skipped = ans === '';
   const answered = ans !== undefined && ans !== '';
-  const dirBadge = q.dir === 'k2r'
-    ? '<span class="q-type-badge badge-k2r">假名→音</span>'
-    : '<span class="q-type-badge badge-r2k">音→假名</span>';
-  const scriptLabel = q.dir === 'k2r' ? (q.script === 'h' ? '平假名' : '片假名') : 'ローマ字';
-  const promptHtml = q.dir === 'k2r'
-    ? '<div class="kana-prompt big">' + esc(q.prompt) + '</div>'
-    : '<div class="kana-prompt romaji">' + esc(q.prompt) + '</div>';
-  const askText = q.dir === 'k2r' ? '請選出正確的羅馬拼音' : '請選出正確的假名';
+  let dirBadge, scriptBadge, promptHtml, askText;
+  if (q.qmode === 'vocab') {
+    const vlabel = q.dir === 'w2r' ? '單字→羅馬音' : (q.dir === 'w2m' ? '單字→中文' : '中文→單字');
+    dirBadge = '<span class="q-type-badge badge-vocab">' + vlabel + '</span>';
+    scriptBadge = '<span class="q-type-badge badge-script">常用單字</span>';
+    promptHtml = q.dir === 'm2w'
+      ? '<div class="kana-prompt romaji">' + esc(q.prompt) + '</div>'
+      : '<div class="kana-prompt big">' + esc(q.prompt) + '</div>';
+    askText = q.dir === 'w2r' ? '請選出正確的羅馬拼音'
+            : (q.dir === 'w2m' ? '請選出正確的中文意思' : '請選出正確的假名單字');
+  } else {
+    dirBadge = q.dir === 'k2r'
+      ? '<span class="q-type-badge badge-k2r">假名→音</span>'
+      : '<span class="q-type-badge badge-r2k">音→假名</span>';
+    const sName = q.script === 'h' ? '平假名' : '片假名';
+    scriptBadge = '<span class="q-type-badge badge-script">' + (q.dir === 'k2r' ? sName : '→' + sName) + '</span>';
+    promptHtml = q.dir === 'k2r'
+      ? '<div class="kana-prompt big">' + esc(q.prompt) + '</div>'
+      : '<div class="kana-prompt romaji">' + esc(q.prompt) + '</div>';
+    askText = q.dir === 'k2r' ? '請選出正確的羅馬拼音' : '請選出正確的' + sName;
+  }
   const opts = q.options.map(function(opt){
     const sel = (ans === opt) ? ' selected' : '';
     return '<div class="opt-label' + sel + '" onclick="selectAnswer(' + i + ',' + JSON.stringify(opt).replace(/"/g,'&quot;') + ')">'
@@ -665,7 +820,7 @@ function renderCard(q) {
     + '<div class="q-card' + (answered ? ' answered' : '') + (skipped ? ' skipped' : '') + '" id="qc-' + i + '">'
     +   '<div class="q-header">'
     +     '<span class="q-num">第 ' + (i+1) + ' 題</span>'
-    +     '<div class="q-badges">' + dirBadge + '<span class="q-type-badge badge-script">' + scriptLabel + '</span></div>'
+    +     '<div class="q-badges">' + dirBadge + scriptBadge + '</div>'
     +   '</div>'
     +   promptHtml
     +   '<div class="q-ask-row"><span class="q-ask">' + askText + '</span>'
@@ -729,8 +884,9 @@ function submitQuiz() {
     const ua = userAnswers[q.idx];
     const correct = ua !== '' && ua === q.correctAnswer;
     if (correct) score++;
-    return { dir: q.dir, script: q.script, prompt: q.prompt, correctAnswer: q.correctAnswer,
-             userAnswer: ua, correct: correct, h: q.h, k: q.k, r: q.r, lv: q.lv };
+    return { qmode: q.qmode, dir: q.dir, script: q.script, prompt: q.prompt, correctAnswer: q.correctAnswer,
+             userAnswer: ua, correct: correct, h: q.h, k: q.k, r: q.r, lv: q.lv,
+             w: q.w, m: q.m, cat: q.cat };
   });
   const record = { date: nowTaipei(), score: score, total: currentQuiz.length,
                    settings: Object.assign({}, quizSettings), wrongQuiz: isWrongQuiz, entries: entries };
@@ -780,7 +936,9 @@ function renderResultDetails(record) {
 function buildResultCard(e, i) {
   const badge = e.correct ? '<div class="res-badge correct">✓</div>'
               : (e.userAnswer === '' ? '<div class="res-badge skipped">–</div>' : '<div class="res-badge wrong">✗</div>');
-  const dirLabel = e.dir === 'k2r' ? '假名 → 羅馬音' : '羅馬音 → 假名';
+  const dirLabel = e.qmode === 'vocab'
+    ? (e.dir === 'w2r' ? '單字 → 羅馬音' : (e.dir === 'w2m' ? '單字 → 中文' : '中文 → 單字'))
+    : (e.dir === 'k2r' ? '假名 → 羅馬音' : '羅馬音 → 假名');
   let body = '<div class="res-prompt">' + esc(e.prompt) + '<span class="res-sub">' + dirLabel + '</span></div>';
   if (e.correct) {
     body += '<div class="res-line"><span class="res-correct-ans">' + esc(e.correctAnswer) + '</span> ✓</div>';
@@ -791,9 +949,11 @@ function buildResultCard(e, i) {
     body += '<div class="res-line">你的答案：<span class="res-your-ans">' + esc(e.userAnswer) + '</span></div>';
     body += '<div class="res-line">正解：<span class="res-correct-ans">' + esc(e.correctAnswer) + '</span></div>';
   }
-  // 補充：完整對照（平/片/羅馬）
-  body += '<div class="res-line" style="color:#9ca3af;font-size:0.8rem;margin-top:8px;">'
-        + esc(e.h) + ' ・ ' + esc(e.k) + ' ・ ' + esc(e.r) + '</div>';
+  // 補充：完整對照
+  const ref = e.qmode === 'vocab'
+    ? esc(e.w) + ' ・ ' + esc(e.r) + ' ・ ' + esc(e.m)
+    : esc(e.h) + ' ・ ' + esc(e.k) + ' ・ ' + esc(e.r);
+  body += '<div class="res-line" style="color:#9ca3af;font-size:0.8rem;margin-top:8px;">' + ref + '</div>';
   return '<div class="res-card" id="res-' + i + '">' + badge + body + '</div>';
 }
 function toggleResultView() {
@@ -823,21 +983,22 @@ function getWrongBank() { try { return JSON.parse(localStorage.getItem(WRONG_KEY
 function saveWrongBank(entries) {
   const bank = getWrongBank();
   entries.forEach(function(e){
-    const key = e.script + ':' + e.dir + ':' + e.h;
+    const key = e.qmode === 'vocab' ? ('vocab:' + e.dir + ':' + e.w) : (e.script + ':' + e.dir + ':' + e.h);
     if (e.correct) {
       // 答對則從錯題庫移除
       if (bank[key]) delete bank[key];
+    } else if (bank[key]) {
+      bank[key].wrongCount++;
+      bank[key].lastWrong = nowTaipei();
+      bank[key].lastUserAnswer = e.userAnswer;
+    } else if (e.qmode === 'vocab') {
+      bank[key] = { qmode: 'vocab', w: e.w, r: e.r, m: e.m, cat: e.cat, dir: e.dir,
+                    wrongCount: 1, firstWrong: nowTaipei(), lastWrong: nowTaipei(), lastUserAnswer: e.userAnswer };
     } else {
-      if (bank[key]) {
-        bank[key].wrongCount++;
-        bank[key].lastWrong = nowTaipei();
-        bank[key].lastUserAnswer = e.userAnswer;
-      } else {
-        const item = KANA.find(function(k){ return k.h === e.h; }) || {};
-        bank[key] = { h: e.h, k: e.k, r: e.r, lv: e.lv, row: item.row || '', col: item.col || '',
-                      dir: e.dir, script: e.script, wrongCount: 1,
-                      firstWrong: nowTaipei(), lastWrong: nowTaipei(), lastUserAnswer: e.userAnswer };
-      }
+      const item = KANA.find(function(k){ return k.h === e.h; }) || {};
+      bank[key] = { qmode: 'kana', h: e.h, k: e.k, r: e.r, lv: e.lv, row: item.row || '', col: item.col || '',
+                    dir: e.dir, script: e.script, wrongCount: 1,
+                    firstWrong: nowTaipei(), lastWrong: nowTaipei(), lastUserAnswer: e.userAnswer };
     }
   });
   localStorage.setItem(WRONG_KEY, JSON.stringify(bank));
@@ -955,11 +1116,19 @@ function showWrongBank() {
     const totalWrong = keys.reduce(function(s, k){ return s + bank[k].wrongCount; }, 0);
     const cards = keys.map(function(k){
       const w = bank[k];
-      const dirLabel = w.dir === 'k2r' ? '假名→音' : '音→假名';
-      const showKana = w.script === 'k' ? w.k : w.h;
-      return '<div class="wb-card"><div class="wb-kana">' + esc(showKana) + '</div>'
-        + '<div class="wb-info"><span class="wb-romaji">' + esc(w.r) + '</span>'
-        + '<div class="wb-meta"><span>' + dirLabel + '</span><span>' + esc(w.h) + ' / ' + esc(w.k) + '</span>'
+      let mainKana, romaji, dirLabel, sub;
+      if (w.qmode === 'vocab') {
+        mainKana = w.w; romaji = w.r;
+        dirLabel = w.dir === 'w2r' ? '單字→音' : (w.dir === 'w2m' ? '單字→中文' : '中文→單字');
+        sub = w.m + ' ・ ' + w.cat;
+      } else {
+        mainKana = w.script === 'k' ? w.k : w.h; romaji = w.r;
+        dirLabel = w.dir === 'k2r' ? '假名→音' : '音→假名';
+        sub = w.h + ' / ' + w.k;
+      }
+      return '<div class="wb-card"><div class="wb-kana">' + esc(mainKana) + '</div>'
+        + '<div class="wb-info"><span class="wb-romaji">' + esc(romaji) + '</span>'
+        + '<div class="wb-meta"><span>' + dirLabel + '</span><span>' + esc(sub) + '</span>'
         + '<span>上次：' + esc(w.lastWrong || '') + '</span></div></div>'
         + '<div class="wb-count-badge"><span class="badge-num">' + w.wrongCount + '</span>錯</div></div>';
     }).join('');
@@ -974,6 +1143,54 @@ function showWrongBank() {
 }
 function clearWrongBank() {
   if (confirm('確定要清除整個錯題庫嗎？')) { localStorage.removeItem(WRONG_KEY); showWrongBank(); }
+}
+
+/* ---------- 題庫儀表板（點選才顯示）---------- */
+function showDashboard() {
+  const basic = KANA.filter(function(k){ return k.lv === 'basic'; }).length;
+  const dakuon = KANA.filter(function(k){ return k.lv === 'dakuon'; }).length;
+  const yoon = KANA.filter(function(k){ return k.lv === 'yoon'; }).length;
+  // 依目前設定可出題數（拆假名變體後）
+  const specs = buildKanaSpecs(getPool());
+  const scriptName = quizSettings.scriptMode === 'hk' ? '平+片假名' : (quizSettings.scriptMode === 'h' ? '平假名' : '片假名');
+  const levelName = quizSettings.level === 'basic' ? '基本' : (quizSettings.level === 'dakuon' ? '清濁' : '清濁拗');
+  const dirName = quizSettings.direction === 'both' ? '雙向' : (quizSettings.direction === 'k2r' ? '假名→音' : '音→假名');
+  // 單字分類統計
+  const cats = {};
+  VOCAB.forEach(function(v){ cats[v.cat] = (cats[v.cat] || 0) + 1; });
+  const catRows = Object.keys(cats).map(function(c){
+    return '<div class="dash-row"><span class="dash-k">' + esc(c) + '</span><span class="dash-v">' + cats[c] + '</span></div>';
+  }).join('');
+  // 學習紀錄
+  const recs = getRecords();
+  const wbCount = Object.keys(getWrongBank()).length;
+
+  $('dashboard-content').innerHTML = ''
+    + '<div class="dash-card"><div class="dash-title">五十音題庫</div>'
+    +   '<div class="dash-grid">'
+    +     '<div class="dash-box"><div class="dash-num">' + basic + '</div><div class="dash-lbl">清音</div></div>'
+    +     '<div class="dash-box"><div class="dash-num">' + dakuon + '</div><div class="dash-lbl">濁音/半濁</div></div>'
+    +     '<div class="dash-box"><div class="dash-num">' + yoon + '</div><div class="dash-lbl">拗音</div></div>'
+    +     '<div class="dash-box"><div class="dash-num">' + KANA.length + '</div><div class="dash-lbl">合計</div></div>'
+    +   '</div>'
+    +   '<div class="dash-note">目前設定：' + scriptName + ' ・ ' + levelName + ' ・ ' + dirName + '<br>'
+    +   '可出題數（拆假名變體後）：<b style="color:#4f46e5;">' + specs.length + '</b> 題</div>'
+    + '</div>'
+    + '<div class="dash-card"><div class="dash-title">常用單字題庫</div>'
+    +   '<div class="dash-grid">'
+    +     '<div class="dash-box amber"><div class="dash-num">' + VOCAB.length + '</div><div class="dash-lbl">單字總數</div></div>'
+    +     '<div class="dash-box amber"><div class="dash-num">' + Object.keys(cats).length + '</div><div class="dash-lbl">主題分類</div></div>'
+    +     '<div class="dash-box amber"><div class="dash-num">' + (VOCAB.length * 3) + '</div><div class="dash-lbl">可出題數</div></div>'
+    +   '</div>'
+    +   '<div style="margin-top:12px;">' + catRows + '</div>'
+    + '</div>'
+    + '<div class="dash-card"><div class="dash-title">學習紀錄</div>'
+    +   '<div class="dash-grid">'
+    +     '<div class="dash-box"><div class="dash-num">' + recs.length + '</div><div class="dash-lbl">測驗次數</div></div>'
+    +     '<div class="dash-box"><div class="dash-num">' + wbCount + '</div><div class="dash-lbl">錯題數</div></div>'
+    +   '</div>'
+    + '</div>';
+  showScreen('dashboard-screen');
 }
 
 /* ---------- 上一頁 / 離開保護 ---------- */

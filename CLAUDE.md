@@ -46,9 +46,12 @@ CHAPP/
 
 ### jquiz.html（日文五十音測驗，獨立程式）
 
-- 與 CQuiz.html 完全獨立，沿用相同視覺主題，但只有單一選擇題型。
+- 與 CQuiz.html 完全獨立，沿用相同視覺主題，含五十音與常用單字兩種題型。
 - **假名資料**：內嵌 JS 陣列 `KANA`，每筆 `{ h:平假名, k:片假名, r:羅馬音, lv:層次, row:子音行, col:母音列 }`，由 `addRow()` 建立；層次 `lv` 為 `basic`(清音46) / `dakuon`(濁音半濁音25) / `yoon`(拗音33)。
-- **出題方向**：`k2r`（看假名選羅馬音）、`r2k`（看羅馬音選假名），`both` 時隨機混合。
+- **單字資料**：內嵌 JS 陣列 `VOCAB`，每筆 `{ w:假名單字, r:羅馬音, m:中文意思, cat:主題分類 }`，由 `addVocab()` 建立（約 109 字、11 主題）。
+- **題目擴充**：`buildKanaSpecs()` 將假名依「腳本 × 方向」拆成獨立題目單位，雙向＋雙腳本下可達 4 倍（416 題）；`makeQuestion`/`makeVocabQuestion` 產生題目物件並以 `qmode`（`'kana'`/`'vocab'`）區分。
+- **出題方向**：五十音 `k2r`/`r2k`（`both` 隨機混合）；單字 `w2r`/`w2m`/`m2w`（隨機混合）。
+- **題庫儀表板**：`showDashboard()`（首頁點選才顯示）統計各題庫數量與目前設定可出題數。
 - **localStorage（`Jquiz_` 前綴，與 CQuiz 隔離）**：`Jquiz_records`（歷史，上限 50）、`Jquiz_wrong_bank`（錯題庫）、`Jquiz_settings`（使用者設定）；`Jquiz_session`（sessionStorage，續答）。
 - **設定**：`quizSettings = { scriptMode:'h'|'k'|'hk', level, direction, count, optCount }`；`optCount`（4/6/8，預設 6）決定每題選項數。
 - 干擾選項優先取同 `row`/`col` 的假名；`r2k` 排除同羅馬音項目以避免雙正解（如 じ/ぢ、ず/づ）。
