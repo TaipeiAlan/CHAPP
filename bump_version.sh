@@ -8,6 +8,7 @@
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 VERSION_FILE="$SCRIPT_DIR/VERSION"
 HTML_FILE="$SCRIPT_DIR/CQuiz.html"
+JHTML_FILE="$SCRIPT_DIR/jquiz.html"
 
 # 強制台灣時間 (UTC+8)
 TODAY=$(TZ=Asia/Taipei date +%Y%m%d)
@@ -33,8 +34,9 @@ NEW_VER="v${TODAY}_${NOW}_${NEW_COUNT}"
 printf '%s\n%s\n%s\n' "$TODAY" "$NEW_COUNT" "$NEW_VER" > "$VERSION_FILE"
 
 # 同步更新 CQuiz.html 內的版本字串
-if [ -f "$HTML_FILE" ] && [ -n "$OLD_VER" ] && [ "$OLD_VER" != "（初始）" ]; then
-    sed -i "s/${OLD_VER}/${NEW_VER}/g" "$HTML_FILE"
+if [ -n "$OLD_VER" ] && [ "$OLD_VER" != "（初始）" ]; then
+    [ -f "$HTML_FILE" ]  && sed -i "s/${OLD_VER}/${NEW_VER}/g" "$HTML_FILE"
+    [ -f "$JHTML_FILE" ] && sed -i "s/${OLD_VER}/${NEW_VER}/g" "$JHTML_FILE"
 fi
 
 echo "${OLD_VER} → ${NEW_VER}"
