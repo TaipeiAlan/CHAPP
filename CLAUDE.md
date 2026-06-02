@@ -24,7 +24,8 @@ CHAPP 是一個純前端的國中國語會考所需的字音、字型、字義�
 
 ```
 CHAPP/
-├── CQuiz.html        # 主程式所在
+├── CQuiz.html        # 主程式所在（國語字音/字形/字義測驗）
+├── jquiz.html        # 日文五十音測驗（平假名/片假名 ⇄ 羅馬音，獨立單頁程式）
 ├── CQBank.csv        # 初始題庫來源 CSV 檔案，格式請參考此檔案
 ├── CLAUDE.md         # 本說明檔
 ├── CHANGELOG.md      # 變更日誌（記錄每次的變更指示，以及變更結果）
@@ -42,6 +43,15 @@ CHAPP/
   - `Cquiz_active_bank` — 目前作答中的題庫 ID
   - `Cquiz_progress` — 作答進度
 - **預設題庫**: 以 pipe-separated 字串嵌入 JS，透過 `parsePipeData()` 解析
+
+### jquiz.html（日文五十音測驗，獨立程式）
+
+- 與 CQuiz.html 完全獨立，沿用相同視覺主題，但只有單一選擇題型。
+- **假名資料**：內嵌 JS 陣列 `KANA`，每筆 `{ h:平假名, k:片假名, r:羅馬音, lv:層次, row:子音行, col:母音列 }`，由 `addRow()` 建立；層次 `lv` 為 `basic`(清音46) / `dakuon`(濁音半濁音25) / `yoon`(拗音33)。
+- **出題方向**：`k2r`（看假名選羅馬音）、`r2k`（看羅馬音選假名），`both` 時隨機混合。
+- **localStorage（`Jquiz_` 前綴，與 CQuiz 隔離）**：`Jquiz_records`（歷史，上限 50）、`Jquiz_wrong_bank`（錯題庫）、`Jquiz_settings`（使用者設定）；`Jquiz_session`（sessionStorage，續答）。
+- **設定**：`quizSettings = { scriptMode:'h'|'k'|'hk', level, direction, count }`。
+- 干擾選項優先取同 `row`/`col` 的假名；`r2k` 排除同羅馬音項目以避免雙正解（如 じ/ぢ、ず/づ）。
 
 ## 關鍵常數與設定
 
