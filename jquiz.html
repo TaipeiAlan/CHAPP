@@ -297,7 +297,7 @@
       <div class="home-icon">あ</div>
       <h1>日文五十音測驗</h1>
       <div class="sub">ひらがな・カタカナ ⇄ ローマ字</div>
-      <div class="home-ver">v20260602_0900_2</div>
+      <div class="home-ver">v20260704_0046_1</div>
     </div>
 
     <div id="resume-banner"></div>
@@ -429,7 +429,7 @@
    日文五十音測驗 — 資料與邏輯（純前端、零依賴）
    ============================================================ */
 
-const APP_VERSION = 'v20260602_0900_2';
+const APP_VERSION = 'v20260704_0046_1';
 
 /* ---------- localStorage keys（Jquiz_ 前綴，與 CQuiz 隔離）---------- */
 const RECORDS_KEY  = 'Jquiz_records';
@@ -906,7 +906,7 @@ function renderResumeBanner() {
   if (s && s.currentQuiz && s.currentQuiz.length) {
     let done = 0;
     (s.currentQuiz).forEach(function(q){ if ((s.userAnswers || {})[q.idx] !== undefined) done++; });
-    if (done >= s.currentQuiz.length) { banner.innerHTML = ''; return; }
+    // 全部作答完但尚未送出批改，也要能續答（否則進度會卡住無法完成）
     banner.innerHTML = '<div class="resume-card"><div class="resume-info"><strong>有未完成的測驗</strong>'
       + esc(s.title || '') + ' ・ ' + done + ' / ' + s.currentQuiz.length + ' 題</div>'
       + '<div class="resume-btns"><button class="btn-resume btn-resume-go" onclick="resumeQuiz()">繼續</button>'

@@ -37,6 +37,7 @@
   document.addEventListener('DOMContentLoaded', showOverlay);
 
   function showOverlay() {
+    if (!document.body) { document.addEventListener('DOMContentLoaded', showOverlay); return; }
     if (document.getElementById('_inapp_overlay')) return; // 避免重複
     var appName = isLine ? 'LINE' : isWeChat ? 'WeChat' : isFB ? '社群應用' : 'App';
 
@@ -876,7 +877,7 @@
           <span>測試模式</span>
         </label>
         <span style="display:inline-flex;align-items:center;gap:6px;">
-        <span style="font-size:0.72rem;opacity:0.5;letter-spacing:0.04em;">v20260602_0900_2</span><button id="sync-icon-btn" title="雲端同步" onclick="onSyncClick()"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M19.35 10.04A7.49 7.49 0 0 0 12 4C9.11 4 6.6 5.64 5.35 8.04A5.994 5.994 0 0 0 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/></svg></button>
+        <span style="font-size:0.72rem;opacity:0.5;letter-spacing:0.04em;">v20260704_0046_1</span><button id="sync-icon-btn" title="雲端同步" onclick="onSyncClick()"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M19.35 10.04A7.49 7.49 0 0 0 12 4C9.11 4 6.6 5.64 5.35 8.04A5.994 5.994 0 0 0 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/></svg></button>
         <a href="https://github.com/TaipeiAlan/CHAPP" target="_blank" rel="noopener" class="github-link" title="GitHub">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
         </a>
@@ -920,7 +921,7 @@
     <div class="card score-card">
       <div class="score-ring">
         <span class="score-num" id="res-score">0</span>
-        <span class="score-denom">/ 20</span>
+        <span class="score-denom" id="res-total">/ 20</span>
       </div>
       <div class="score-message" id="res-message"></div>
       <div class="score-date" id="res-date"></div>
@@ -2623,7 +2624,7 @@ const CSV_DATA = `id|sentence|target_char|correct_pinyin|wrong_pinyin|correct_ch
 // CONSTANTS
 // ============================================================
 const QUIZ_SIZE = 20;
-const APP_VERSION      = 'v20260602_0900_2';
+const APP_VERSION      = 'v20260704_0046_1';
 const RECORDS_KEY      = 'Cquiz_records';
 const _OLD_HIST_KEY    = 'Cquiz_history';   // migration only
 const _OLD_LOG_KEY     = 'Cquiz_test_log';  // migration only
@@ -2850,7 +2851,7 @@ function buildQuestion(item, idx) {
 
 function buildIdiomQuestion(item, idx) {
   const correct = item['成語簡義'];
-  const wrongRaw = (item['成語常見誤義'] || '').split('+').map(s => s.trim()).filter(Boolean);
+  const wrongRaw = [...new Set((item['成語常見誤義'] || '').split('+').map(s => s.trim()).filter(s => s && s !== correct))];
   // Fill to 3 wrong options from other idiom items' 成語簡義
   const pool = shuffle(idiomItems.filter(i => i.sentence !== item.sentence && i['成語簡義'] !== correct));
   const wrongOpts = [...wrongRaw];
@@ -2882,7 +2883,7 @@ function formatSentence(sentence, targetChar, forResult) {
 }
 
 function escHtml(s) {
-  return (s == null ? '' : String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return (s == null ? '' : String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
 // ============================================================
@@ -2985,9 +2986,10 @@ function startQuiz(mode) {
   const today = todayStr();
   const verDateMatch = APP_VERSION.match(/v(\d{8})/);
   const verDate = verDateMatch ? verDateMatch[1] : '0';
+  // loadDate 為 '0' 表示 localStorage 不可用（initData 寫入失敗），此時不重載以免無限迴圈
   const loadDate = localStorage.getItem(LOAD_DATE_KEY) || '0';
-  if (today > verDate && today > loadDate) {
-    location.href = location.href;
+  if (loadDate !== '0' && today > verDate && today > loadDate) {
+    location.reload();
     return;
   }
 
@@ -3019,7 +3021,7 @@ function startQuiz(mode) {
         if (!d.qType || d.qType === 'audio') seenKeys.add(d.sentence + '|' + d.targetChar);
       }
     }
-    const wbSorted = Object.values(getWrongBank()).sort((a, b) => new Date(b.lastWrong) - new Date(a.lastWrong));
+    const wbSorted = Object.values(getWrongBank()).sort((a, b) => dateSortKey(b.lastWrong).localeCompare(dateSortKey(a.lastWrong)));
     const wrongPicks = [];
     if (wbSorted.length >= 10) {
       wrongPicks.push(...shuffle(wbSorted.slice(0, 10)).slice(0, 2));
@@ -3083,7 +3085,7 @@ function renderIdiomCard(q) {
       <div class="options" id="opts-${q.idx}">
         ${q.options.map((opt, oi) => `
           <div class="opt-label" id="opt-${q.idx}-${oi}"
-               onclick="selectAnswer(${q.idx}, '${opt.replace(/'/g,"\\'")}', ${oi})">
+               onclick="selectAnswer(${q.idx}, ${oi})">
             <div class="opt-radio" id="radio-${q.idx}-${oi}"></div>
             <span class="opt-key">${OPTION_KEYS[oi]}</span>
             <span class="opt-text">${escHtml(opt)}</span>
@@ -3109,7 +3111,7 @@ function renderAudioCard(q) {
       <div class="options" id="opts-${q.idx}">
         ${q.options.map((opt, oi) => `
           <div class="opt-label" id="opt-${q.idx}-${oi}"
-               onclick="selectAnswer(${q.idx}, '${opt.replace(/'/g,"\\'")}', ${oi})">
+               onclick="selectAnswer(${q.idx}, ${oi})">
             <div class="opt-radio" id="radio-${q.idx}-${oi}"></div>
             <span class="opt-key">${OPTION_KEYS[oi]}</span>
             <span class="opt-text">${escHtml(opt)}</span>
@@ -3135,7 +3137,7 @@ function renderShape1Card(q) {
       <div class="options" id="opts-${q.idx}">
         ${q.options.map((opt, oi) => `
           <div class="opt-label opt-sentence" id="opt-${q.idx}-${oi}"
-               onclick="selectAnswer(${q.idx}, '${opt.replace(/'/g,"\\'")}', ${oi})">
+               onclick="selectAnswer(${q.idx}, ${oi})">
             <div class="opt-radio" id="radio-${q.idx}-${oi}"></div>
             <span class="opt-key">${OPTION_KEYS[oi]}</span>
             <span class="opt-text opt-text-sentence">${escHtml(opt)}</span>
@@ -3167,7 +3169,7 @@ function renderShape2Card(q) {
       <div class="options options-char" id="opts-${q.idx}">
         ${q.options.map((opt, oi) => `
           <div class="opt-label opt-char" id="opt-${q.idx}-${oi}"
-               onclick="selectAnswer(${q.idx}, '${opt.replace(/'/g,"\\'")}', ${oi})">
+               onclick="selectAnswer(${q.idx}, ${oi})">
             <div class="opt-radio" id="radio-${q.idx}-${oi}"></div>
             <span class="opt-key">${OPTION_KEYS[oi]}</span>
             <span class="opt-text opt-text-char">${escHtml(opt)}</span>
@@ -3224,9 +3226,11 @@ function _scrollToNext(qIdx) {
   }, 160);
 }
 
-function selectAnswer(qIdx, answer, optIdx) {
+function selectAnswer(qIdx, optIdx) {
   if (Date.now() < quizReadyTime) return;  // 忽略進入後 400ms 內的鬼點
   const q = currentQuiz[qIdx];
+  if (!q) return;
+  const answer = q.options[optIdx];
   // Clear previous selection
   q.options.forEach((_, oi) => {
     const lbl = document.getElementById(`opt-${qIdx}-${oi}`);
@@ -3345,6 +3349,8 @@ function showResults(record) {
   showAllResults = false;
   const toggleBtn = document.getElementById('toggle-result-btn'); if (toggleBtn) toggleBtn.textContent = '▾ 顯示全部題目';
   document.getElementById('res-score').textContent = record.score;
+  const resTotal = document.getElementById('res-total');
+  if (resTotal) resTotal.textContent = '/ ' + record.total;
   document.getElementById('res-date').textContent = record.date;
   // Populate answer grid in summary card
   const grid = document.getElementById('res-answer-grid');
@@ -3353,7 +3359,7 @@ function showResults(record) {
       const isSkipped = !q.isCorrect && q.userAnswer === '';
       const cls  = q.isCorrect ? 'grid-correct' : isSkipped ? 'grid-skip' : 'grid-wrong';
       const icon = q.isCorrect ? '✓' : isSkipped ? '－' : '✗';
-      return `<div class="ans-cell ${cls}" title="第${i+1}題: ${q.userAnswer||'未作答'}" onclick="scrollToResult(${i})">
+      return `<div class="ans-cell ${cls}" title="第${i+1}題: ${escHtml(q.userAnswer||'未作答')}" onclick="scrollToResult(${i})">
         <span class="cell-num">${i+1}</span><span class="cell-icon">${icon}</span>
       </div>`;
     }).join('');
@@ -3551,7 +3557,9 @@ function getRecords() {
 function saveRecord(record) {
   let recs = getRecords();
   const entry = {
-    localId:  crypto.randomUUID(),
+    localId:  (window.crypto && crypto.randomUUID)
+                ? crypto.randomUUID()
+                : 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10),
     date:     record.date,
     score:    record.score,
     total:    record.total,
@@ -4055,7 +4063,7 @@ function showWrongBank(mode) {
   if (wbFilter === 'shape') {
     // Shape wrong bank
     const bank  = getShapeWrongBank();
-    const items = Object.values(bank).sort((a, b) => b.wrongCount - a.wrongCount || b.lastWrong.localeCompare(a.lastWrong));
+    const items = Object.values(bank).sort((a, b) => b.wrongCount - a.wrongCount || dateSortKey(b.lastWrong).localeCompare(dateSortKey(a.lastWrong)));
     if (!items.length) {
       statsBar.style.display = 'none';
       list.innerHTML = `<div class="wb-empty">
@@ -4104,7 +4112,7 @@ function showWrongBank(mode) {
   } else {
     // Audio wrong bank (original)
     const bank  = getWrongBank();
-    const items = Object.values(bank).sort((a, b) => b.wrongCount - a.wrongCount || b.lastWrong.localeCompare(a.lastWrong));
+    const items = Object.values(bank).sort((a, b) => b.wrongCount - a.wrongCount || dateSortKey(b.lastWrong).localeCompare(dateSortKey(a.lastWrong)));
     if (!items.length) {
       statsBar.style.display = 'none';
       list.innerHTML = `<div class="wb-empty">
@@ -4180,18 +4188,19 @@ function clearQuizSession() {
 }
 
 function checkResumeSession() {
+  const card = document.getElementById('resume-card');
+  const hideCard = () => { if (card) card.style.display = 'none'; };
   try {
     const saved = JSON.parse(sessionStorage.getItem('Cquiz_session') || 'null');
-    if (!saved || !saved.currentQuiz || !saved.currentQuiz.length) return;
+    if (!saved || !saved.currentQuiz || !saved.currentQuiz.length) { hideCard(); return; }
     const answered = Object.keys(saved.userAnswers).length;
-    if (!answered) return;
-    const card = document.getElementById('resume-card');
+    if (!answered) { hideCard(); return; }
     const meta = document.getElementById('resume-meta');
     if (card && meta) {
       meta.textContent = `已作答 ${answered} / ${saved.currentQuiz.length} 題（${saved.savedAt}）`;
       card.style.display = 'flex';
     }
-  } catch(e) {}
+  } catch(e) { hideCard(); }
 }
 
 function resumeQuiz() {
@@ -4250,6 +4259,26 @@ function scrollToResult(idx) {
 // ============================================================
 // LEARNING STATS
 // ============================================================
+
+// toLocaleString('zh-TW') 字串（如 "2026/7/3 下午4:38:00"）→ 可排序的 "YYYYMMDDHHMMSS"
+// （new Date() 無法解析含上午/下午的字串；未補零的月日直接 localeCompare 也會排錯）
+function dateSortKey(dateStr) {
+  const s = String(dateStr || '');
+  const p = n => String(n).padStart(2, '0');
+  const d = s.match(/(\d{4})[\/年](\d{1,2})[\/月](\d{1,2})/);
+  if (!d) return '00000000000000';
+  let key = d[1] + p(d[2]) + p(d[3]);
+  const t = s.match(/(上午|下午)?\s*(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+  if (t) {
+    let h = parseInt(t[2], 10);
+    if (t[1] === '下午' && h < 12) h += 12;
+    if (t[1] === '上午' && h === 12) h = 0;
+    key += p(h) + t[3] + (t[4] || '00');
+  } else {
+    key += '000000';
+  }
+  return key;
+}
 
 // Parse date string from toLocaleString('zh-TW') into YYYYMMDD
 function parseDateToYMD(dateStr) {
@@ -4771,13 +4800,13 @@ function _renderSyncModalSetup(editMode) {
   document.getElementById('sync-modal-body').innerHTML = `
     <div class="sync-field-label">Supabase Project URL</div>
     <input id="sb-url-input" type="text" placeholder="https://xxxx.supabase.co"
-      value="${url}" onkeydown="if(event.key==='Enter')document.getElementById('sb-key-input').focus()">
+      value="${escHtml(url)}" onkeydown="if(event.key==='Enter')document.getElementById('sb-key-input').focus()">
     <div class="sync-field-label">Anon Key</div>
     <input id="sb-key-input" type="password" placeholder="eyJh..."
-      value="${key}" onkeydown="if(event.key==='Enter')document.getElementById('sb-user-input').focus()">
+      value="${escHtml(key)}" onkeydown="if(event.key==='Enter')document.getElementById('sb-user-input').focus()">
     <div class="sync-field-label">使用者名稱</div>
     <input id="sb-user-input" type="text" placeholder="你的名字" maxlength="30"
-      value="${user}" onkeydown="if(event.key==='Enter')doSyncConnect()">
+      value="${escHtml(user)}" onkeydown="if(event.key==='Enter')doSyncConnect()">
     <div id="sb-login-status" class="sync-status-row"></div>
     <div class="sync-btn-row">
       <button class="sync-btn sync-btn-secondary" onclick="${cancelFn}">取消</button>
@@ -4791,7 +4820,7 @@ function _renderSyncModalSetup(editMode) {
 
 function _renderSyncModalLoggedIn(username) {
   document.getElementById('sync-modal-body').innerHTML = `
-    <div class="sync-user-info">使用者：<strong>${username}</strong></div>
+    <div class="sync-user-info">使用者：<strong>${escHtml(username)}</strong></div>
     <div id="sb-login-status" class="sync-status-row"></div>
     <div class="sync-btn-row" style="flex-direction:column;gap:8px;">
       <button class="sync-btn sync-btn-primary"    onclick="doSyncNow()">立即同步</button>
@@ -4900,7 +4929,7 @@ async function doViewUsersStats() {
       const medal  = isMe ? '★ ' : '';
       const youTag = isMe ? ' <span style="font-size:0.7rem;opacity:0.55">(你)</span>' : '';
       return `<div class="sb-user-row${isMe ? ' sb-user-me' : ''}">
-        <div class="sb-user-name">${medal}${u.username}${youTag}</div>
+        <div class="sb-user-name">${medal}${escHtml(u.username)}${youTag}</div>
         <div class="sb-user-stat">${count} 次 · 均分 ${avgPct}% · ${latest}</div>
       </div>`;
     }).join('');

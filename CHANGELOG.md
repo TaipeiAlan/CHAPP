@@ -4,6 +4,32 @@
 
 ---
 
+## 2026-07-04
+
+### 收到指示
+- 全面檢視需要改善的錯誤。
+
+### 執行結果（CQuiz.html）
+- **修正錯題排序失效**：`lastWrong` 以 `toLocaleString('zh-TW')`（如「2026/7/3 下午4:38:00」）儲存，`new Date()` 無法解析導致字音測驗「優先出錯題」排序無效；錯題本以 `localeCompare` 直接比較未補零的月日也會排錯。新增 `dateSortKey()` 將此格式轉為可排序的 `YYYYMMDDHHMMSS`，三處排序全部改用。
+- **修正結果頁分母寫死 `/ 20`**：測試模式（5 題）批改後分數圈仍顯示「/ 20」。改為依 `record.total` 動態顯示。
+- **修正「未完成測驗」橫幅殘留**：`checkResumeSession()` 只會顯示、從不隱藏，測驗完成回首頁後橫幅仍殘留舊資訊。改為 session 不存在時主動隱藏。
+- **修正 XSS**：雲端同步「查看所有使用者統計」將其他使用者的 username 未跳脫直接插入 HTML（儲存型 XSS）；同步設定表單的 URL/Key/名稱回填值也未跳脫。均改用 `escHtml()`。
+- **強化 `escHtml()` 與選項事件繫結**：`escHtml()` 補上 `"` 與 `'` 的跳脫；四種題型選項的 inline `onclick` 原本把選項文字內嵌進屬性（僅跳脫單引號，含 `"` 或 `&` 的文字會破壞屬性並造成比對錯誤），改為只傳題目與選項索引，由 `selectAnswer(qIdx, optIdx)` 從 `currentQuiz` 取值。
+- **修正自動重載保護**：localStorage 不可用時 `Cquiz_load_date` 永遠缺失，點開始測驗會無限重新載入；加入防護並將 `location.href = location.href`（帶 hash 時不會重載）改為 `location.reload()`。
+- **修正 `crypto.randomUUID()` 相依**：非安全環境（http）無此 API，會使 `saveRecord()` 拋錯、整筆考試記錄遺失。加入時間戳＋亂數的後備 ID。
+- **成語題選項去重**：`成語常見誤義` 若含重複項或與 `成語簡義` 相同，會出現重複選項／雙正解；建立選項時先去重並排除與正解相同者。
+- **修正 in-app 瀏覽器提示時序**：Android intent 分支的 `setTimeout(showOverlay, 500)` 可能在 `document.body` 建立前執行而拋錯；`showOverlay` 加入 body 未就緒時改掛 `DOMContentLoaded` 的防護。
+- **答題格 title 跳脫**：結果摘要答題格的 `title` 屬性內嵌使用者答案未跳脫，改用 `escHtml()`。
+
+### 執行結果（jquiz.html）
+- **修正續答死角**：全部作答完但尚未送出批改時回到首頁，「續答」橫幅被隱藏，導致無法回到測驗送出。改為此情況仍顯示續答橫幅。
+
+### 驗證
+- 以 Node 對兩檔全部 `<script>` 區塊做語法檢查通過；`dateSortKey()` 以 7 組上午/下午/24 小時制/年月日格式單元測試通過。
+- 以 headless Chromium 實測：字音測試模式（5 題）分母正確顯示「/ 5」、批改與記錄寫入正常；綜合測驗 20 題（含成語/字形選項點擊，走新的 `selectAnswer(qIdx, optIdx)`）全流程正常；完測回首頁續答橫幅正確消失；錯題本畫面正常。jquiz 全答未送出回首頁可續答並成功批改，無 JS 錯誤。
+
+---
+
 ## 2026-06-02（第二批）
 
 ### 收到指示
