@@ -416,10 +416,47 @@
     .sync-user-info strong { color: #818cf8; }
     .sync-field-label { font-size: 0.75rem; color: #94a3b8; margin-bottom: 4px; }
     .sb-users-list { max-height: 280px; overflow-y: auto; margin-bottom: 12px; }
-    .sb-user-row { padding: 8px 10px; border-radius: 8px; margin-bottom: 6px; background: #0f172a; }
+    .sb-user-row {
+      padding: 8px 10px; border-radius: 8px; margin-bottom: 6px; background: #0f172a;
+      cursor: pointer; position: relative; padding-right: 26px; transition: background 0.15s;
+    }
+    .sb-user-row:hover { background: #1e293b; }
     .sb-user-row.sb-user-me { background: #1e1b4b; border: 1px solid #4338ca; }
+    .sb-user-row.sb-user-me:hover { background: #262263; }
+    .sb-user-row::after {
+      content: '\203A'; position: absolute; right: 10px; top: 50%;
+      transform: translateY(-50%); color: #64748b; font-size: 1.1rem; line-height: 1;
+    }
     .sb-user-name { font-size: 0.88rem; font-weight: 600; color: #f1f5f9; }
     .sb-user-stat { font-size: 0.75rem; color: #94a3b8; margin-top: 2px; }
+    .sb-user-last { font-size: 0.72rem; color: #64748b; margin-top: 2px; }
+    .sb-user-last b { color: #a5b4fc; font-weight: 600; }
+    /* ── user detail (latest 50 records) ── */
+    .sb-detail-head {
+      font-size: 0.85rem; color: #cbd5e1; margin-bottom: 10px; text-align: center;
+    }
+    .sb-detail-head strong { color: #818cf8; }
+    .sb-recs-list { max-height: 56vh; overflow-y: auto; margin-bottom: 12px; }
+    .sb-rec-row {
+      background: #0f172a; border-radius: 8px; padding: 8px 10px; margin-bottom: 6px;
+    }
+    .sb-rec-top { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .sb-rec-time { font-size: 0.78rem; color: #e2e8f0; font-weight: 600; letter-spacing: 0.02em; }
+    .sb-rec-badge {
+      font-size: 0.62rem; padding: 1px 6px; border-radius: 7px;
+      background: #1e293b; color: #94a3b8;
+    }
+    .sb-rec-score { font-size: 0.78rem; font-weight: 700; margin-left: auto; }
+    .sb-rec-note { font-size: 0.7rem; color: #64748b; margin-top: 4px; }
+    .sb-w-list { margin-top: 5px; border-top: 1px dashed #1e293b; padding-top: 5px; }
+    .sb-w-title { font-size: 0.68rem; color: #f87171; margin-bottom: 3px; }
+    .sb-w-item {
+      font-size: 0.72rem; color: #cbd5e1; line-height: 1.55;
+      display: flex; gap: 5px; flex-wrap: wrap; align-items: baseline;
+    }
+    .sb-w-char { color: #a78bfa; font-weight: 700; }
+    .sb-w-ok   { color: #4ade80; letter-spacing: 0.04em; }
+    .sb-w-bad  { color: #f87171; letter-spacing: 0.04em; text-decoration: line-through; }
     /* cloud icon button next to version */
     #sync-icon-btn {
       display: inline-flex; align-items: center; justify-content: center;
@@ -876,7 +913,7 @@
           <span>測試模式</span>
         </label>
         <span style="display:inline-flex;align-items:center;gap:6px;">
-        <span style="font-size:0.72rem;opacity:0.5;letter-spacing:0.04em;">v20260602_0900_2</span><button id="sync-icon-btn" title="雲端同步" onclick="onSyncClick()"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M19.35 10.04A7.49 7.49 0 0 0 12 4C9.11 4 6.6 5.64 5.35 8.04A5.994 5.994 0 0 0 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/></svg></button>
+        <span style="font-size:0.72rem;opacity:0.5;letter-spacing:0.04em;">v20260920_0033_1</span><button id="sync-icon-btn" title="雲端同步" onclick="onSyncClick()"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M19.35 10.04A7.49 7.49 0 0 0 12 4C9.11 4 6.6 5.64 5.35 8.04A5.994 5.994 0 0 0 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/></svg></button>
         <a href="https://github.com/TaipeiAlan/CHAPP" target="_blank" rel="noopener" class="github-link" title="GitHub">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
         </a>
@@ -2623,7 +2660,7 @@ const CSV_DATA = `id|sentence|target_char|correct_pinyin|wrong_pinyin|correct_ch
 // CONSTANTS
 // ============================================================
 const QUIZ_SIZE = 20;
-const APP_VERSION      = 'v20260602_0900_2';
+const APP_VERSION      = 'v20260920_0033_1';
 const RECORDS_KEY      = 'Cquiz_records';
 const _OLD_HIST_KEY    = 'Cquiz_history';   // migration only
 const _OLD_LOG_KEY     = 'Cquiz_test_log';  // migration only
@@ -4861,6 +4898,49 @@ function doBackToLoggedIn() {
   if (u) _renderSyncModalLoggedIn(u); else _renderSyncModalSetup(false);
 }
 
+// ── date helpers ──
+function _parseRecDate(dateStr) {
+  // zh-TW format: "2026/4/18 下午2:30:45"（時間部分可能缺漏）
+  if (!dateStr) return null;
+  const m = String(dateStr).match(
+    /(\d{4})\/(\d{1,2})\/(\d{1,2})(?:\s*(上午|下午)?\s*(\d{1,2}):(\d{2})(?::(\d{2}))?)?/
+  );
+  if (!m) return null;
+  let h = m[5] !== undefined ? Number(m[5]) : 0;
+  if (m[4] === '下午' && h < 12) h += 12;
+  if (m[4] === '上午' && h === 12) h = 0;
+  const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]),
+                     h, m[6] !== undefined ? Number(m[6]) : 0, m[7] !== undefined ? Number(m[7]) : 0);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+function _fmtRecTime(dateStr) {
+  const d = _parseRecDate(dateStr);
+  if (!d) return dateStr || '—';
+  const p = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}/${p(d.getMonth() + 1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
+function _relativeDate(dateStr) {
+  // zh-TW format: "2026/4/18 下午2:30:45"
+  const rec = _parseRecDate(dateStr);
+  if (!rec) return '最近';
+  const today = new Date();
+  const diff  = Math.round(
+    (new Date(today.getFullYear(), today.getMonth(), today.getDate())
+     - new Date(rec.getFullYear(), rec.getMonth(), rec.getDate())) / 86400000
+  );
+  if (diff === 0) return '今天';
+  if (diff === 1) return '昨天';
+  if (diff < 7)  return `${diff}天前`;
+  if (diff < 30) return `${Math.floor(diff / 7)}週前`;
+  return `${rec.getMonth() + 1}/${rec.getDate()}`;
+}
+
+const _SB_TYPE_LABEL = { audio: '字音', shape: '字形', idiom: '成語', mixed: '綜合' };
+let _sbUserCache = [];   // 使用者列表快取（供點選查看明細用）
+
+// ── 所有使用者統計 ──
 async function doViewUsersStats() {
   const body = document.getElementById('sync-modal-body');
   body.innerHTML = `<div class="sync-status-row">載入中…</div>`;
@@ -4877,12 +4957,13 @@ async function doViewUsersStats() {
     // Aggregate per user
     const statsMap = {};
     (records || []).forEach(r => {
-      if (!statsMap[r.user_id]) statsMap[r.user_id] = { count: 0, scoreSum: 0, totalSum: 0, latestDate: '' };
+      if (!statsMap[r.user_id]) statsMap[r.user_id] = { count: 0, scoreSum: 0, totalSum: 0, latestDate: '', latestTs: 0 };
       const s = statsMap[r.user_id];
       s.count++;
       s.scoreSum  += r.score || 0;
       s.totalSum  += r.total || 20;
-      if (!s.latestDate || r.date > s.latestDate) s.latestDate = r.date;
+      const ts = _parseRecDate(r.date)?.getTime() || 0;
+      if (ts >= s.latestTs) { s.latestTs = ts; s.latestDate = r.date; }
     });
 
     const sorted = (users || []).sort((a, b) => {
@@ -4891,17 +4972,22 @@ async function doViewUsersStats() {
       return (statsMap[b.id]?.count || 0) - (statsMap[a.id]?.count || 0);
     });
 
-    const rows = sorted.map(u => {
+    _sbUserCache = sorted.map(u => ({ id: u.id, username: u.username || '' }));
+
+    const rows = sorted.map((u, uidx) => {
       const s = statsMap[u.id];
       const isMe = u.id === myUid;
       const count  = s?.count || 0;
       const avgPct = (s && s.totalSum > 0) ? Math.round(s.scoreSum / s.totalSum * 100) : 0;
-      const latest = s?.latestDate ? _relativeDate(s.latestDate) : '尚無記錄';
       const medal  = isMe ? '★ ' : '';
       const youTag = isMe ? ' <span style="font-size:0.7rem;opacity:0.55">(你)</span>' : '';
-      return `<div class="sb-user-row${isMe ? ' sb-user-me' : ''}">
-        <div class="sb-user-name">${medal}${u.username}${youTag}</div>
-        <div class="sb-user-stat">${count} 次 · 均分 ${avgPct}% · ${latest}</div>
+      const lastHtml = s?.latestDate
+        ? `最新測驗 <b>${escHtml(_fmtRecTime(s.latestDate))}</b>（${escHtml(_relativeDate(s.latestDate))}）`
+        : '尚無記錄';
+      return `<div class="sb-user-row${isMe ? ' sb-user-me' : ''}" onclick="doViewUserDetail(${uidx})">
+        <div class="sb-user-name">${medal}${escHtml(u.username || '')}${youTag}</div>
+        <div class="sb-user-stat">${count} 次 · 均分 ${avgPct}%</div>
+        <div class="sb-user-last">${lastHtml}</div>
       </div>`;
     }).join('');
 
@@ -4910,25 +4996,92 @@ async function doViewUsersStats() {
       <button class="sync-btn sync-btn-secondary" style="width:100%" onclick="doBackToLoggedIn()">← 返回</button>`;
   } catch(e) {
     body.innerHTML = `
-      <div class="sync-status-row err">錯誤：${e.message || e}</div>
+      <div class="sync-status-row err">錯誤：${escHtml(e.message || String(e))}</div>
       <button class="sync-btn sync-btn-secondary" style="width:100%;margin-top:8px" onclick="doBackToLoggedIn()">← 返回</button>`;
   }
 }
 
-function _relativeDate(dateStr) {
-  // zh-TW format: "2026/4/18 下午2:30:45"
+// ── 單一使用者：最新 50 筆測驗明細 ──
+function _sbWrongItem(d) {
+  const user = d.userAnswer ? `<span class="sb-w-bad">${escHtml(d.userAnswer)}</span>` : '';
+  if (d.qType === 'idiom') {
+    return `<div class="sb-w-item">
+      <span>${escHtml(d.sentence || '')}</span>
+      <span class="sb-w-ok">${escHtml(d.correctAnswer || '')}</span>${user}</div>`;
+  }
+  if (d.qType === 'shape2') {
+    return `<div class="sb-w-item">
+      <span>${escHtml(d.sentence || '')}</span>
+      <span class="sb-w-char">「${escHtml(d.correctChar || '')}」</span>
+      <span class="sb-w-ok">${escHtml(d.correctAnswer || '')}</span>${user}</div>`;
+  }
+  if (d.qType === 'shape1') {
+    return `<div class="sb-w-item">
+      <span>${escHtml(d.sentence || '')}</span>
+      <span class="sb-w-char">「${escHtml(d.targetChar || '')}」</span>
+      <span class="sb-w-ok">→${escHtml(d.correctChar || d.targetChar || '')}</span>
+      ${d.wrongChar ? `<span class="sb-w-bad">${escHtml(d.wrongChar)}</span>` : user}</div>`;
+  }
+  return `<div class="sb-w-item">
+    <span>${escHtml((d.sentence || '').replace(d.targetChar || '', ''))}</span>
+    <span class="sb-w-char">「${escHtml(d.targetChar || '')}」</span>
+    <span class="sb-w-ok">${escHtml(d.correctPinyin || '')}</span>${user}</div>`;
+}
+
+async function doViewUserDetail(uidx) {
+  const target = _sbUserCache[uidx];
+  if (!target) return;
+  const userId = target.id, username = target.username;
+  const body = document.getElementById('sync-modal-body');
+  body.innerHTML = `<div class="sync-status-row">載入中…</div>`;
+  const backBtn = `<button class="sync-btn sync-btn-secondary" style="width:100%" onclick="doViewUsersStats()">← 返回使用者列表</button>`;
   try {
-    const [datePart] = dateStr.split(' ');
-    const [y, m, d] = datePart.split('/').map(Number);
-    const today = new Date();
-    const rec   = new Date(y, m - 1, d);
-    const diff  = Math.round((new Date(today.getFullYear(), today.getMonth(), today.getDate()) - rec) / 86400000);
-    if (diff === 0) return '今天';
-    if (diff === 1) return '昨天';
-    if (diff < 7)  return `${diff}天前`;
-    if (diff < 30) return `${Math.floor(diff / 7)}週前`;
-    return `${m}/${d}`;
-  } catch { return '最近'; }
+    const sb = getSbClient();
+    const { data, error } = await sb.from('quiz_records')
+      .select('local_id, date, score, total, quiz_type, entries')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(300);
+    if (error) throw error;
+
+    const recs = (data || [])
+      .map(r => ({ ...r, _ts: _parseRecDate(r.date)?.getTime() || 0 }))
+      .sort((a, b) => b._ts - a._ts)
+      .slice(0, 50);
+
+    const rows = recs.map(r => {
+      const total   = r.total || 0;
+      const pct     = total > 0 ? Math.round((r.score || 0) / total * 100) : 0;
+      const color   = pct >= 80 ? '#4ade80' : pct >= 60 ? '#facc15' : '#f87171';
+      const label   = _SB_TYPE_LABEL[r.quiz_type] || '字音';
+      const entries = Array.isArray(r.entries) ? r.entries : [];
+      const wrongs  = entries.filter(d => !d.isCorrect && !d.isSkipped);
+      const skipped = entries.filter(d => d.isSkipped).length;
+      const wrongHtml = wrongs.length
+        ? `<div class="sb-w-list">
+             <div class="sb-w-title">✗ 錯題 ${wrongs.length} 題${skipped ? `　略過 ${skipped} 題` : ''}</div>
+             ${wrongs.map(_sbWrongItem).join('')}
+           </div>`
+        : `<div class="sb-rec-note">${entries.length ? (skipped ? `全對（略過 ${skipped} 題）` : '✓ 全部答對') : '無題目明細'}</div>`;
+      return `<div class="sb-rec-row">
+        <div class="sb-rec-top">
+          <span class="sb-rec-time">${escHtml(_fmtRecTime(r.date))}</span>
+          <span class="sb-rec-badge">${label}</span>
+          <span class="sb-rec-score" style="color:${color}">${r.score || 0}/${total} · ${pct}%</span>
+        </div>
+        ${wrongHtml}
+      </div>`;
+    }).join('');
+
+    body.innerHTML = `
+      <div class="sb-detail-head"><strong>${escHtml(username || '')}</strong> 最近 ${recs.length} 筆測驗記錄</div>
+      <div class="sb-recs-list">${rows || '<div class="sync-status-row">尚無測驗記錄</div>'}</div>
+      ${backBtn}`;
+  } catch(e) {
+    body.innerHTML = `
+      <div class="sync-status-row err">錯誤：${escHtml(e.message || String(e))}</div>
+      <div style="margin-top:8px">${backBtn}</div>`;
+  }
 }
 
 // ── init icon state on load ──
